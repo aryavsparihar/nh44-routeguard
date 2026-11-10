@@ -1,0 +1,41 @@
+name: Risk job
+
+on:
+  schedule:
+    # Minute 7 of every hour (UTC). Top-of-hour runs are often delayed by GitHub.
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+# Never run two at once; let a slow run finish instead of cancelling it.
+concurrency:
+  group: risk-job
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: jobs/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r jobs/requirements.txt
+
+      # Exits non-zero (red run + GitHub email) if Open-Meteo fails or Supabase rejects a write.
+      - name: Fetch weather and score risk
+        run: python jobs/run_risk.py
+
+      - name: Check risk_scores got a full new run
+        run: python jobs/check_run.py --max-age-min 30
