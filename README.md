@@ -19,6 +19,7 @@ You need Node.js 20 or newer.
    ```bash
    cp .env.example .env.local
    ```
+   The URL looks like `https://<project-ref>.supabase.co`, not the `supabase.com/dashboard/...` link in your browser.
    Never commit `.env.local`, and never put the Supabase secret key in it.
 4. Start the dev server and open http://localhost:3000:
    ```bash
