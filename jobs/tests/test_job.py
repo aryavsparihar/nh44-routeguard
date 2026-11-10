@@ -182,3 +182,38 @@ def test_hex_rows_for_db_have_centre_and_nearest_point():
     assert by["883d308abdfffff"]["weather_point_id"] == "z4_ramban"
     assert by["883d309521fffff"]["weather_point_id"] == "z5_banihal"
     assert by["883d308abdfffff"]["centroid"].startswith("SRID=4326;POINT(75.2")
+
+
+# --- check_run.py -------------------------------------------------------------
+def _fake_latest(rows):
+    class FakeDb:
+        def __init__(self, *a):
+            pass
+
+        def select(self, table, params):
+            assert table == "latest_risk"
+            return rows
+
+        def close(self):
+            pass
+
+    return FakeDb
+
+
+def test_check_run_ok_and_failures(monkeypatch):
+    import check_run
+    from datetime import datetime, timezone
+
+    monkeypatch.setenv("SUPABASE_URL", "https://abcdefghijklmnopqrst.supabase.co")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "not-a-real-key-for-tests")
+    fresh = datetime.now(timezone.utc).isoformat()
+    full = [{"run_at": fresh, "zone_id": z, "horizon_hours": h} for z in range(1, 7) for h in (0, 12, 24, 48)]
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(full))
+    assert check_run.main([]) == 0
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(full[:23]))
+    assert check_run.main([]) == 1
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest([]))
+    assert check_run.main([]) == 1
+    old = [{**r, "run_at": "2026-01-01T00:00:00+00:00"} for r in full]
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(old))
+    assert check_run.main([]) == 1
