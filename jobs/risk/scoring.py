@@ -125,11 +125,11 @@ LABELS = {"landslide": "landslides", "rockfall": "rockfall", "flash_flood": "fla
 
 def exposure_words(e: float) -> str:
     if e >= 0.8:
-        return "very exposed to"
+        return "is very exposed to"
     if e >= 0.5:
-        return "exposed to"
+        return "is exposed to"
     if e >= 0.3:
-        return "somewhat exposed to"
+        return "is somewhat exposed to"
     return "has low exposure to"
 
 
@@ -160,7 +160,7 @@ def reason(zone_id: int, top_hazard: str | None, pick: HazardPick | None, cfg: d
     limit = cfg["reason_max_chars"]
     if top_hazard is None or pick is None:
         return f"Zone {zone_id}: no rain, snow or frost trigger in the window"[:limit]
-    tail = f"zone {zone_id} is {exposure_words(exposure(cfg, zone_id, top_hazard))} {LABELS[top_hazard]}"
+    tail = f"zone {zone_id} {exposure_words(exposure(cfg, zone_id, top_hazard))} {LABELS[top_hazard]}"
     head = weather_phrase(top_hazard, pick.trigger.facts)
     text = f"{head} near {pick.point_name}; {tail}"
     if len(text) > limit:
