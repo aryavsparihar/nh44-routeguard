@@ -1,0 +1,2 @@
+# Python dependencies for the hourly risk job (jobs/run_risk.py).
+# Pin versions here as the job is built in Phase 1.
