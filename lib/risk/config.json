@@ -1,0 +1,73 @@
+{
+  "_note": "Settings for the rules-based risk model. ALL thresholds, scores and exposure values here are our own starting values, not sourced figures. They will be tuned in the backtest. Read by jobs/risk (Python) and later by the app. See docs/risk-model.md.",
+  "model_version": "rules-v0.1",
+  "horizons_hours": [0, 12, 24, 48],
+  "hazards": ["landslide", "rockfall", "flash_flood", "snow_ice"],
+
+  "exposure": {
+    "_note": "How exposed each zone is to each hazard, 0-1. Our own values from the dossier zone notes.",
+    "1": { "landslide": 0.1, "rockfall": 0.1, "flash_flood": 0.1, "snow_ice": 0.1 },
+    "2": { "landslide": 0.6, "rockfall": 0.3, "flash_flood": 0.3, "snow_ice": 0.2 },
+    "3": { "landslide": 0.9, "rockfall": 0.6, "flash_flood": 0.8, "snow_ice": 0.3 },
+    "4": { "landslide": 0.8, "rockfall": 1.0, "flash_flood": 0.5, "snow_ice": 0.3 },
+    "5": { "landslide": 0.5, "rockfall": 0.7, "flash_flood": 0.3, "snow_ice": 1.0 },
+    "6": { "landslide": 0.1, "rockfall": 0.1, "flash_flood": 0.1, "snow_ice": 0.1 }
+  },
+
+  "triggers": {
+    "_note": "Weather windows end at the forecast time. Rain in mm, snow in cm, snow depth in m, temperature in °C.",
+    "landslide": {
+      "rain_window_h": 72,
+      "rain_mm_zero": 10,
+      "rain_mm_full": 80,
+      "burst_window_h": 24,
+      "burst_mm_over": 30,
+      "burst_bonus": 0.2
+    },
+    "rockfall": {
+      "rain_window_h": 48,
+      "rain_mm_zero": 10,
+      "rain_mm_full": 50,
+      "freeze_thaw_score": 0.7,
+      "freeze_thaw_rain_mm": 10,
+      "freeze_thaw_after_h": 24,
+      "freeze_below_c": 0
+    },
+    "flash_flood": {
+      "window_h": 24,
+      "burst_hours": 3,
+      "rain_mm_zero": 5,
+      "rain_mm_full": 25
+    },
+    "snow_ice": {
+      "snowfall_window_h": 24,
+      "snowfall_cm_full": 20,
+      "snow_depth_m_full": 0.3,
+      "black_ice_score": 0.6,
+      "black_ice_wet_window_h": 24,
+      "freeze_below_c": 0
+    }
+  },
+
+  "range_half_width": { "0": 0.05, "12": 0.10, "24": 0.15, "48": 0.20 },
+
+  "levels": {
+    "_note": "low < medium_from <= medium <= high_above < high. Matches Mayank's advice table.",
+    "medium_from": 0.30,
+    "high_above": 0.65
+  },
+
+  "confidence": {
+    "report_window_h": 6,
+    "history_exposure_min": 0.6,
+    "always_low_horizon_h": 48
+  },
+
+  "slope": {
+    "_note": "Hexagons only: landslide and rockfall are multiplied by min(slope_deg / full_effect_deg, 1).",
+    "full_effect_deg": 35,
+    "applies_to": ["landslide", "rockfall"]
+  },
+
+  "reason_max_chars": 140
+}
