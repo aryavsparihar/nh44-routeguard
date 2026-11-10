@@ -173,6 +173,7 @@ export type Database = {
           horizon_hours: number
           id: number
           landslide: number | null
+          level: string | null
           model_version: string
           overall: number
           reason: string | null
@@ -191,6 +192,7 @@ export type Database = {
           horizon_hours: number
           id?: never
           landslide?: number | null
+          level?: string | null
           model_version: string
           overall: number
           reason?: string | null
@@ -209,6 +211,7 @@ export type Database = {
           horizon_hours?: number
           id?: never
           landslide?: number | null
+          level?: string | null
           model_version?: string
           overall?: number
           reason?: string | null
@@ -439,7 +442,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      latest_risk: {
+        Row: {
+          confidence: Database["public"]["Enums"]["confidence_level"] | null
+          flash_flood: number | null
+          h3_index: string | null
+          horizon_hours: number | null
+          id: number | null
+          landslide: number | null
+          level: string | null
+          model_version: string | null
+          overall: number | null
+          reason: string | null
+          risk_high: number | null
+          risk_low: number | null
+          rockfall: number | null
+          run_at: string | null
+          snow_ice: number | null
+          top_hazard: Database["public"]["Enums"]["hazard_type"] | null
+          zone_id: number | null
+          zone_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_scores_h3_index_fkey"
+            columns: ["h3_index"]
+            isOneToOne: false
+            referencedRelation: "hexes"
+            referencedColumns: ["h3_index"]
+          },
+          {
+            foreignKeyName: "risk_scores_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
