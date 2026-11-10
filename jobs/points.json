@@ -1,0 +1,192 @@
+{
+  "_note": "Weather points along NH-44. Located with OpenStreetMap (Nominatim), each checked to be within 2 km of the NH-44 road line (OSRM route on OSM). Regenerate with jobs/tools/locate_points.py; fix by hand only with a note in 'source'.",
+  "points": [
+    {
+      "id": "z1_nagrota",
+      "name": "Nagrota",
+      "zone_id": 1,
+      "lat": 32.79085,
+      "lng": 74.90476,
+      "source": "Nominatim 'Nagrota' -> OSM node 5306808243 (place=suburb); 0.11 km from NH-44 line",
+      "km_from_jammu": 10.0
+    },
+    {
+      "id": "z1_jakhani",
+      "name": "Udhampur (Jakhani)",
+      "zone_id": 1,
+      "lat": 32.92197,
+      "lng": 75.13315,
+      "source": "Nominatim 'Udhampur' -> OSM node 1977558902 (place=city); 0.49 km from NH-44 line",
+      "km_from_jammu": 57.4
+    },
+    {
+      "id": "z2_chenani",
+      "name": "Chenani",
+      "zone_id": 2,
+      "lat": 33.03641,
+      "lng": 75.28389,
+      "source": "Nominatim 'Chenani' -> OSM node 1423415153 (place=town); 0.56 km from NH-44 line",
+      "km_from_jammu": 80.1
+    },
+    {
+      "id": "z3_nashri",
+      "name": "Nashri",
+      "zone_id": 3,
+      "lat": 33.0881,
+      "lng": 75.28678,
+      "source": "Nominatim 'Nashri' -> OSM way 128930104 (highway=trunk); 0.00 km from NH-44 line",
+      "km_from_jammu": 85.9
+    },
+    {
+      "id": "z3_peerah",
+      "name": "Peerah",
+      "zone_id": 3,
+      "lat": 33.17752,
+      "lng": 75.30027,
+      "source": "Nominatim 'Peerah' -> OSM way 1445960461 (highway=trunk); 0.07 km from NH-44 line",
+      "km_from_jammu": 97.7
+    },
+    {
+      "id": "z3_seri",
+      "name": "Seri",
+      "zone_id": 3,
+      "lat": 33.24981,
+      "lng": 75.2104,
+      "source": "Nominatim 'Seri' -> OSM node 7913418554 (place=hamlet); 0.07 km from NH-44 line",
+      "km_from_jammu": 111.1
+    },
+    {
+      "id": "z4_ramban",
+      "name": "Ramban",
+      "zone_id": 4,
+      "lat": 33.2387,
+      "lng": 75.24044,
+      "source": "Nominatim 'Ramban' -> OSM node 434392578 (place=town); 0.11 km from NH-44 line",
+      "km_from_jammu": 107.9
+    },
+    {
+      "id": "z4_digdol",
+      "name": "Digdol",
+      "zone_id": 4,
+      "lat": 33.30284,
+      "lng": 75.17981,
+      "source": "Nominatim 'Digdaal' -> OSM node 7913418538 (place=hamlet); 0.21 km from NH-44 line",
+      "km_from_jammu": 122.3
+    },
+    {
+      "id": "z4_marog",
+      "name": "Marog",
+      "zone_id": 4,
+      "lat": 33.2648,
+      "lng": 75.18839,
+      "source": "Nominatim 'Marog' -> OSM node 7913418546 (place=hamlet); 0.18 km from NH-44 line",
+      "km_from_jammu": 115.0
+    },
+    {
+      "id": "z5_ramsoo",
+      "name": "Ramsoo",
+      "zone_id": 5,
+      "lat": 33.33652,
+      "lng": 75.1924,
+      "source": "Nominatim 'Ramsu' -> OSM node 7925415169 (place=hamlet); 0.05 km from NH-44 line",
+      "km_from_jammu": 127.8
+    },
+    {
+      "id": "z5_banihal",
+      "name": "Banihal",
+      "zone_id": 5,
+      "lat": 33.43789,
+      "lng": 75.19549,
+      "source": "Nominatim 'Banihal' -> OSM node 342119133 (place=town); 0.14 km from NH-44 line",
+      "km_from_jammu": 143.5
+    },
+    {
+      "id": "z5_navyug_south",
+      "name": "Navyug tunnel (Banihal side)",
+      "zone_id": 5,
+      "lat": 33.48916,
+      "lng": 75.17274,
+      "source": "Nominatim 'Banihal Qazigund Tunnel' -> southern end of OSM way 316685070 (highway=motorway); 0.00 km from NH-44 line",
+      "km_from_jammu": 150.3
+    },
+    {
+      "id": "z5_qazigund",
+      "name": "Qazigund",
+      "zone_id": 5,
+      "lat": 33.59347,
+      "lng": 75.16582,
+      "source": "Nominatim 'Qazigund' -> OSM node 342119126 (place=town); 0.06 km from NH-44 line",
+      "km_from_jammu": 162.9
+    },
+    {
+      "id": "z6_bijbehara",
+      "name": "Anantnag (Bijbehara)",
+      "zone_id": 6,
+      "lat": 33.79352,
+      "lng": 75.10616,
+      "source": "Nominatim 'Bijbehara' -> OSM node 342119164 (place=town); 1.71 km from NH-44 line",
+      "km_from_jammu": 186.8
+    },
+    {
+      "id": "z6_srinagar",
+      "name": "Srinagar",
+      "zone_id": 6,
+      "lat": 34.07474,
+      "lng": 74.82044,
+      "source": "Nominatim 'Srinagar' -> OSM node 273658993 (place=city); 0.03 km from NH-44 line",
+      "km_from_jammu": 232.6
+    }
+  ],
+  "not_placed": [
+    {
+      "id": "z2_dewal",
+      "name": "Dewal",
+      "zone_id": 2,
+      "why": "closest hit 12.7 km away (Dewal, Udhampur, Udhampur district, Jammu and Kashmir, India)"
+    },
+    {
+      "id": "z2_kheri",
+      "name": "Kheri",
+      "zone_id": 2,
+      "why": "no hits"
+    },
+    {
+      "id": "z2_samroli",
+      "name": "Samroli",
+      "zone_id": 2,
+      "why": "no hits"
+    },
+    {
+      "id": "z3_dalwas",
+      "name": "Dalwas",
+      "zone_id": 3,
+      "why": "no hits"
+    },
+    {
+      "id": "z3_mehar",
+      "name": "Mehar / Cafeteria Morh",
+      "zone_id": 3,
+      "why": "no hits"
+    },
+    {
+      "id": "z4_battery_chashma",
+      "name": "Battery Chashma",
+      "zone_id": 4,
+      "why": "no hits"
+    },
+    {
+      "id": "z4_khooni_nallah",
+      "name": "Khooni Nallah",
+      "zone_id": 4,
+      "why": "no hits"
+    }
+  ],
+  "warnings": [
+    "Ramban (zone 4, km 107.9) comes before Seri (zone 3, km 111.1) along the road",
+    "Marog (zone 4, km 115.0) comes before Digdol (zone 4, km 122.3) along the road",
+    "Udhampur (Jakhani): found under another name/spelling, please confirm (Nominatim 'Udhampur' -> OSM node 1977558902 (place=city); 0.49 km from)",
+    "Digdol: found under another name/spelling, please confirm (Nominatim 'Digdaal' -> OSM node 7913418538 (place=hamlet); 0.21 km fro)",
+    "Ramsoo: found under another name/spelling, please confirm (Nominatim 'Ramsu' -> OSM node 7925415169 (place=hamlet); 0.05 km from )",
+    "Navyug tunnel (Banihal side): found under another name/spelling, please confirm (Nominatim 'Banihal Qazigund Tunnel' -> southern end of OSM way 3166850)"
+  ]
+}
