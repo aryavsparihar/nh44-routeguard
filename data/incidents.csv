@@ -1,0 +1,7 @@
+date,zone_id,place,lat,lng,hazard_type,hours_closed,trucks_stranded,source_url
+2018-02-06,5,Ramsu,33.3412,75.1925,landslide,24,300,https://timesofindia.indiatimes.com/india/jk-highway-closed-after-landslide-in-ramban/articleshow/62802288.cms
+2019-05-09,4,Digdol,33.282971,75.178749,landslide,48,500,https://www.indiatoday.in/india/story/jammu-srinagar-national-highway-shut-after-landslide-hits-ramban-1520838-2019-05-09
+2020-03-04,3,Peera,33.1710957, 75.2989106,landslide,24,200,https://www.indiatvnews.com/news/india/jammu-and-kashmir-highway-shut-landslides-594862
+2021-01-24,5,Banihal,33.4333,75.2000,snow_ice,48,500,https://www.ndtv.com/india-news/amid-heavy-snow-2-found-dead-inside-stranded-vehicle-on-jammu-srinagar-highway-2357449
+2024-03-05,3,Dalwas,33.1944,75.2972,landslide,48,1500,https://timesofindia.indiatimes.com/india/after-2-day-closure-one-way-traffic-resumes-on-jammu-srinagar-national-highway/articleshow/108215100.cms
+2024-04-16,5,Kishtwari Pather,33.402846,75.196819,landslide,15,600,https://kashmirobserver.net/2024/04/16/kashmir-highway-partially-restored-stranded-traffic-being-cleared/
