@@ -5,3 +5,19 @@ date,zone_id,place,lat,lng,hazard_type,hours_closed,trucks_stranded,source_url
 2021-01-24,5,Banihal,33.4333,75.2000,snow_ice,48,500,https://www.ndtv.com/india-news/amid-heavy-snow-2-found-dead-inside-stranded-vehicle-on-jammu-srinagar-highway-2357449
 2024-03-02,3,Dalwas,33.1944,75.2972,landslide,48,1500,https://timesofindia.indiatimes.com/india/after-2-day-closure-one-way-traffic-resumes-on-jammu-srinagar-national-highway/articleshow/108215100.cms
 2024-04-16,5,Kishtwari Pather,33.402846,75.196819,landslide,15,600,https://kashmirobserver.net/2024/04/16/kashmir-highway-partially-restored-stranded-traffic-being-cleared/
+
+2024-02-21,4,Mehad-Cafeteria,33.2450,75.1410,landslide,24,500,https://www.timesnownews.com/india/video-landslide-shooting-stones-block-jammu-srinagar-nh-44-jammu-and-kashmir-article-107884249
+2024-02-21,4,Rampari,33.2870,75.1610,landslide,24,500,https://www.timesnownews.com/india/video-landslide-shooting-stones-block-jammu-srinagar-nh-44-jammu-and-kashmir-article-107884249
+2024-02-21,4,Gangroo,33.3420,75.1780,landslide,24,500,https://www.timesnownews.com/india/video-landslide-shooting-stones-block-jammu-srinagar-nh-44-jammu-and-kashmir-article-107884249
+2024-02-21,4,Chamalwas,33.4110,75.2010,landslide,24,500,https://www.timesnownews.com/india/video-landslide-shooting-stones-block-jammu-srinagar-nh-44-jammu-and-kashmir-article-107884249
+2022-09-27,5,Qazigund,33.5937,75.1587,landslide,504,8000,https://www.aljazeera.com/news/2022/9/27/gone-to-waste-kashmir-growers-watch-apples-rot-as-key-highway-is-blocked
+2024-04-29,4,Mehar,33.2450,75.1410,mudslide,48,600,https://www.hindustantimes.com/cities/chandigarh-news/inclement-weather-jammu-srinagar-nh-blocked-at-several-places-boy-swept-away-in-doda-rivulet-101714419726872.html
+2024-04-29,4,Gangroo,33.3420,75.1780,mudslide,48,600,https://www.hindustantimes.com/cities/chandigarh-news/inclement-weather-jammu-srinagar-nh-blocked-at-several-places-boy-swept-away-in-doda-rivulet-101714419726872.html
+2024-04-29,4,Mom Passi,33.3225,75.1865,landslide,48,600,https://www.hindustantimes.com/cities/chandigarh-news/inclement-weather-jammu-srinagar-nh-blocked-at-several-places-boy-swept-away-in-doda-rivulet-101714419726872.html
+2024-04-29,5,Kishtwari Pather,33.3950,75.1980,shooting_stones,48,600,https://www.hindustantimes.com/cities/chandigarh-news/inclement-weather-jammu-srinagar-nh-blocked-at-several-places-boy-swept-away-in-doda-rivulet-101714419726872.html
+2024-04-19,4,Mehad,33.2450,75.1410,mudslide,24,400,https://kashmirlife.net/jammu-srinagar-highway-closed-again-351128/
+2024-04-19,5,Kishtwari Pather,33.3950,75.1980,shooting_stones,24,400,https://kashmirlife.net/jammu-srinagar-highway-closed-again-351128/
+2024-04-19,4,Gangroo,33.3420,75.1780,landslide,24,400,https://kashmirlife.net/jammu-srinagar-highway-closed-again-351128/
+2025-08-18,4,Monkey Morh,33.2505,75.1440,landslide,36,500,https://truthprevail.com/jammu-srinagar-highway-closed-after-landslides-shooting-stones-in-ramban/
+2025-08-18,4,Maroog,33.2650,75.1480,shooting_stones,36,500,https://truthprevail.com/jammu-srinagar-highway-closed-after-landslides-shooting-stones-in-ramban/
+2025-08-18,3,Sharda Mata Udhampur,32.9265,75.1380,landslide,36,500,https://truthprevail.com/jammu-srinagar-highway-closed-after-landslides-shooting-stones-in-ramban/
