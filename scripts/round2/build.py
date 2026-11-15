@@ -103,7 +103,10 @@ def build_plugin(tokens: dict, replay: dict) -> None:
     pat = re.compile(r"(/\* BUILD:data \*/\n)(.*?)(\n/\* /BUILD:data \*/)", re.S)
     if not pat.search(src):
         raise SystemExit("marker BUILD:data not found in figma-plugin/code.js")
-    code.write_text(pat.sub(lambda m: m.group(1) + block + m.group(3), src))
+    out = pat.sub(lambda m: m.group(1) + block + m.group(3), src)
+    # Figma's plugin loader is happiest with plain ASCII: write any other character as \\uXXXX
+    out = "".join(c if ord(c) < 128 else f"\\u{ord(c):04x}" for c in out)
+    code.write_text(out, encoding="ascii")
 
 
 RENDER_JS = r"""

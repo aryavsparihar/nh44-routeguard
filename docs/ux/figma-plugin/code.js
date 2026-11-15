@@ -721,7 +721,7 @@ async function buildStyleGuide(page) {
     const meta = frame({ name: 'meta', dir: 'V', gap: 2, pad: 8, w: 200 });
     add(card, meta);
     add(meta, await text(name, 'body', 'text.primary', { weight: 600 }));
-    add(meta, await text(T[name] + ' · ' + (onW >= onD ? 'white' : 'ink') + ' ' + best.toFixed(2) + ':1 ' + tag, 'body', 'text.secondary'));
+    add(meta, await text(T[name] + ' \u00b7 ' + (onW >= onD ? 'white' : 'ink') + ' ' + best.toFixed(2) + ':1 ' + tag, 'body', 'text.secondary'));
   }
 
   add(root, await text('Pairs we use', 'h1'));
@@ -741,10 +741,10 @@ async function buildStyleGuide(page) {
     const t = DATA.tokens.type[name];
     const row = frame({ name: 'type/' + name, dir: 'H', gap: 24, w: 1344, align: 'CENTER' });
     add(root, row);
-    const lab = await text(name + ' · ' + t.family + ' ' + t.size + '/' + t.line, 'body', 'text.secondary');
+    const lab = await text(name + ' \u00b7 ' + t.family + ' ' + t.size + '/' + t.line, 'body', 'text.secondary');
     lab.resize(260, lab.height); lab.textAutoResize = 'HEIGHT';
     add(row, lab);
-    add(row, await text(name === 'data' ? '0.70 · range 0.45 to 0.95 · +24 h' : 'Send the lot before Ramban closes', name));
+    add(row, await text(name === 'data' ? '0.70 \u00b7 range 0.45 to 0.95 \u00b7 +24 h' : 'Send the lot before Ramban closes', name));
   }
 
   add(root, await text('Spacing (8 pt grid) and touch', 'h1'));
@@ -772,16 +772,16 @@ async function buildStyleGuide(page) {
 const ADVICE = {
   SEND: { tok: 'send', icon: 'decision-send', why: 'All 6 zones stay low for 24 h. Leave in the next 12 h.' },
   HOLD: { tok: 'hold', icon: 'decision-hold', why: 'Zone 3 is medium at +12 h. Wait 6 h and check again.' },
-  RAIL: { tok: 'rail', icon: 'decision-rail', why: 'Zones 3 to 5 stay high at +24 h and +48 h. Book a Budgam–Delhi parcel slot.' },
+  RAIL: { tok: 'rail', icon: 'decision-rail', why: 'Zones 3 to 5 stay high at +24 h and +48 h. Book a Budgam\u2013Delhi parcel slot.' },
   DIVERT: { tok: 'divert', icon: 'decision-divert', why: 'Light truck: take Mughal Road instead of NH-44.' },
 };
 const LEVEL = { Low: { bg: 'send.bg', text: 'send.text', map: 'risk.low.map', score: '0.15' }, Medium: { bg: 'hold.bg', text: 'hold.text', map: 'risk.medium.map', score: '0.42' }, High: { bg: 'high.bg', text: 'high.text', map: 'risk.high.map', score: '0.71' } };
 const CONF = { Low: { bg: 'bg.surface', text: 'text.secondary' }, Medium: { bg: 'bg.surface', text: 'text.primary' }, High: { bg: 'rail.bg', text: 'rail.text' } };
 const SYNC = {
-  'Online Live': { bg: 'send.bg', text: 'send.text', icon: 'nav-map', label: 'Live · scores from the 18:34 UTC run' },
-  'Offline Cached <5KB': { bg: 'text.primary', text: 'text.inverse', icon: 'status-offline-queue', label: 'Offline · cached scores, 1.9 KB' },
-  'Stale Score >2h': { bg: 'hold.bg', text: 'hold.text', icon: 'decision-hold', label: 'Scores are 3 h old · the hourly job missed a run' },
-  'Syncing Queued Report (2)': { bg: 'rail.bg', text: 'rail.text', icon: 'status-offline-queue', label: 'Sending 2 queued reports…' },
+  'Online Live': { bg: 'send.bg', text: 'send.text', icon: 'nav-map', label: 'Live \u00b7 scores from the 18:34 UTC run' },
+  'Offline Cached <5KB': { bg: 'text.primary', text: 'text.inverse', icon: 'status-offline-queue', label: 'Offline \u00b7 cached scores, 1.9 KB' },
+  'Stale Score >2h': { bg: 'hold.bg', text: 'hold.text', icon: 'decision-hold', label: 'Scores are 3 h old \u00b7 the hourly job missed a run' },
+  'Syncing Queued Report (2)': { bg: 'rail.bg', text: 'rail.text', icon: 'status-offline-queue', label: 'Sending 2 queued reports\u2026' },
 };
 const SOURCE = {
   'Police Official': { bg: 'rail.bg', text: 'rail.text', stroke: 'rail.fill', icon: 'decision-hold' },
@@ -836,10 +836,10 @@ async function buildComponents(page) {
     add(c, stripe); stripe.layoutSizingVertical = 'FILL';
     const body = frame({ name: 'body', dir: 'V', gap: 8, pad: [12, 16, 12, 16] });
     add(c, body, true);
-    add(body, await text('Zone 4 · Ramban → Ramsoo', 'body', 'text.primary', { weight: 600, name: 'zone' }));
+    add(body, await text('Zone 4 \u00b7 Ramban \u2192 Ramsoo', 'body', 'text.primary', { weight: 600, name: 'zone' }));
     const row = frame({ name: 'badges', dir: 'H', gap: 8 });
     add(body, row);
-    add(row, await badge((lv === 'High' ? '▲▲ ' : lv === 'Medium' ? '▲ ' : '') + lv + ' risk', L.bg, L.text));
+    add(row, await badge((lv === 'High' ? '\u25b2\u25b2 ' : lv === 'Medium' ? '\u25b2 ' : '') + lv + ' risk', L.bg, L.text));
     add(row, await badge(cf + ' confidence', K.bg, K.text));
     const sc = frame({ name: 'score', dir: 'H', gap: 12, align: 'CENTER' });
     add(body, sc);
@@ -921,18 +921,18 @@ async function buildComponents(page) {
 
 // ------------------------------------------------------------------ 3 wireframes
 const WF = [
-  ['1 Risk map (home)', [['title · role', 36], ['sync banner', 28, 1], ['horizon chips', 32], ['map · hex cells', 300], ['legend', 12], ['zone chips', 100], ['road report pills', 40]]],
-  ['2 Zone sheet (overlay)', [['title · role', 36], ['sync banner', 28, 1], ['map, dimmed', 200], ['bottom sheet: badges, score, reason, hazard bars, outlook, past closures', 420, 2]]],
-  ['3 48-hour strip', [['title · role', 36], ['sync banner', 28, 1], ['worst on route', 44], ['6 zones x 4 times grid', 380], ['pattern note', 24]]],
-  ['4 Dispatch advisor (form)', [['title · role', 36], ['sync banner', 28, 1], ['variety', 48], ['days · tonnes', 48], ['destination (3 radio cards)', 170], ['truck (2 radio cards)', 116], ['truck number', 48], ['get advice', 48, 1]]],
-  ['5 Advice card', [['title · role', 36], ['sync banner', 28, 1], ['decision banner', 120, 1], ['worst zone card', 140], ['delay · priority', 80], ['commit to board', 48, 1], ['change lot', 48, 2]]],
-  ['6 Shipment board', [['title · role', 36], ['sync banner', 28, 1], ['filter: all / moving / held', 56], ['truck card #1', 110], ['truck card #2', 110], ['truck card #3', 110], ['truck card #4', 110]]],
-  ['7 Report: what did you see', [['title · role', 36], ['sync banner', 28, 1], ['step 1 of 3', 8, 1], ['4 hazard buttons, 112 px tall', 240], ['offline note', 50, 2]]],
-  ['8 Report: where + send', [['title · role', 36], ['sync banner', 28, 1], ['step 2 of 3', 8, 1], ['photo (optional)', 140], ['GPS coords + zone', 80], ['this is the place', 48, 1], ['send report', 48, 1]]],
-  ['9 TCU console (police)', [['title · role', 36], ['sync banner', 28, 1], ['zone', 48], ['status: closed / one-way / open', 180], ['cause', 48], ['publish advisory', 48, 1], ['driver reports waiting', 120]]],
-  ['10 Offline drawer', [['title · role', 36], ['sync banner', 28, 1], ['screen behind', 160], ['drawer: cache size, queued reports, send now, works offline', 420, 2]]],
-  ['11 Loading state', [['title · role', 36], ['sync banner', 28, 1], ['skeleton chips', 48], ['skeleton map', 300], ['skeleton rows', 120]]],
-  ['12 Empty and error states', [['title · role', 36], ['sync banner', 28, 1], ['icon', 60], ['what happened, in plain words', 50], ['one action: retry / plan a lot', 48, 1]]],
+  ['1 Risk map (home)', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['horizon chips', 32], ['map \u00b7 hex cells', 300], ['legend', 12], ['zone chips', 100], ['road report pills', 40]]],
+  ['2 Zone sheet (overlay)', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['map, dimmed', 200], ['bottom sheet: badges, score, reason, hazard bars, outlook, past closures', 420, 2]]],
+  ['3 48-hour strip', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['worst on route', 44], ['6 zones x 4 times grid', 380], ['pattern note', 24]]],
+  ['4 Dispatch advisor (form)', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['variety', 48], ['days \u00b7 tonnes', 48], ['destination (3 radio cards)', 170], ['truck (2 radio cards)', 116], ['truck number', 48], ['get advice', 48, 1]]],
+  ['5 Advice card', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['decision banner', 120, 1], ['worst zone card', 140], ['delay \u00b7 priority', 80], ['commit to board', 48, 1], ['change lot', 48, 2]]],
+  ['6 Shipment board', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['filter: all / moving / held', 56], ['truck card #1', 110], ['truck card #2', 110], ['truck card #3', 110], ['truck card #4', 110]]],
+  ['7 Report: what did you see', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['step 1 of 3', 8, 1], ['4 hazard buttons, 112 px tall', 240], ['offline note', 50, 2]]],
+  ['8 Report: where + send', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['step 2 of 3', 8, 1], ['photo (optional)', 140], ['GPS coords + zone', 80], ['this is the place', 48, 1], ['send report', 48, 1]]],
+  ['9 TCU console (police)', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['zone', 48], ['status: closed / one-way / open', 180], ['cause', 48], ['publish advisory', 48, 1], ['driver reports waiting', 120]]],
+  ['10 Offline drawer', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['screen behind', 160], ['drawer: cache size, queued reports, send now, works offline', 420, 2]]],
+  ['11 Loading state', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['skeleton chips', 48], ['skeleton map', 300], ['skeleton rows', 120]]],
+  ['12 Empty and error states', [['title \u00b7 role', 36], ['sync banner', 28, 1], ['icon', 60], ['what happened, in plain words', 50], ['one action: retry / plan a lot', 48, 1]]],
 ];
 async function buildWireframes(page) {
   const frames = [];
@@ -949,7 +949,7 @@ async function buildWireframes(page) {
     add(f, sp, true); sp.layoutGrow = 1;
     const nav = frame({ name: 'bottom nav', dir: 'V', pad: 6, h: 64, fill: 'border.strong' });
     add(f, nav, true);
-    add(nav, await text('bottom nav · 5 tabs', 'label', 'text.inverse'));
+    add(nav, await text('bottom nav \u00b7 5 tabs', 'label', 'text.inverse'));
     const cap = await text(name, 'h2');
     place(page, cap, f.x, f.y - 36);
     frames.push(f);
@@ -1022,7 +1022,7 @@ async function buildPrototype(page, sets) {
     add(S.sheet, rect(40, 4, 'border.strong', 2)); S.sheet.counterAxisAlignItems = 'MIN';
     const head = frame({ name: 'head', dir: 'H', justify: 'SPACE_BETWEEN', align: 'CENTER' });
     add(S.sheet, head, true);
-    add(head, await text('Zone 4 · +24 h', 'h2'));
+    add(head, await text('Zone 4 \u00b7 +24 h', 'h2'));
     S.sheetClose = await button('Close', 'bg.elevated', 'text.primary', 'border.strong');
     add(head, S.sheetClose);
     const r = replayRow(4, 24);
@@ -1056,7 +1056,7 @@ async function buildPrototype(page, sets) {
   S.form = await screen(page, 'M3 Advisor form', X(2), 60, 'Dispatch advisor', 'Grower / Trader', 'Advisor', sets);
   {
     const b = S.form.body;
-    for (const [lab, val] of [['Variety', 'Delicious'], ['Days since picking', '12'], ['Tonnes', '10'], ['Destination', '◉ Azadpur (Delhi)   ○ Narwal   ○ Parimpora'], ['Truck', '◉ Multi-axle   ○ Light 6-wheeler'], ['Truck number', 'JK05 G 7712']]) {
+    for (const [lab, val] of [['Variety', 'Delicious'], ['Days since picking', '12'], ['Tonnes', '10'], ['Destination', '\u25c9 Azadpur (Delhi)   \u25cb Narwal   \u25cb Parimpora'], ['Truck', '\u25c9 Multi-axle   \u25cb Light 6-wheeler'], ['Truck number', 'JK05 G 7712']]) {
       add(b, await text(lab, 'label', 'text.secondary'));
       const f = frame({ name: 'field/' + lab, dir: 'H', h: 48, pad: [0, 12, 0, 12], fill: 'bg.elevated', stroke: 'border.strong', radius: 8, align: 'CENTER' });
       add(b, f, true);
@@ -1081,8 +1081,8 @@ async function buildPrototype(page, sets) {
   S.board = await screen(page, 'M5 Shipment board', X(4), 60, 'Shipment board', 'Transport Agent', 'Board', sets);
   {
     const b = S.board.body;
-    add(b, wrapText(await text('Ranked by priority = spoilage × load value. Sample trucks.', 'body', 'text.secondary')), true);
-    for (const [i, truck, lot, adv] of [[1, 'JK13 D 0921', '9 t Ambri to Parimpora', 'SEND'], [2, 'JK22 C 8810', '8 t Kullu Delicious to Azadpur', 'RAIL'], [3, 'JK05 G 7712', '10 t Delicious to Azadpur · just committed', 'RAIL'], [4, 'JK03 F 2214', '10 t Delicious to Azadpur', 'RAIL']]) {
+    add(b, wrapText(await text('Ranked by priority = spoilage \u00d7 load value. Sample trucks.', 'body', 'text.secondary')), true);
+    for (const [i, truck, lot, adv] of [[1, 'JK13 D 0921', '9 t Ambri to Parimpora', 'SEND'], [2, 'JK22 C 8810', '8 t Kullu Delicious to Azadpur', 'RAIL'], [3, 'JK05 G 7712', '10 t Delicious to Azadpur \u00b7 just committed', 'RAIL'], [4, 'JK03 F 2214', '10 t Delicious to Azadpur', 'RAIL']]) {
       const card = frame({ name: 'truck ' + truck, dir: 'V', gap: 6, pad: 12, fill: 'bg.elevated', stroke: i === 3 ? 'brand.teal' : 'border.default', strokeWeight: i === 3 ? 2 : 1, radius: 8 });
       add(b, card, true);
       const top = frame({ name: 'top', dir: 'H', gap: 8, align: 'CENTER' });
@@ -1094,7 +1094,7 @@ async function buildPrototype(page, sets) {
     }
   }
   // Report 1-3
-  S.rep1 = await screen(page, 'M6 Report 1 · what', X(5), 60, 'Report a hazard', 'Truck Driver', 'Report', sets, 'Offline Cached <5KB');
+  S.rep1 = await screen(page, 'M6 Report 1 \u00b7 what', X(5), 60, 'Report a hazard', 'Truck Driver', 'Report', sets, 'Offline Cached <5KB');
   {
     const b = S.rep1.body;
     add(b, await text('What did you see?', 'h2'));
@@ -1111,16 +1111,16 @@ async function buildPrototype(page, sets) {
     }
     add(b, wrapText(await text('No signal right now. Your report will wait on this phone and send by itself.', 'body')), true);
   }
-  S.rep2 = await screen(page, 'M7 Report 2 · where', X(6), 60, 'Report a hazard', 'Truck Driver', 'Report', sets, 'Offline Cached <5KB');
+  S.rep2 = await screen(page, 'M7 Report 2 \u00b7 where', X(6), 60, 'Report a hazard', 'Truck Driver', 'Report', sets, 'Offline Cached <5KB');
   {
     const b = S.rep2.body;
     add(b, await text('Rockfall: where?', 'h2'));
     add(b, frame({ name: 'photo (optional)', h: 140, fill: 'border.default', radius: 8 }), true);
-    add(b, await text('33.30284, 75.17981 · near Digdol, zone 4', 'data'));
+    add(b, await text('33.30284, 75.17981 \u00b7 near Digdol, zone 4', 'data'));
     S.rep2Go = await button('This is the place', 'brand.terracotta.ink', 'text.inverse');
     add(b, S.rep2Go, true);
   }
-  S.rep3 = await screen(page, 'M8 Report 3 · send', X(7), 60, 'Report a hazard', 'Truck Driver', 'Report', sets, 'Offline Cached <5KB');
+  S.rep3 = await screen(page, 'M8 Report 3 \u00b7 send', X(7), 60, 'Report a hazard', 'Truck Driver', 'Report', sets, 'Offline Cached <5KB');
   {
     const b = S.rep3.body;
     add(b, await text('Send this report?', 'h2'));
@@ -1135,7 +1135,7 @@ async function buildPrototype(page, sets) {
   S.tcu = await screen(page, 'M10 TCU console', X(9), 60, 'TCU console', 'Traffic Police (TCU)', 'Report', sets);
   {
     const b = S.tcu.body;
-    for (const [lab, val] of [['Zone', 'Zone 4 · Ramban → Ramsoo'], ['Road status', '◉ Closed both ways'], ['Cause', 'Landslide']]) {
+    for (const [lab, val] of [['Zone', 'Zone 4 \u00b7 Ramban \u2192 Ramsoo'], ['Road status', '\u25c9 Closed both ways'], ['Cause', 'Landslide']]) {
       add(b, await text(lab, 'label', 'text.secondary'));
       const f = frame({ name: 'field/' + lab, dir: 'H', h: 48, pad: [0, 12, 0, 12], fill: 'bg.elevated', stroke: 'border.strong', radius: 8, align: 'CENTER' });
       add(b, f, true);
@@ -1156,7 +1156,7 @@ async function buildPrototype(page, sets) {
     add(head, await text('Offline and sync', 'h2'));
     S.drawerClose = await button('Close', 'bg.elevated', 'text.primary', 'border.strong');
     add(head, S.drawerClose);
-    add(S.drawer, wrapText(await text('24 zone scores cached on this phone · under 5 KB, so it loads on 2G', 'body')), true);
+    add(S.drawer, wrapText(await text('24 zone scores cached on this phone \u00b7 under 5 KB, so it loads on 2G', 'body')), true);
     add(S.drawer, variant(sets.pill, { Source: 'Unconfirmed Driver' }));
     add(S.drawer, await button('Send now', 'brand.teal', 'text.inverse'), true);
   }
