@@ -15,15 +15,8 @@ The deliverables for the judges are in **`ui ux round/`** at the repo root. Each
 | `09_Clickable_Prototype.html` | The clickable prototype. The only HTML file. Works offline |
 | `icons/` | 14 SVG icons, 24 px grid, 2 px stroke |
 
-The Figma file is separate: build it by hand with **`FIGMA-GUIDE.md`**.
-
-## Guides for the team (not for the judges)
-
-| File | What it is |
+| Other files | What it is |
 |---|---|
-| `DRAWIO-GUIDE.md` | Redraw the DFDs yourselves in draw.io, and how to show a judge |
-| `FIGMA-GUIDE.md` | Build the Figma file by hand: variables, styles, components, screens, links |
-| `judge-defense-bible.md` | Likely judge questions and answers |
 | `figma-plugin/` | Optional: a plugin that builds the Figma file automatically |
 
 ## Sources
