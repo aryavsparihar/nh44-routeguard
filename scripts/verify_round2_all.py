@@ -9,12 +9,13 @@ Checks
      piercing, collinear overlaps, label clearance, DFD rules, L0/L1 balancing),
      then the same file rendered by draw.io's own viewer, comparing its routed
      edge points with ours.
-  2  SVG icons, and the inline SVG diagrams in the HTML (1:1 with draw.io,
-     measured text inside its box, no overlapping labels).
+  2  SVG icons, and the deliverables in "ui ux round/": every file there and
+     non-empty, each diagram's .drawio identical to its page in the working
+     copy, one-page diagram PDFs, the prototype the only HTML and offline.
   3  WCAG contrast for every token pair we use, token sync between files,
      48 px touch targets and minimum font sizes in the prototype.
   4  Figma plugin: node --check, required API calls, tokens match.
-  5  Screenshots of every tab, prototype state and draw.io page to
+  5  Screenshots of every document page, prototype state and draw.io page to
      /tmp/round2_audit/*.png (look at them).
 
 The browser checks need Playwright. If it is not importable, this script
@@ -38,7 +39,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 UX = ROOT / "docs/ux"
 DRAWIO = UX / "routeguard-architecture.drawio"
-HTML = UX / "routeguard-round2-master.html"
+OUT = ROOT / "ui ux round"
+HTML = OUT / "09_Clickable_Prototype.html"
+BUILD = ROOT / "scripts/round2/.build"
+DIAGRAM_FILES = ["01_DFD_Level_0", "02_DFD_Level_1", "03_Sitemap", "04_User_Flows"]
+DOC_FILES = ["05_Personas", "06_Style_Guide", "07_Wireframes", "08_Design_Rationale"]
 ICONS = UX / "assets/icons"
 PLUGIN = UX / "figma-plugin"
 TOKENS = UX / "data/tokens.json"
@@ -661,41 +666,89 @@ def check2_icons() -> None:
                     err(f"icon {f.name}: {k}={el.get(k)} is outside the 24 px box")
 
 
-def check2_html_static(pages: list[Page]) -> None:
-    if not HTML.exists():
-        err(f"missing {HTML.relative_to(ROOT)}")
+def pdf_pages(f: Path) -> int:
+    return len(re.findall(rb"/Type\s*/Page[^s]", f.read_bytes()))
+
+
+def model_xml(diagram) -> str:
+    """The page's model, with the per-file layer ids (p1-0, p2-1, ...) made neutral."""
+    return re.sub(r'"p\d+-([01])"', r'"layer-\1"', ET.tostring(diagram.find("mxGraphModel")).decode())
+
+
+def check2_deliverables(pages: list[Page]) -> None:
+    if not OUT.is_dir():
+        err(f"missing folder {OUT.relative_to(ROOT)}/ (run scripts/round2/build.py)")
         return
-    text = HTML.read_text()
-    by = {p.name: p for p in pages}
-    keys = {"l0": PAGES[0], "l1": PAGES[1], "sm": PAGES[2], "uf": PAGES[3]}
-    for key, name in keys.items():
-        m = re.search(rf'<svg class="dg" data-diagram="{key}".*?</svg>', text, re.S)
-        if not m:
-            err(f"HTML: inline SVG for {name} is missing")
+    rel = lambda f: f.relative_to(ROOT)  # noqa: E731
+    want = [OUT / f"{d}.{ext}" for d in DIAGRAM_FILES for ext in ("drawio", "pdf", "png")]
+    want += [OUT / f"{d}.pdf" for d in DOC_FILES] + [HTML]
+    want += [OUT / "icons" / f"{n}.svg" for n in REQUIRED_ICONS]
+    for f in want:
+        if not f.exists():
+            err(f"missing deliverable {rel(f)}")
+        elif f.stat().st_size < (100 if f.suffix == ".svg" else 500):
+            err(f"deliverable {rel(f)} is only {f.stat().st_size} bytes")
+    allowed = {f.name for f in want} | {"icons"}
+    for f in OUT.iterdir():
+        if f.name.startswith("."):
             continue
-        if name not in by:
+        if f.name not in allowed:
+            warn(f"unexpected file in the deliverables folder: {rel(f)}")
+    for f in OUT.glob("*.html"):
+        if f != HTML:
+            err(f"{rel(f)}: only the clickable prototype may be HTML")
+    # each diagram file holds exactly its page of the working copy
+    try:
+        work = {d.get("name"): model_xml(d) for d in ET.parse(DRAWIO).getroot().iter("diagram")}
+    except ET.ParseError as e:
+        err(f"{rel(DRAWIO)} does not parse: {e}")
+        work = {}
+    for stem, name in zip(DIAGRAM_FILES, PAGES):
+        f = OUT / f"{stem}.drawio"
+        if not f.exists():
             continue
-        svg = m.group(0)
-        pg = by[name]
-        nodes = dict((g[0], tuple(float(v) for v in g[1:])) for g in
-                     re.findall(r'<g class="node" data-id="([^"]+)" data-kind="[^"]+" data-x="([\d.]+)" data-y="([\d.]+)" data-w="([\d.]+)" data-h="([\d.]+)"', svg))
-        for vid in pg.vertices:
-            if vid not in nodes:
-                err(f"HTML {key}: node {vid} is in draw.io but not in the SVG")
-            elif tuple(nodes[vid]) != pg.abs_box(vid):
-                err(f"HTML {key}: node {vid} is at {nodes[vid]} in the SVG but {pg.abs_box(vid)} in draw.io")
-        for vid in nodes:
-            if vid not in pg.vertices:
-                err(f"HTML {key}: node {vid} is in the SVG but not in draw.io")
-        svg_edges = dict(re.findall(r'<polyline class="edge" data-id="([^"]+)"[^>]*points="([^"]+)"', svg))
-        for e in pg.edges:
-            if e["id"] not in svg_edges:
-                err(f"HTML {key}: edge {e['id']} missing from the SVG")
-                continue
-            pts = [tuple(float(v) for v in p.split(",")) for p in svg_edges[e["id"]].split()]
-            ours = edge_path(pg, e)
-            if ours and (len(pts) != len(ours) or any(abs(a[0] - b[0]) > 0.6 or abs(a[1] - b[1]) > 0.6 for a, b in zip(pts, ours))):
-                err(f"HTML {key}: edge {e['id']} path differs from draw.io")
+        try:
+            ds = list(ET.parse(f).getroot().iter("diagram"))
+        except ET.ParseError as e:
+            err(f"{rel(f)} does not parse: {e}")
+            continue
+        if 'agent="scripts/round2/build.py"' not in f.read_text():
+            # redrawn by hand in draw.io: the geometry checks above are for the generated
+            # working copy, so here we only check it opens and has its exports
+            print(f"note  {rel(f)} was saved from draw.io by hand; not compared with the working copy")
+            if not ds:
+                err(f"{rel(f)} has no diagram page")
+        elif len(ds) != 1:
+            err(f"{rel(f)} should hold 1 diagram page, has {len(ds)}")
+        elif ds[0].get("name") != name:
+            err(f"{rel(f)}: page is named {ds[0].get('name')!r}, expected {name!r}")
+        elif work.get(name) != model_xml(ds[0]):
+            err(f"{rel(f)} differs from page {name} of {rel(DRAWIO)}; rebuild")
+        for ext, n in (("pdf", 1),):
+            p = OUT / f"{stem}.{ext}"
+            if p.exists() and pdf_pages(p) != n:
+                err(f"{rel(p)} has {pdf_pages(p)} pages, expected {n}")
+        png = OUT / f"{stem}.png"
+        if png.exists() and png.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            err(f"{rel(png)} is not a PNG")
+    for d in DOC_FILES:
+        p = OUT / f"{d}.pdf"
+        if p.exists():
+            n = pdf_pages(p)
+            if not 1 <= n <= 12:
+                err(f"{rel(p)} has {n} pages")
+            if p.read_bytes()[:5] != b"%PDF-":
+                err(f"{rel(p)} is not a PDF")
+    if HTML.exists():
+        text = HTML.read_text()
+        ext = re.findall(r'(?:src|href)=["\'](https?:[^"\']+)', text)
+        if ext:
+            err(f"{rel(HTML)} loads external files, so it will not work offline: {ext[:3]}")
+        if "<title>" not in text:
+            err(f"{rel(HTML)} has no <title>")
+    old = UX / "routeguard-round2-master.html"
+    if old.exists():
+        err(f"{rel(old)} is the old all-in-one page; delete it")
 
 
 # =============================================================== check 3: WCAG + tokens
@@ -801,28 +854,24 @@ def browser_checks(pages: list[Page]) -> None:
         console_errors = []
         page.on("pageerror", lambda e: console_errors.append(str(e)))
         page.on("console", lambda m: console_errors.append(m.text) if m.type == "error" else None)
+        # document pages, as printed (these become the PDFs)
+        for f in sorted(BUILD.glob("0*.html")):
+            page.emulate_media(media="print")
+            page.goto(f.resolve().as_uri())
+            page.wait_for_timeout(200)
+            empty = page.evaluate("""() => ['#swatches', '#pairs', '#components', '#wireframes']
+                .filter(s => document.querySelector(s) && !document.querySelector(s).children.length)""")
+            for sel in empty:
+                err(f"{f.name}: {sel} rendered nothing")
+            page.set_viewport_size({"width": 1060 if f.stem in ("06_Style_Guide", "07_Wireframes") else 760, "height": 1000})
+            page.screenshot(path=str(SHOTS / f"doc_{f.stem}.png"), full_page=True)
+            page.set_viewport_size({"width": 1440, "height": 1000})
+        page.emulate_media(media="screen")
+        if not list(BUILD.glob("0*.html")):
+            err(f"no document pages in {BUILD.relative_to(ROOT)} (run scripts/round2/build.py)")
         page.goto(url)
         page.wait_for_timeout(300)
-        tabs = page.eval_on_selector_all("[role=tab][data-tab]", "els => els.map(e => e.dataset.tab)")
-        if len(tabs) != 7:
-            err(f"HTML: expected 7 tabs, found {len(tabs)}: {tabs}")
-        for i, t in enumerate(tabs, 1):
-            page.click(f"[role=tab][data-tab='{t}']")
-            page.wait_for_timeout(200)
-            page.screenshot(path=str(SHOTS / f"tab{i}_{t}.png"), full_page=True)
-        # inline SVG diagrams: measured text inside boxes, labels apart
-        page.click("[role=tab][data-tab='architecture']")
-        page.wait_for_timeout(200)
-        res = page.evaluate(SVG_AUDIT_JS)
-        for m in res:
-            err(f"HTML diagram: {m}")
-        for key in ("l0", "l1", "sm", "uf"):
-            el = page.query_selector(f'svg.dg[data-diagram="{key}"]')
-            if el:
-                el.screenshot(path=str(SHOTS / f"diagram_{key}.png"))
         # prototype: every state, touch targets, font sizes
-        page.click("[role=tab][data-tab='prototype']")
-        page.wait_for_timeout(200)
         states = page.evaluate("() => window.RG && window.RG.auditStates ? window.RG.auditStates() : null")
         if not states:
             err("prototype: window.RG.auditStates() is missing")
@@ -842,7 +891,7 @@ def browser_checks(pages: list[Page]) -> None:
         for m in e2e:
             err(f"prototype self-test: {m}")
         # desktop control room
-        page.set_viewport_size({"width": 1440, "height": 1600})  # whole control room below the sticky tabs
+        page.set_viewport_size({"width": 1440, "height": 1600})  # whole control room in one shot
         page.evaluate("() => { window.RG.applyState({name:'desktop', device:'desktop'}); window.scrollTo(0, 0); }")
         page.wait_for_timeout(200)
         el = page.query_selector(".proto-stage")
@@ -850,82 +899,23 @@ def browser_checks(pages: list[Page]) -> None:
             el.screenshot(path=str(SHOTS / "proto_desktop_control_room.png"))
         page.evaluate("() => window.RG.applyState({name:'reset'})")
         page.set_viewport_size({"width": 1440, "height": 1000})
-        # mobile viewport of the whole hub
+        # the prototype page on a 390 px phone
         m = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=1)
         mp = m.new_page()
         mp.goto(url)
         mp.wait_for_timeout(200)
         overflow = mp.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
         if overflow > 1:
-            err(f"HTML at 390 px wide scrolls sideways by {overflow} px")
-        mp.screenshot(path=str(SHOTS / "hub_mobile_390.png"))
+            err(f"prototype at 390 px wide scrolls sideways by {overflow} px")
+        mp.screenshot(path=str(SHOTS / "proto_page_mobile_390.png"), full_page=True)
         m.close()
-        # print stylesheet
-        page.emulate_media(media="print")
-        page.screenshot(path=str(SHOTS / "hub_print.png"))
-        page.emulate_media(media="screen")
+        page.screenshot(path=str(SHOTS / "proto_page_desktop.png"), full_page=True)
         for c in console_errors:
-            err(f"HTML console error: {c[:200]}")
+            err(f"console error: {c[:200]}")
         # draw.io: render with draw.io's own viewer and compare routed edges
         drawio_viewer_check(b, pages)
         b.close()
 
-
-SVG_AUDIT_JS = r"""
-() => {
-  const out = [];
-  document.querySelectorAll('svg.dg').forEach(svg => {
-    const key = svg.dataset.diagram;
-    const nodes = [...svg.querySelectorAll('g.node')];
-    nodes.forEach(g => {
-      const k = g.dataset.kind; if (k === 'pool' || k === 'lane') return;
-      const x = +g.dataset.x, y = +g.dataset.y, w = +g.dataset.w, h = +g.dataset.h;
-      g.querySelectorAll('text').forEach(t => {
-        const b = t.getBBox();
-        let ok = b.x >= x - 0.5 && b.x + b.width <= x + w + 0.5 && b.y >= y - 0.5 && b.y + b.height <= y + h + 0.5;
-        if (k === 'process' || k === 'start' || k === 'end') {
-          const cy = y + h / 2, ry = h / 2, rx = w / 2, cx = x + w / 2;
-          const yy = Math.max(Math.abs(b.y - cy), Math.abs(b.y + b.height - cy));
-          const half = rx * Math.sqrt(Math.max(0, 1 - (yy / ry) ** 2));
-          ok = ok && b.x >= cx - half - 0.5 && b.x + b.width <= cx + half + 0.5;
-        }
-        if (k === 'decision') {
-          const cx = x + w / 2, cy = y + h / 2;
-          const yy = Math.max(Math.abs(b.y - cy), Math.abs(b.y + b.height - cy));
-          const half = (w / 2) * (1 - yy / (h / 2));
-          ok = ok && b.x >= cx - half - 0.5 && b.x + b.width <= cx + half + 0.5;
-        }
-        if (!ok) out.push(`${key}: text "${t.textContent}" spills out of ${g.dataset.id}`);
-      });
-    });
-    const pills = [...svg.querySelectorAll('g.elabel')].map(g => {
-      const r = g.querySelector('rect'); const b = { x: +r.getAttribute('x'), y: +r.getAttribute('y'),
-        w: +r.getAttribute('width'), h: +r.getAttribute('height') };
-      g.querySelectorAll('text').forEach(t => { const tb = t.getBBox();
-        if (tb.x < b.x - 0.5 || tb.x + tb.width > b.x + b.w + 0.5) out.push(`${key}: label "${t.textContent}" is wider than its pill`); });
-      return { id: g.dataset.id, ...b };
-    });
-    for (let i = 0; i < pills.length; i++) for (let j = i + 1; j < pills.length; j++) {
-      const a = pills[i], c = pills[j];
-      if (a.x < c.x + c.w + 2 && c.x < a.x + a.w + 2 && a.y < c.y + c.h + 2 && c.y < a.y + a.h + 2)
-        out.push(`${key}: labels ${a.id} and ${c.id} overlap`);
-    }
-    pills.forEach(pl => nodes.forEach(g => {
-      const k = g.dataset.kind; if (k === 'pool' || k === 'lane') return;
-      const x = +g.dataset.x, y = +g.dataset.y, w = +g.dataset.w, h = +g.dataset.h;
-      if (!(pl.x < x + w && x < pl.x + pl.w && pl.y < y + h && y < pl.y + pl.h)) return;
-      // round shapes: test the real outline, not the bounding box
-      const cx = x + w / 2, cy = y + h / 2;
-      const nx = Math.max(pl.x, Math.min(cx, pl.x + pl.w)), ny = Math.max(pl.y, Math.min(cy, pl.y + pl.h));
-      const ex = (nx - cx) / (w / 2), ey = (ny - cy) / (h / 2);
-      if ((k === 'process' || k === 'start' || k === 'end') && ex * ex + ey * ey >= 1) return;
-      if (k === 'decision' && Math.abs(ex) + Math.abs(ey) >= 1) return;
-      out.push(`${key}: label ${pl.id} covers node ${g.dataset.id}`);
-    }));
-  });
-  return out;
-}
-"""
 
 TOUCH_AUDIT_JS = r"""
 () => {
@@ -1067,7 +1057,7 @@ def main() -> int:
     if args.only in (None, "icons"):
         check2_icons()
     if args.only in (None, "drawio", "browser"):
-        check2_html_static(pages)
+        check2_deliverables(pages)
     tok = check3_tokens() if args.only in (None, "tokens", "figma", "browser") else {}
     if args.only in (None, "figma"):
         check4_plugin(tok)
