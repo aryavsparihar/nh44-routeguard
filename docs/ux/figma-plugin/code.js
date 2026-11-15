@@ -1,4 +1,4 @@
-// RouteGuard Round 2: builds our Figma design file from the same tokens as the HTML hub.
+// RouteGuard Round 2: builds our Figma design file from the same tokens as the style guide and prototype.
 // Run it once in an empty Figma design file (Plugins > Development > Import plugin from manifest).
 // It creates 4 pages:
 //   01_Style_Guide_&_Variables              variable collection, text styles, swatches with WCAG ratios, icons
