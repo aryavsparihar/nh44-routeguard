@@ -20,3 +20,9 @@ date,zone_id,place,lat,lng,hazard_type,hours_closed,trucks_stranded,source_url
 2025-08-18,4,Monkey Morh,33.2416227,75.2281781,landslide,36,500,https://truthprevail.com/jammu-srinagar-highway-closed-after-landslides-shooting-stones-in-ramban/
 2025-08-18,4,Maroog,33.2586188,75.1972016,shooting_stones,36,500,https://truthprevail.com/jammu-srinagar-highway-closed-after-landslides-shooting-stones-in-ramban/
 2025-08-18,3,Sharda Mata Udhampur,32.9479827,75.1568035,landslide,36,500,https://truthprevail.com/jammu-srinagar-highway-closed-after-landslides-shooting-stones-in-ramban/
+2023-09-13,5,Kishtwari Pather,33.402846,75.196819,landslide,24,400,https://www.hindustantimes.com/lifestyle/travel/jammusrinagar-national-highway-blocked-due-to-landslides-at-kishtwari-pather-and-banihal-101694493233359.html
+2023-09-13,5,Banihal,33.4333,75.2000,landslide,24,400,https://www.hindustantimes.com/lifestyle/travel/jammusrinagar-national-highway-blocked-due-to-landslides-at-kishtwari-pather-and-banihal-101694493233359.html
+2023-06-26,4,Mehar,33.2441954,75.2261902,landslide,24,500,https://www.greaterkashmir.com/chenab-valley/jammu-srinagar-national-highway-closed-due-to-landslides/
+2023-06-15,4,Cafeteria Morh,33.2352800,75.2466454,landslide,10,200,https://www.hindustantimes.com/cities/chandigarh-news/traffic-disrupted-on-jammu-srinagar-highway-due-to-landslide-stranded-vehicles-cleared-by-authorities-101686847932296.html
+2023-04-27,5,Shalgadi,33.4333,75.2000,shooting_stones,24,300,https://www.ndtv.com/india-news/j-k-jammu-srinagar-nh-closed-after-landslide-over-300-vehicles-stranded-3983306
+2023-12-11,4,Ramban,33.2586015,75.1970668,shooting_stones,12,300,https://timesofindia.indiatimes.com/city/jammu/shooting-stones-disrupt-traffic-on-jammusrinagar-highway-in-ramban/articleshow/105890055.cms
