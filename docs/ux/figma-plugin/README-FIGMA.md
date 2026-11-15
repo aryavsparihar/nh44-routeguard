@@ -1,6 +1,6 @@
 # RouteGuard Figma builder
 
-This plugin builds our Round 2 Figma file from the same tokens as the HTML hub (`docs/ux/data/tokens.json`). It runs once on an empty file. After that, the file is ours to edit by hand in Figma.
+This plugin builds our Round 2 Figma file from the same tokens as the style guide and prototype (`docs/ux/data/tokens.json`). It runs once on an empty file. After that, the file is ours to edit by hand in Figma.
 
 ## Run it (Figma desktop app)
 
@@ -17,7 +17,7 @@ This plugin builds our Round 2 Figma file from the same tokens as the HTML hub (
 |---|---|
 | `01_Style_Guide_&_Variables` | Variable collection "RouteGuard tokens" (33 colours, spacing, radius, touch size), 8 text styles under `RouteGuard/`, colour swatches with their WCAG ratio, the contrast pairs we use, type scale, spacing bars, 14 icons |
 | `02_Components_&_Variants` | 5 component sets, all auto-layout: Decision Banner (Advice = SEND / HOLD / RAIL / DIVERT), Zone Risk Card (RiskLevel × Confidence, 9 variants), Connectivity & Sync Banner (4 states), Hazard Report Pill (Police Official / Verified Driver / Unconfirmed Driver), Bottom Nav Bar (ActiveTab = Map / 48h Strip / Advisor / Board / Report) |
-| `03_Low_Fi_Wireframes` | 12 grey-box frames at 390 × 844, the same as tab 5 of the HTML hub |
+| `03_Low_Fi_Wireframes` | 12 grey-box frames at 390 × 844, the same as `ui ux round/07_Wireframes.pdf` |
 | `04_High_Fi_Prototype_Mobile_&_Desktop` | 10 mobile screens (390 × 844), 2 overlays (zone sheet, offline drawer) and the desktop control room (1440 × 900), built from instances of the components |
 
 Colours on every node are bound to the variables, and auto-layout gaps and padding are bound to the spacing variables, so changing a variable updates the whole file.
@@ -44,4 +44,4 @@ Zone scores on page 4 come from our replay of 25 Aug 2025 (`rules-v0.1` on archi
 ## After it runs
 
 - Rename, rearrange and polish by hand. The plugin is a starting point, not the final file.
-- If you change a colour, change it in the variable panel. For the code, also change `tokens.json` so the HTML hub and the plugin stay in sync.
+- If you change a colour, change it in the variable panel. For the code, also change `tokens.json` so the style guide, prototype and plugin stay in sync.
