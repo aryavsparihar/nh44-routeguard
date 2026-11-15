@@ -45,3 +45,13 @@ next-env.d.ts
 __pycache__/
 *.pyc
 .venv/
+.venv-ux/
+scripts/round2/.build/
+
+# Team-only Round 2 notes: kept on our laptops, never pushed
+docs/ux/judge-defense-bible.md
+docs/ux/FIGMA-GUIDE.md
+docs/ux/DRAWIO-GUIDE.md
+
+# Team-only study guides (sources and PDFs): never pushed
+team-guides/

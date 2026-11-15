@@ -1,0 +1,72 @@
+<header class="doc-head">
+  <div class="doc-kicker">Team 01 · RouteGuard · Sangam Round 2 (UI/UX)</div>
+  <h1>User research and personas</h1>
+  <p class="doc-meta">Who RouteGuard is for, what they do today, and what each of them needs from the app.</p>
+</header>
+
+<h2>Where this comes from</h2>
+<p>We built these personas from our Round 1 research: a zone-by-zone dossier of NH-44 from news reports and published studies (deck slide 18), a log of past closures with coordinates (<code>data/incidents.csv</code>), a comparison of six existing tools (deck slide 5), and what we know first-hand. One of us lives in Ramban, and our mentor has been stuck there in a closure.</p>
+<p>The four people below are <strong>proto-personas</strong>: composites based on that research, not on interviews yet. The names are made up. Before the final round, Madhusudan and Aryaveer will talk to growers, drivers and the traffic control unit in Ramban and update this document with what they hear.</p>
+
+<h2>The apple journey, and where it breaks</h2>
+<table class="t journey-t">
+  <thead><tr><th>Step</th><th>Who</th><th>What happens today</th></tr></thead>
+  <tbody>
+    <tr><td>1 Pick and pack</td><td>Grower</td><td>Good fruit can only wait in CA cold storage. J&amp;K has 2.92 lakh MT of it against about 6 lakh MT needed.</td></tr>
+    <tr class="hot"><td>2 Decide to send</td><td>Grower, trader</td><td>Decided from weather apps, WhatsApp forwards and yesterday's police advisory. <strong>This is where RouteGuard speaks.</strong></td></tr>
+    <tr><td>3 Load and leave</td><td>Agent, driver</td><td>A loaded multi-axle truck is committed: there is no other road through the Ramban gorge for it.</td></tr>
+    <tr class="hot"><td>4 Qazigund to Ramban</td><td>Driver, TCU police</td><td>Closures are announced after the slope fails. Trucks wait for days with no signal.</td></tr>
+    <tr><td>5 Reach the mandi</td><td>Trader, Azadpur</td><td>Trucks arrive together and prices crash, about 40% in the 2025 closure.</td></tr>
+  </tbody>
+</table>
+
+<h2>Personas</h2>
+  <div class="persona-grid" id="personas">
+    <article class="card persona"><div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="avatar" style="background:var(--send-fill)">GN</div><div><h3>Haji Ghulam Nabi</h3><div class="label">Apple grower, Shopian · Persona 1</div></div></div>
+      <dl><dt>Situation</dt><dd>Delicious and Ambri, about 3 truckloads a season. No CA slot of his own.</dd>
+      <dt>Goal</dt><dd>Send the lot when the road will stay open, at a price that pays for the season.</dd>
+      <dt>Pain</dt><dd>Step 2 blind spot: decides from WhatsApp forwards. CA storage is short, so fruit waits in the orchard shed.</dd>
+      <dt>Device</dt><dd>Mid-range Android, Kashmiri and Urdu first, reads short English labels and numbers.</dd>
+      <dt>We give</dt><dd>Dispatch Advisor: one card (SEND / HOLD / RAIL / DIVERT) with the reason and how sure we are.</dd>
+      <dt>Evidence</dt><dd>Deck slides 2 to 4, refs [1], [3], [5].</dd></dl></article>
+    <article class="card persona"><div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="avatar" style="background:var(--brand-rail)">TA</div><div><h3>Tariq Ahmad</h3><div class="label">Commission agent / transport coordinator · Persona 2</div></div></div>
+      <dl><dt>Situation</dt><dd>Coordinates 18 trucks in peak season from Sopore, books Budgam parcel-train slots when he can.</dd>
+      <dt>Goal</dt><dd>Know where every truck is and give scarce rail / CA slots to the lots that spoil first.</dd>
+      <dt>Pain</dt><dd>Phone calls to each driver; slots go first-come; nobody sees road risk and trucks together.</dd>
+      <dt>Device</dt><dd>Android phone on the road, laptop at the office.</dd>
+      <dt>We give</dt><dd>Shipment Board ranked by priority (spoilage × load value), desktop control room.</dd>
+      <dt>Evidence</dt><dd>Deck slides 3, 4 (cause 4: 800 to 1,000 MT a day by rail), refs [4], [8].</dd></dl></article>
+    <article class="card persona"><div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="avatar" style="background:var(--brand-apple-ink)">GS</div><div><h3>Gurpreet Singh</h3><div class="label">Multi-axle truck driver · Persona 3</div></div></div>
+      <dl><dt>Situation</dt><dd>12-wheeler between Qazigund and Ramban, often in a queue for a day or more.</dd>
+      <dt>Goal</dt><dd>Warn others about debris fast and know when his stretch reopens.</dd>
+      <dt>Pain</dt><dd>No signal in the gorge, cold hands or gloves, rumours on WhatsApp.</dd>
+      <dt>Device</dt><dd>Older Android, low battery, intermittent 2G.</dd>
+      <dt>We give</dt><dd>3-tap Report with an offline queue, 48 px+ buttons, zone push alerts.</dd>
+      <dt>Evidence</dt><dd>Deck slides 3, 4, 18 (signal drops), ref [12].</dd></dl></article>
+    <article class="card persona"><div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="avatar" style="background:var(--text-primary)">RS</div><div><h3>Inspector Rajesh Sharma</h3><div class="label">J&amp;K Traffic Police, TCU Ramban control room · Persona 4</div></div></div>
+      <dl><dt>Situation</dt><dd>Issues go / no-go and one-way timings by vehicle type for the corridor.</dd>
+      <dt>Goal</dt><dd>One shared picture of risk and stranded trucks; get official word to drivers fast.</dd>
+      <dt>Pain</dt><dd>Can only hold trucks back after a slope fails; advisories travel slowly.</dd>
+      <dt>Device</dt><dd>Desktop in the control room, phone in the field.</dd>
+      <dt>We give</dt><dd>TCU Console: official override that sets zone confidence to High and pushes to drivers in that zone.</dd>
+      <dt>Evidence</dt><dd>Deck slides 3, 5 (existing tools), ref [12].</dd></dl></article>
+  </div>
+
+
+<h2>What the personas changed in the design</h2>
+<ul>
+  <li><strong>Ghulam Nabi</strong> decides before loading, often in bright sun. So the advisor answers in one large word with an icon, and every decision colour pair is at least 7:1 contrast.</li>
+  <li><strong>Tariq</strong> juggles 18 trucks. So the board ranks trucks by priority (spoilage × load value) and has a desktop control-room layout.</li>
+  <li><strong>Gurpreet</strong> has gloves, a weak phone and no signal in the gorge. So reporting takes 3 taps, buttons are at least 48 px (hazard buttons 112 px), and reports wait on the phone until there is signal.</li>
+  <li><strong>Inspector Sharma</strong> needs official word to beat rumours. So police updates are marked differently from driver reports and set the zone's confidence to High.</li>
+</ul>
+
+<h2>How we will check them</h2>
+<table class="t keep">
+  <thead><tr><th>Question</th><th>Who we ask</th><th>What would change</th></tr></thead>
+  <tbody>
+    <tr><td>Do growers decide the day before or the morning of loading?</td><td>3 to 5 growers near Shopian and Sopore</td><td>Which forecast hour the advisor shows first</td></tr>
+    <tr><td>Can drivers read English labels, or do they need Urdu or Hindi?</td><td>Drivers waiting at Qazigund and Ramban</td><td>Language of the report screen</td></tr>
+    <tr><td>How does TCU publish advisories today, and how fast?</td><td>TCU Ramban control room</td><td>The police console fields</td></tr>
+  </tbody>
+</table>

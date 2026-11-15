@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RouteGuard: Clickable prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;family=Atkinson+Hyperlegible+Mono:wght@400;500;700&amp;display=swap">
+<style>
+/* RouteGuard tokens and shared components. Colour values must match docs/ux/data/tokens.json (checked by verify_round2_all.py). */
+:root {
+  --bg-canvas: #F1F2EE; --bg-surface: #E4E7E0; --bg-elevated: #FFFFFF; --bg-map: #DCE1D5;
+  --text-primary: #15191C; --text-secondary: #4A5250; --text-inverse: #FFFFFF;
+  --border-default: #C8CDC5; --border-strong: #737B75;
+  --brand-apple: #C42A30; --brand-apple-ink: #A3212A; --brand-highway: #005F3F;
+  --brand-milestone: #F2B705; --brand-milestone-ink: #6B4F00; --brand-rail: #1D4B8A;
+  --send-fill: #005F3F; --send-bg: #DCEEE3; --send-text: #08432F;
+  --hold-fill: #A87A00; --hold-bg: #FCEEBF; --hold-text: #4F3A00;
+  --rail-fill: #1D4B8A; --rail-bg: #DEE6F3; --rail-text: #163A69;
+  --divert-fill: #C65316; --divert-bg: #FBE3D2; --divert-text: #6E2A05;
+  --high-fill: #B0202B; --high-bg: #F8DEDC; --high-text: #74131B;
+  --risk-low-map: #1F6E50; --risk-medium-map: #8F6A00; --risk-high-map: #B0202B;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px;
+  --r-sm: 2px; --r-md: 6px; --r-lg: 10px;
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --f-ui: "Atkinson Hyperlegible", Verdana, sans-serif;
+  --f-data: "Atkinson Hyperlegible Mono", ui-monospace, Menlo, monospace;
+  --touch: 48px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg-canvas); color: var(--text-primary); font: 400 15px/22px var(--f-ui); }
+h1, h2, h3 { font-family: var(--f-display); margin: 0 0 var(--s3); }
+h1 { font-size: 28px; line-height: 36px; }
+h2 { font-size: 22px; line-height: 30px; margin-top: var(--s8); }
+h3 { font-size: 18px; line-height: 24px; font-family: var(--f-ui); font-weight: 600; margin-top: var(--s6); }
+h4 { font-size: 16px; margin: var(--s4) 0 var(--s2); }
+p { margin: 0 0 var(--s3); max-width: 78ch; }
+a { color: var(--brand-apple-ink); }
+code, .num { font-family: var(--f-data); font-size: 13px; }
+.num { font-variant-numeric: tabular-nums; }
+.label { font: 600 13px/16px var(--f-display); text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); }
+.muted { color: var(--text-secondary); }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 var(--s4); }
+
+
+/* generic blocks */
+.grid { display: grid; gap: var(--s4); }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.g4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--r-md); padding: var(--s4); }
+.card.sand { background: var(--bg-surface); }
+.callout { border-left: 4px solid var(--brand-rail); background: var(--rail-bg); padding: var(--s3) var(--s4); border-radius: 0 var(--r-md) var(--r-md) 0; margin: var(--s4) 0; max-width: 90ch; }
+.callout.warn { border-color: var(--hold-fill); background: var(--hold-bg); }
+.callout.honest { border-color: var(--brand-apple-ink); background: var(--divert-bg); }
+table.t { border-collapse: collapse; width: 100%; background: var(--bg-elevated); font-size: 14px; }
+table.t th, table.t td { border: 1px solid var(--border-default); padding: var(--s2) var(--s3); text-align: left; vertical-align: top; }
+table.t th { background: var(--bg-surface); font-weight: 600; }
+.tbl-wrap { overflow-x: auto; }
+.pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 10px; font: 600 13px/18px var(--f-display); text-transform: uppercase; letter-spacing: .05em; }
+.ok { background: var(--send-bg); color: var(--send-text); }
+.part { background: var(--hold-bg); color: var(--hold-text); }
+.todo { background: var(--high-bg); color: var(--high-text); }
+.ico { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ico.sm { width: 20px; height: 20px; }
+
+
+/* buttons and form fields */
+.btn { min-height: var(--touch); min-width: var(--touch); padding: 0 var(--s4); border-radius: var(--r-md); border: 1px solid var(--border-strong); background: var(--bg-elevated); color: var(--text-primary); font: 600 14px var(--f-ui); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); }
+.btn.primary { background: var(--brand-highway); border-color: var(--brand-highway); color: var(--text-inverse); }
+.btn.rail { background: var(--brand-rail); border-color: var(--brand-rail); color: var(--text-inverse); }
+.btn.report { background: var(--brand-apple-ink); border-color: var(--brand-apple-ink); color: var(--text-inverse); }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.field { display: grid; gap: 4px; }
+.field > span { font: 600 13px/16px var(--f-display); text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); }
+select, input[type=number], input[type=text] { min-height: var(--touch); font: 400 16px var(--f-ui); color: var(--text-primary); background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--r-md); padding: 0 var(--s3); width: 100%; }
+
+/* shared components (the 5 component sets, also in Figma) */
+.decision { display: grid; grid-template-columns: 6px 1fr; border-radius: var(--r-md); overflow: hidden; background: var(--bg-elevated); border: 1px solid var(--border-default); width: 100%; max-width: 360px; }
+.decision .stripe { background: var(--c-fill); }
+.decision .body { background: var(--c-bg); color: var(--c-text); padding: var(--s3) var(--s4); display: grid; gap: 4px; }
+.decision .head { display: flex; align-items: center; gap: var(--s2); font: 700 28px/30px var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.decision .why { color: var(--text-primary); font-size: 14px; }
+.d-send { --c-fill: var(--send-fill); --c-bg: var(--send-bg); --c-text: var(--send-text); }
+.d-hold { --c-fill: var(--hold-fill); --c-bg: var(--hold-bg); --c-text: var(--hold-text); }
+.d-rail { --c-fill: var(--rail-fill); --c-bg: var(--rail-bg); --c-text: var(--rail-text); }
+.d-divert { --c-fill: var(--divert-fill); --c-bg: var(--divert-bg); --c-text: var(--divert-text); }
+.d-high { --c-fill: var(--high-fill); --c-bg: var(--high-bg); --c-text: var(--high-text); }
+.badge { display: inline-flex; align-items: center; gap: 4px; border-radius: var(--r-sm); padding: 2px 8px; font: 700 13px/18px var(--f-display); text-transform: uppercase; letter-spacing: .05em; background: var(--c-bg); color: var(--c-text); }
+.lv-low { --c-bg: var(--send-bg); --c-text: var(--send-text); --c-fill: var(--risk-low-map); }
+.lv-medium { --c-bg: var(--hold-bg); --c-text: var(--hold-text); --c-fill: var(--risk-medium-map); }
+.lv-high { --c-bg: var(--high-bg); --c-text: var(--high-text); --c-fill: var(--risk-high-map); }
+.cf-high { --c-bg: var(--rail-bg); --c-text: var(--rail-text); }
+.cf-medium { --c-bg: var(--bg-surface); --c-text: var(--text-primary); }
+.cf-low { --c-bg: var(--bg-surface); --c-text: var(--text-secondary); }
+.zone-card { width: 100%; max-width: 360px; background: var(--bg-elevated); border: 1px solid var(--border-default); border-left: 6px solid var(--c-fill); border-radius: var(--r-md); padding: var(--s3) var(--s4); display: grid; gap: var(--s2); }
+.zone-card .row { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.zone-card .score { font: 600 24px/28px var(--f-data); }
+.sync { width: 100%; max-width: 390px; display: flex; align-items: center; gap: var(--s2); min-height: var(--touch); padding: 0 var(--s3); font: 600 14px/18px var(--f-ui); border: 0; text-align: left; cursor: pointer; }
+.sync.s-live { background: var(--send-bg); color: var(--send-text); }
+.sync.s-offline { background: var(--text-primary); color: var(--text-inverse); }
+.sync.s-stale { background: var(--hold-bg); color: var(--hold-text); }
+.sync.s-queued { background: var(--rail-bg); color: var(--rail-text); }
+.sync.s-error { background: var(--high-bg); color: var(--high-text); }
+.rpill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; border-radius: 999px; padding: 4px 12px; font: 600 14px/18px var(--f-ui); border: 1px solid var(--border-default); }
+.rp-police { background: var(--rail-bg); color: var(--rail-text); border-color: var(--rail-fill); }
+.rp-verified { background: var(--send-bg); color: var(--send-text); border-color: var(--send-fill); }
+.rp-unconfirmed { background: var(--bg-elevated); color: var(--text-secondary); border-style: dashed; border-color: var(--border-strong); }
+.bnav { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--bg-elevated); border-top: 1px solid var(--border-default); width: 100%; }
+.bnav button { min-height: 64px; display: grid; justify-items: center; align-content: center; gap: 2px; border: 0; background: none; color: var(--text-secondary); font: 600 13px/14px var(--f-display); text-transform: uppercase; letter-spacing: .05em; cursor: pointer; padding: 6px 0; position: relative; }
+.bnav button[aria-current=page] { color: var(--brand-highway); }
+.bnav button[aria-current=page]::before { content: ""; position: absolute; top: 0; left: 20%; right: 20%; height: 4px; border-radius: 0; background: var(--brand-highway); }
+
+
+/* Clickable prototype page. */
+/* prototype */
+.simbar { background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--r-md); padding: var(--s3); display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--s3); margin-bottom: var(--s4); }
+.proto-layout { display: grid; grid-template-columns: 390px 1fr; gap: var(--s6); align-items: start; }
+.proto-stage { display: grid; justify-items: start; }
+#phone { width: 390px; height: 844px; border-radius: 28px; border: 1px solid var(--border-strong); background: var(--bg-canvas); overflow: hidden; position: relative; display: grid; grid-template-rows: auto auto 1fr auto; box-shadow: 0 12px 32px rgba(30,45,58,.18); }
+/* header: highway green, like an NH sign. Title and role, then the alerts bell and the profile badge */
+.appbar { display: flex; align-items: center; gap: 2px; min-height: 64px; padding: 8px 8px 8px var(--s4); background: var(--brand-highway); color: var(--text-inverse); }
+.appbar.sub { padding-left: 4px; }
+.appbar .ttl { flex: 1; min-width: 0; }
+.appbar .t { font: 700 20px/26px var(--f-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appbar .role { font: 600 12px/16px var(--f-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--send-bg); }
+.hbtn { flex: none; width: 48px; height: 48px; border: 0; border-radius: var(--r-sm); background: none; color: var(--text-inverse); display: grid; place-items: center; cursor: pointer; position: relative; padding: 0; font: 700 24px/1 var(--f-ui); }
+.hbtn .ico { width: 26px; height: 26px; }
+.hbtn .count { position: absolute; top: 3px; right: 1px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--bg-elevated); color: var(--brand-apple-ink); font: 700 12px/20px var(--f-data); }
+.hbtn .av, .who .av { display: block; width: 38px; height: 38px; border-radius: 50%; background: var(--brand-milestone); color: var(--text-primary); font: 700 15px/38px var(--f-display); text-align: center; text-transform: uppercase; }
+#phone :focus-visible, .desk :focus-visible { outline: 3px solid var(--brand-milestone); outline-offset: 1px; }
+.appbar :focus-visible { outline-offset: -3px; }
+.screen { overflow-y: auto; padding: var(--s3) var(--s4) var(--s6); display: flex; flex-direction: column; gap: var(--s3); }
+.screen > *, .sheet > * { flex-shrink: 0; }
+.scroll-x { display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chip { flex: none; min-height: var(--touch); min-width: var(--touch); padding: 0 var(--s4); border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg-elevated); color: var(--text-primary); font: 600 14px var(--f-ui); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.chip[aria-pressed=true] { background: var(--text-primary); color: var(--text-inverse); border-color: var(--text-primary); }
+.mapbox { background: var(--bg-map); border-radius: var(--r-md); border: 1px solid var(--border-default); position: relative; }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.hex { cursor: pointer; stroke: #FFFFFF; stroke-width: 1.2; }
+.hex.sel { stroke: var(--text-primary); stroke-width: 2.5; }
+.legend { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; font-size: 14px; }
+.legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+.zone-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.zbtn { min-height: var(--touch); border-radius: var(--r-md); border: 1px solid var(--border-default); border-left: 6px solid var(--c-fill); background: var(--bg-elevated); font: 600 14px var(--f-ui); color: var(--text-primary); cursor: pointer; text-align: left; padding: 4px 8px; display: grid; }
+.zbtn .num { font-size: 13px; color: var(--text-secondary); }
+.strip { width: 100%; border-collapse: separate; border-spacing: 4px; }
+.strip th { font: 600 12px/16px var(--f-ui); text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); text-align: center; }
+.strip th.z { text-align: left; font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--text-primary); width: 92px; }
+.cellbtn { width: 100%; min-height: 56px; min-width: 48px; border: 0; border-radius: var(--r-sm); background: var(--c-bg); color: var(--c-text); font: 700 16px/18px var(--f-data); cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 2px; position: relative; }
+.cellbtn .lv { font: 700 12px/12px var(--f-ui); text-transform: uppercase; letter-spacing: .05em; }
+.cellbtn.lv-medium { background-image: repeating-linear-gradient(135deg, transparent 0 7px, rgba(79,58,0,.12) 7px 9px); }
+.cellbtn.lv-high { background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(116,19,27,.14) 6px 8px), repeating-linear-gradient(135deg, transparent 0 6px, rgba(116,19,27,.14) 6px 8px); }
+.form { display: grid; gap: var(--s3); }
+.radio-cards { display: grid; gap: var(--s2); }
+.radio-cards label { min-height: 56px; display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--bg-elevated); cursor: pointer; font-size: 14px; }
+.radio-cards input { width: 22px; height: 22px; accent-color: var(--brand-highway); flex: none; }
+.radio-cards label:has(input:checked) { border: 2px solid var(--brand-highway); background: var(--send-bg); }
+.stack { display: grid; gap: var(--s2); }
+.ship { background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--r-md); padding: var(--s3); display: grid; gap: 6px; }
+.ship.new { border: 2px solid var(--brand-highway); }
+.ship .top { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); }
+.ship .rank { font: 700 14px var(--f-data); background: var(--text-primary); color: var(--text-inverse); border-radius: var(--r-sm); padding: 2px 8px; }
+.ship .kv { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; color: var(--text-secondary); }
+.tabrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--bg-surface); border-radius: var(--r-md); padding: 4px; }
+.tabrow button { min-height: var(--touch); border: 0; border-radius: 6px; background: none; font: 600 14px/16px var(--f-ui); color: var(--text-secondary); cursor: pointer; }
+.tabrow button[aria-selected=true] { background: var(--bg-elevated); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.hazgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.hazbtn { min-height: 112px; border-radius: var(--r-lg); border: 2px solid var(--border-strong); background: var(--bg-elevated); display: grid; justify-items: center; align-content: center; gap: var(--s2); font: 700 16px var(--f-ui); color: var(--text-primary); cursor: pointer; }
+.hazbtn .ico { width: 40px; height: 40px; }
+.hazbtn[aria-pressed=true] { border-color: var(--brand-apple-ink); background: var(--divert-bg); color: var(--divert-text); }
+.steps { display: flex; gap: 6px; align-items: center; }
+.steps span { flex: 1; height: 6px; border-radius: 3px; background: var(--border-default); }
+.steps span.on { background: var(--brand-apple-ink); }
+.photo { height: 140px; border-radius: var(--r-md); background: repeating-linear-gradient(45deg, #C8CDC5 0 10px, #D5D9D1 10px 20px); display: grid; place-items: center; color: var(--text-primary); font-weight: 600; }
+.coords { font: 600 14px/20px var(--f-data); }
+.sheet-scrim { position: absolute; inset: 0; background: rgba(21,25,28,.45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 78%; overflow-y: auto; background: var(--bg-elevated); border-radius: 20px 20px 0 0; padding: var(--s2) var(--s4) var(--s6); transform: translateY(105%); transition: transform .25s ease-out; z-index: 31; display: flex; flex-direction: column; gap: var(--s3); }
+.sheet .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border-strong); align-self: center; }
+.sheet .sh-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); }
+.open .sheet-scrim { opacity: 1; pointer-events: auto; }
+.open .sheet { transform: none; }
+.bars { display: grid; gap: 6px; }
+.bars .b { display: grid; grid-template-columns: 96px 1fr 52px; gap: 8px; align-items: center; font-size: 14px; }
+.bars .track { height: 10px; background: var(--bg-surface); border-radius: 5px; overflow: hidden; }
+.bars .fill { height: 100%; background: var(--brand-rail); }
+.toast { position: absolute; left: var(--s4); right: var(--s4); bottom: 84px; background: var(--text-primary); color: var(--text-inverse); border-radius: var(--r-md); padding: var(--s3); font-size: 14px; z-index: 40; opacity: 0; transform: translateY(8px); transition: all .2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: none; }
+.skel { background: linear-gradient(90deg, #E4E7E0 0%, #EEF0EA 50%, #E4E7E0 100%); background-size: 200% 100%; animation: sh 1.2s infinite linear; border-radius: var(--r-md); }
+#phone .num, #phone code { font-size: 14px; }
+.instant .sheet, .instant .sheet-scrim, .instant .toast { transition: none !important; }
+@keyframes sh { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } .sheet, .toast, .sheet-scrim { transition: none; } }
+.empty { text-align: center; padding: var(--s8) var(--s4); display: grid; gap: var(--s3); justify-items: center; }
+.empty .ico { width: 40px; height: 40px; color: var(--text-secondary); }
+.proto-side { display: grid; gap: var(--s4); }
+.desk { width: 1440px; height: 900px; transform: scale(.89); transform-origin: top left; margin-bottom: -99px; margin-right: -158px; background: var(--bg-canvas); border: 1px solid var(--border-strong); border-radius: var(--r-md); display: grid; grid-template-rows: 64px 1fr; overflow: hidden; }
+.desk .dhead { background: var(--brand-highway); color: var(--text-inverse); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s6); gap: var(--s4); }
+.desk .dbody { display: grid; grid-template-columns: 440px 1fr 340px; gap: var(--s4); padding: var(--s4); overflow: hidden; }
+.desk .col { background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--r-md); padding: var(--s4); overflow: auto; display: flex; flex-direction: column; gap: var(--s3); }
+.desk .col > * { flex-shrink: 0; }
+.proto-stage.desktop-mode { overflow: hidden; }
+
+
+/* page frame */
+body.proto { background: var(--bg-canvas); }
+.proto-head { background: var(--text-primary); color: var(--text-inverse); }
+.proto-head .wrap { padding-top: 14px; padding-bottom: 14px; font-size: 16px; }
+.muted-inv { color: #D9DED6; }
+.proto-main { padding-top: var(--s4); padding-bottom: var(--s12); }
+@media (max-width: 860px) {
+  .proto-layout { grid-template-columns: 1fr; }
+  .proto-stage { overflow-x: auto; }
+}
+@media (max-width: 430px) { #phone { width: 100%; } }
+
+/* signed out: no header, banner or nav before sign-in */
+#phone.signed-out { grid-template-rows: 1fr; }
+.signed-out .appbar, .signed-out #banner, .signed-out .bnav { display: none; }
+.screen.enter { animation: enter .22s ease-out; }
+@keyframes enter { from { opacity: 0; transform: translateX(14px); } }
+.instant .screen.enter, .instant .dialog { animation: none; transition: none !important; }
+.wide { width: 100%; }
+
+/* sign-in (Flow D) */
+.auth { display: flex; flex-direction: column; gap: var(--s4); padding-top: var(--s6); }
+.auth .h { font: 700 26px/32px var(--f-display); margin: 0; }
+.auth .brand { display: flex; align-items: center; gap: var(--s3); font: 700 32px/36px var(--f-display); }
+.auth .back { align-self: flex-start; padding: 0 var(--s2); margin-left: calc(-1 * var(--s2)); }
+.lead { font-size: 17px; line-height: 25px; margin: 0; }
+.gets { list-style: none; margin: 0; padding: var(--s3) 0; display: grid; gap: var(--s3); border-top: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); }
+.gets li { display: flex; gap: var(--s3); align-items: center; font-size: 15px; line-height: 20px; }
+.gets .ico { color: var(--brand-highway); }
+.ms { display: inline-grid; flex: none; width: 54px; border: 2px solid var(--text-primary); border-radius: 16px 16px 2px 2px; overflow: hidden; background: var(--bg-elevated); color: var(--text-primary); text-align: center; }
+.ms b { background: var(--brand-milestone); font: 700 14px/20px var(--f-display); text-transform: uppercase; padding-top: 3px; }
+.ms i { font: 700 22px/28px var(--f-display); font-style: normal; }
+.tel { display: flex; align-items: stretch; min-height: var(--touch); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--bg-elevated); overflow: hidden; }
+.tel .cc { display: grid; place-items: center; padding: 0 var(--s3); background: var(--bg-surface); border-right: 1px solid var(--border-default); font: 600 17px var(--f-data); }
+.tel input { border: 0; border-radius: 0; font: 600 18px var(--f-data); letter-spacing: .04em; }
+.tel.bad { border: 2px solid var(--high-fill); }
+.ferr { display: flex; gap: var(--s2); align-items: flex-start; background: var(--high-bg); color: var(--high-text); border-radius: var(--r-md); padding: var(--s2) var(--s3); font-size: 15px; line-height: 20px; font-weight: 700; }
+.ferr .ico { margin-top: 1px; }
+.otp { position: relative; }
+.otp .boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--s2); }
+.otp .boxes span { height: 58px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--bg-elevated); display: grid; place-items: center; font: 700 26px var(--f-data); }
+.otp:focus-within .boxes span.cur { border: 2px solid var(--brand-highway); box-shadow: 0 0 0 3px var(--brand-milestone); }
+.otp.bad .boxes span { border: 2px solid var(--high-fill); }
+.otp input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .01; font: 16px var(--f-data); border: 0; color: transparent; caret-color: transparent; cursor: text; }
+.sw { width: 100%; min-height: 60px; display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--bg-elevated); color: var(--text-primary); text-align: left; cursor: pointer; font: 400 15px/20px var(--f-ui); }
+.sw + .sw { margin-top: var(--s2); }
+.sw .sw-t { flex: 1; display: grid; gap: 2px; }
+.sw .sw-t .muted { font-size: 14px; }
+.sw .knob { flex: none; width: 46px; height: 28px; border-radius: 14px; background: var(--border-strong); position: relative; transition: background .15s; }
+.sw .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg-elevated); transition: transform .15s; }
+.sw[aria-checked=true] .knob { background: var(--brand-highway); }
+.sw[aria-checked=true] .knob::after { transform: translateX(18px); }
+.why summary { min-height: var(--touch); display: flex; align-items: center; font-weight: 700; cursor: pointer; color: var(--brand-rail); }
+.why p { margin: 0; }
+.field .help { font-size: 14px; line-height: 19px; text-transform: none; letter-spacing: 0; font-family: var(--f-ui); font-weight: 400; }
+.radio-cards.row3 { grid-template-columns: repeat(3, 1fr); }
+.spin { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 3px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.notice { position: absolute; left: 8px; right: 8px; top: 8px; z-index: 45; }
+.sms { width: 100%; display: grid; gap: 2px; text-align: left; border: 0; border-radius: 14px; background: var(--text-primary); color: var(--text-inverse); padding: 10px 14px; font: 400 15px/20px var(--f-ui); cursor: pointer; box-shadow: 0 8px 24px rgba(21,25,28,.3); animation: drop .3s ease-out; }
+.sms .from { display: flex; align-items: center; gap: 6px; font: 600 13px/18px var(--f-display); text-transform: uppercase; letter-spacing: .05em; color: var(--border-default); }
+@keyframes drop { from { transform: translateY(-130%); } }
+
+/* shipment cards are buttons: the whole card opens the truck detail */
+button.ship { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.ship .kv + .kv { margin-top: -2px; }
+.kvs { display: grid; grid-template-columns: 116px 1fr; gap: 6px 12px; margin: 0; font-size: 15px; }
+.kvs dt { font: 600 13px/20px var(--f-display); text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); }
+.kvs dd { margin: 0; }
+
+/* alerts */
+.alert { width: 100%; min-height: var(--touch); display: grid; gap: 2px; text-align: left; border: 0; border-left: 6px solid var(--a-edge); border-radius: var(--r-md); background: var(--a-bg); color: var(--text-primary); padding: var(--s3); font: 400 15px/20px var(--f-ui); cursor: pointer; }
+.alert strong { color: var(--a-text); }
+.alert .tag { justify-self: start; border-radius: var(--r-sm); background: var(--text-primary); color: var(--text-inverse); padding: 0 6px; font: 700 12px/18px var(--f-display); text-transform: uppercase; letter-spacing: .05em; }
+.a-police { --a-edge: var(--rail-fill); --a-bg: var(--rail-bg); --a-text: var(--rail-text); }
+.a-verified { --a-edge: var(--send-fill); --a-bg: var(--send-bg); --a-text: var(--send-text); }
+.a-high { --a-edge: var(--high-fill); --a-bg: var(--high-bg); --a-text: var(--high-text); }
+.a-stale { --a-edge: var(--hold-fill); --a-bg: var(--hold-bg); --a-text: var(--hold-text); }
+.a-queued { --a-edge: var(--border-strong); --a-bg: var(--bg-surface); --a-text: var(--text-primary); }
+
+/* profile */
+.who { display: flex; gap: var(--s3); align-items: center; background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--r-md); padding: var(--s3); }
+.who .av { width: 56px; height: 56px; font-size: 22px; line-height: 56px; flex: none; }
+.who .nm { font: 700 20px/26px var(--f-display); }
+.who .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.btn.danger { color: var(--brand-apple-ink); border-color: var(--brand-apple-ink); }
+
+/* confirm dialog: for anything that is hard to undo (sign out with unsent reports, delete account, a police closure) */
+.dialog { position: absolute; left: var(--s4); right: var(--s4); top: 50%; z-index: 32; display: grid; gap: var(--s3); padding: var(--s4); background: var(--bg-elevated); border-radius: var(--r-lg); box-shadow: 0 16px 40px rgba(21,25,28,.35); transform: translateY(-50%); animation: pop .18s ease-out; }
+.dialog h3 { margin: 0; font: 700 22px/28px var(--f-display); }
+.dialog .acts { display: grid; gap: var(--s2); }
+@keyframes pop { from { opacity: 0; transform: translateY(-46%); } }
+.dlg .sheet-scrim { opacity: 1; pointer-events: auto; }
+.desk { position: relative; }
+.desk .dscrim { position: absolute; inset: 0; background: rgba(21,25,28,.45); z-index: 31; }
+.desk .dialog { left: 50%; right: auto; width: 460px; transform: translate(-50%, -50%); animation: none; }
+.desk .toast { left: auto; right: 24px; bottom: 24px; width: 460px; }
+.desk .ms { width: 44px; border-color: var(--text-inverse); }
+.desk .ms i { font-size: 18px; line-height: 22px; }
+.desk .ms b { font-size: 13px; line-height: 16px; }
+@media (prefers-reduced-motion: reduce) { .screen.enter, .sms, .dialog, .spin { animation: none; } .sw .knob, .sw .knob::after { transition: none; } }
+
+</style>
+</head>
+<body class="proto">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-decision-divert" viewBox="0 0 24 24" data-title="Divert"><path d="M8 21V3"/><path d="m5 6 3-3 3 3"/><path d="M8 15a4 4 0 0 1 4-4h8"/><path d="m17 8 3 3-3 3"/></symbol><symbol id="i-decision-hold" viewBox="0 0 24 24" data-title="Hold and check again in 6 hours"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="i-decision-rail" viewBox="0 0 24 24" data-title="Book rail"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14"/><path d="M9 13.5h.01M15 13.5h.01"/><path d="m8 21 2-4M16 21l-2-4"/></symbol><symbol id="i-decision-send" viewBox="0 0 24 24" data-title="Send now"><path d="M3 12h15"/><path d="m13 6 6 6-6 6"/><path d="M3 7h4M3 17h4"/></symbol><symbol id="i-hazard-flash-flood" viewBox="0 0 24 24" data-title="Flash flood"><path d="M8 3v3M12 2v4M16 3v3"/><path d="M2 13c1.5 0 2.5-1 4-1s2.5 1 4 1 2.5-1 4-1 2.5 1 4 1 2.5-1 4-1"/><path d="M2 18c1.5 0 2.5-1 4-1s2.5 1 4 1 2.5-1 4-1 2.5 1 4 1 2.5-1 4-1"/></symbol><symbol id="i-hazard-landslide" viewBox="0 0 24 24" data-title="Landslide"><path d="M2 20h20"/><path d="M4 20 9 7l3 5"/><path d="M12 12c1.5 2.2 3.6 3.6 6.5 4.2"/><circle cx="17.5" cy="18.5" r="1.5"/><circle cx="13.5" cy="17.5" r="1"/></symbol><symbol id="i-hazard-rockfall" viewBox="0 0 24 24" data-title="Rockfall"><path d="M3 21V3h4l1 5-2 4 2 4v5"/><path d="M3 21h18"/><path d="m14 4 3-1 2 2-1 3h-3z"/><path d="m14 15 3-1 3 2-1 3h-3z"/><path d="M11 9h-1M12 12h-1"/></symbol><symbol id="i-hazard-snow-ice" viewBox="0 0 24 24" data-title="Snow and ice"><path d="M12 3v14"/><path d="m5.9 6.5 12.2 7"/><path d="m5.9 13.5 12.2-7"/><path d="m10 4.5 2 1.5 2-1.5"/><path d="m10 15.5 2-1.5 2 1.5"/><path d="M3 21h18"/></symbol><symbol id="i-nav-advisor" viewBox="0 0 24 24" data-title="Dispatch advisor"><path d="M3 6h10v10H3z"/><path d="M13 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol><symbol id="i-nav-alerts" viewBox="0 0 24 24" data-title="Alerts"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol><symbol id="i-nav-board" viewBox="0 0 24 24" data-title="Shipment board"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h6M9 18h3"/></symbol><symbol id="i-nav-map" viewBox="0 0 24 24" data-title="Risk map"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol><symbol id="i-nav-report" viewBox="0 0 24 24" data-title="Report hazard"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></symbol><symbol id="i-nav-strip" viewBox="0 0 24 24" data-title="48 hour strip"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7.5 5v14M12 5v14M16.5 5v14"/></symbol><symbol id="i-status-offline-queue" viewBox="0 0 24 24" data-title="Offline, reports queued"><path d="M3 20v-3M7 20v-6M11 20v-9"/><path d="M3 4l12 12"/><rect x="15" y="14" width="6" height="7" rx="1"/><path d="M16 11h4"/></symbol></svg>
+<header class="proto-head">
+  <div class="wrap"><strong>RouteGuard</strong> · clickable prototype <span class="muted-inv">· Team 01 · Sangam Round 2</span></div>
+</header>
+<main class="wrap proto-main">
+  <div class="simbar no-print" aria-label="Simulation controls">
+    <label class="field"><span>Session</span><select id="sim-session"><option value="out">Signed out: start at sign-in (Flow D)</option><option value="in">Signed in</option></select></label>
+    <label class="field"><span>Scenario</span><select id="sim-scenario"><option value="replay">Replay: 25 Aug 2025 (zones 3 to 5 high)</option><option value="daybefore">Replay: 24 Aug 2025, a day earlier</option><option value="live">Live: 10 Nov 2026 run (low risk)</option></select></label>
+    <label class="field"><span>Network</span><select id="sim-network"><option value="online">Online (4G)</option><option value="offline">Offline in the gorge (cached copy)</option><option value="stale">Online, but scores 3 h old</option></select></label>
+    <label class="field"><span>UI edge state</span><select id="sim-edge"><option value="normal">Normal</option><option value="loading">Loading skeleton</option><option value="empty">Empty</option><option value="error">Error / GPS denied / code expired</option></select></label>
+    <label class="field"><span>Role</span><select id="sim-role"><option value="grower">Grower / Trader</option><option value="agent">Transport Agent</option><option value="driver">Truck Driver</option><option value="police">Traffic Police (TCU)</option></select></label>
+    <label class="field"><span>Device</span><select id="sim-device"><option value="mobile">Mobile 390 × 844</option><option value="desktop">Desktop control room 1440 × 900</option></select></label>
+  </div>
+  <div class="proto-layout">
+    <div class="proto-stage" id="stage">
+      <div id="phone" aria-label="RouteGuard mobile prototype">
+        <div class="appbar" id="appbar"></div>
+        <button class="sync s-live" id="banner"></button>
+        <div class="screen" id="screen"></div>
+        <nav class="bnav" id="bnav"></nav>
+        <div class="sheet-scrim" id="scrim"></div>
+        <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+        <div id="dialog"></div>
+        <div class="notice" id="notice"></div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+    <aside class="proto-side no-print">
+      <div class="card sand"><h3 style="margin-top:0">Try these paths</h3>
+        <ol style="margin:0;padding-left:20px">
+          <li><strong>Flow D, first sign-in:</strong> Send code → tap the SMS that drops in (code 418207) → Verify → Create account. Try a short number or a wrong code to see the errors. The number 94190 11180 belongs to Haji Ghulam Nabi and skips account creation.</li>
+          <li><strong>Flow A:</strong> Advisor → Get advice → RAIL in this replay → Commit. The truck lands on the Board, ranked; tap it for ETA, last seen and its zones. Switch Scenario to Live and the same lot gets SEND.</li>
+          <li><strong>Flow B:</strong> Role = Truck Driver, Network = Offline. Report in 3 taps; the report waits on the phone. Back online, it sends.</li>
+          <li><strong>Flow C:</strong> Role = Traffic Police. Publish asks you to confirm, then zone confidence becomes High. Set Device to Desktop for the control room.</li>
+          <li><strong>Header:</strong> the bell opens alerts for your zones; the round badge opens Profile (alert zones, offline data, sign out, delete account).</li>
+          <li>Tap the banner under the header for the offline drawer, and any hex or strip cell for the zone sheet.</li>
+        </ol></div>
+      <div class="card"><h3 style="margin-top:0">Data in this prototype</h3><p id="data-note" class="muted"></p></div>
+    </aside>
+  </div>
+</main>
+
+<script id="rg-data" type="application/json">{"tokens":{"_note":"RouteGuard design tokens, Round 2. The palette is taken from NH-44 itself: highway-sign green (brand.highway), the yellow cap of National Highway milestones (brand.milestone), Kashmir apple red (brand.apple) and Indian Railways blue (brand.rail), on concrete and asphalt neutrals. The *.ink tokens are darker versions for text, added because the base colour failed WCAG for that use (see contrast_pairs and rejected_pairs). One source of truth: the style guide, the prototype, the Figma plugin and scripts/verify_round2_all.py all read or are checked against this file.","color":{"bg.canvas":"#F1F2EE","bg.surface":"#E4E7E0","bg.elevated":"#FFFFFF","bg.map":"#DCE1D5","text.primary":"#15191C","text.secondary":"#4A5250","text.inverse":"#FFFFFF","border.default":"#C8CDC5","border.strong":"#737B75","brand.apple":"#C42A30","brand.apple.ink":"#A3212A","brand.highway":"#005F3F","brand.milestone":"#F2B705","brand.milestone.ink":"#6B4F00","brand.rail":"#1D4B8A","send.fill":"#005F3F","send.bg":"#DCEEE3","send.text":"#08432F","hold.fill":"#A87A00","hold.bg":"#FCEEBF","hold.text":"#4F3A00","rail.fill":"#1D4B8A","rail.bg":"#DEE6F3","rail.text":"#163A69","divert.fill":"#C65316","divert.bg":"#FBE3D2","divert.text":"#6E2A05","high.fill":"#B0202B","high.bg":"#F8DEDC","high.text":"#74131B","risk.low.map":"#1F6E50","risk.medium.map":"#8F6A00","risk.high.map":"#B0202B"},"space":{"1":4,"2":8,"3":12,"4":16,"6":24,"8":32,"12":48},"radius":{"sm":2,"md":6,"lg":10,"pill":999},"touch_min_px":48,"type":{"display":{"family":"Barlow Semi Condensed","fallback":"'Arial Narrow', sans-serif","size":32,"line":36,"weight":700},"h1":{"family":"Barlow Semi Condensed","fallback":"'Arial Narrow', sans-serif","size":24,"line":30,"weight":700},"h2":{"family":"Barlow Semi Condensed","fallback":"'Arial Narrow', sans-serif","size":20,"line":24,"weight":600},"body":{"family":"Atkinson Hyperlegible","fallback":"Verdana, sans-serif","size":15,"line":22,"weight":400},"input":{"family":"Atkinson Hyperlegible","fallback":"Verdana, sans-serif","size":16,"line":24,"weight":400},"label":{"family":"Barlow Semi Condensed","fallback":"'Arial Narrow', sans-serif","size":13,"line":16,"weight":600,"upper":true,"tracking":0.05},"data":{"family":"Atkinson Hyperlegible Mono","fallback":"ui-monospace, Menlo, monospace","size":14,"line":20,"weight":500},"decision":{"family":"Barlow Semi Condensed","fallback":"'Arial Narrow', sans-serif","size":28,"line":30,"weight":700,"upper":true,"tracking":0.03}},"contrast_pairs":[{"fg":"text.primary","bg":"bg.canvas","use":"body text","min":4.5},{"fg":"text.primary","bg":"bg.surface","use":"body text on cards","min":4.5},{"fg":"text.primary","bg":"bg.map","use":"map labels","min":4.5},{"fg":"text.secondary","bg":"bg.canvas","use":"secondary text","min":4.5},{"fg":"text.secondary","bg":"bg.surface","use":"secondary text on cards","min":4.5},{"fg":"text.secondary","bg":"bg.elevated","use":"secondary text on sheets","min":4.5},{"fg":"brand.apple.ink","bg":"bg.canvas","use":"links and accent text","min":4.5},{"fg":"brand.apple.ink","bg":"bg.surface","use":"accent text on cards","min":4.5},{"fg":"brand.milestone.ink","bg":"bg.canvas","use":"warning text (milestone ink)","min":4.5},{"fg":"text.primary","bg":"brand.milestone","use":"milestone tag (black on NH yellow)","min":7.0},{"fg":"text.inverse","bg":"brand.highway","use":"primary button label","min":7.0},{"fg":"text.inverse","bg":"brand.rail","use":"secondary button label","min":4.5},{"fg":"text.inverse","bg":"text.primary","use":"offline banner","min":7.0},{"fg":"text.inverse","bg":"brand.apple.ink","use":"report button label","min":4.5},{"fg":"text.inverse","bg":"high.fill","use":"closure banner label","min":4.5},{"fg":"send.text","bg":"send.bg","use":"SEND decision badge","min":7.0,"decision":true},{"fg":"hold.text","bg":"hold.bg","use":"HOLD decision badge","min":7.0,"decision":true},{"fg":"rail.text","bg":"rail.bg","use":"RAIL decision badge","min":7.0,"decision":true},{"fg":"divert.text","bg":"divert.bg","use":"DIVERT decision badge","min":7.0,"decision":true},{"fg":"high.text","bg":"high.bg","use":"HIGH risk badge","min":7.0,"decision":true},{"fg":"text.primary","bg":"send.bg","use":"body text in SEND card","min":4.5},{"fg":"text.primary","bg":"hold.bg","use":"body text in HOLD card","min":4.5},{"fg":"text.primary","bg":"rail.bg","use":"body text in RAIL card","min":4.5},{"fg":"text.primary","bg":"divert.bg","use":"body text in DIVERT card","min":4.5},{"fg":"text.primary","bg":"high.bg","use":"body text in HIGH card","min":4.5},{"fg":"risk.low.map","bg":"bg.map","use":"low-risk hexagon fill (graphic)","min":3.0},{"fg":"risk.medium.map","bg":"bg.map","use":"medium-risk hexagon fill (graphic)","min":3.0},{"fg":"risk.high.map","bg":"bg.map","use":"high-risk hexagon fill (graphic)","min":3.0},{"fg":"border.strong","bg":"bg.elevated","use":"form field border (graphic)","min":3.0},{"fg":"send.fill","bg":"bg.elevated","use":"decision stripe (graphic)","min":3.0},{"fg":"hold.fill","bg":"bg.elevated","use":"decision stripe (graphic)","min":3.0},{"fg":"rail.fill","bg":"bg.elevated","use":"decision stripe (graphic)","min":3.0},{"fg":"divert.fill","bg":"bg.elevated","use":"decision stripe (graphic)","min":3.0}],"rejected_pairs":[{"fg":"text.inverse","bg":"hold.fill","why":"white on HOLD amber is 3.85:1, so HOLD never puts white text on its fill colour"},{"fg":"text.inverse","bg":"brand.milestone","why":"white on milestone yellow is 1.6:1, so the yellow only ever carries black text, as on a real milestone"},{"fg":"brand.milestone","bg":"bg.canvas","why":"1.62:1, so yellow is never used for text; warning text uses brand.milestone.ink"},{"fg":"hold.fill","bg":"bg.map","why":"2.89:1 on the map, so medium hexagons use risk.medium.map"}]},"live":{"label":"Live run, 10 Nov 2026 18:34 UTC (00:04 IST 11 Nov)","run_at":"2026-11-10T18:34:39Z","source":"risk_scores table in Supabase, model rules-v0.1, copied unchanged","rows":[{"zone_id":1,"horizon_hours":0,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 1: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.05},{"zone_id":1,"horizon_hours":12,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 1: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.1},{"zone_id":1,"horizon_hours":24,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 1: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.15},{"zone_id":1,"horizon_hours":48,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 1: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.2},{"zone_id":2,"horizon_hours":0,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 2: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.05},{"zone_id":2,"horizon_hours":12,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 2: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.1},{"zone_id":2,"horizon_hours":24,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 2: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.15},{"zone_id":2,"horizon_hours":48,"level":"low","top_hazard":"flash_flood","confidence":"low","reason":"Flash flood: 6.1 mm in 3 h near Chenani; zone 2 is somewhat exposed to flash floods","landslide":0.0,"rockfall":0.0,"flash_flood":0.017,"snow_ice":0.0,"overall":0.017,"risk_low":0.0,"risk_high":0.217},{"zone_id":3,"horizon_hours":0,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 3: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.05},{"zone_id":3,"horizon_hours":12,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 3: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.1},{"zone_id":3,"horizon_hours":24,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 3: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.15},{"zone_id":3,"horizon_hours":48,"level":"low","top_hazard":"flash_flood","confidence":"low","reason":"Flash flood: 6.7 mm in 3 h near Peerah; zone 3 is very exposed to flash floods","landslide":0.005,"rockfall":0.005,"flash_flood":0.068,"snow_ice":0.0,"overall":0.068,"risk_low":0.0,"risk_high":0.268},{"zone_id":4,"horizon_hours":0,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 4: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.05},{"zone_id":4,"horizon_hours":12,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 4: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.1},{"zone_id":4,"horizon_hours":24,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 4: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.15},{"zone_id":4,"horizon_hours":48,"level":"low","top_hazard":"flash_flood","confidence":"low","reason":"Flash flood: 6.7 mm in 3 h near Ramban; zone 4 is exposed to flash floods","landslide":0.003,"rockfall":0.008,"flash_flood":0.043,"snow_ice":0.0,"overall":0.043,"risk_low":0.0,"risk_high":0.243},{"zone_id":5,"horizon_hours":0,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 5: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.05},{"zone_id":5,"horizon_hours":12,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 5: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.1},{"zone_id":5,"horizon_hours":24,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 5: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.15},{"zone_id":5,"horizon_hours":48,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 18 mm rain in 48 h near Navyug tunnel (Banihal side); zone 5 is exposed to rockfall","landslide":0.063,"rockfall":0.149,"flash_flood":0.09,"snow_ice":0.0,"overall":0.149,"risk_low":0.0,"risk_high":0.349},{"zone_id":6,"horizon_hours":0,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 6: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.05},{"zone_id":6,"horizon_hours":12,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 6: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.1},{"zone_id":6,"horizon_hours":24,"level":"low","top_hazard":null,"confidence":"low","reason":"Zone 6: no rain, snow or frost trigger in the window","landslide":0.0,"rockfall":0.0,"flash_flood":0.0,"snow_ice":0.0,"overall":0.0,"risk_low":0.0,"risk_high":0.15},{"zone_id":6,"horizon_hours":48,"level":"low","top_hazard":"flash_flood","confidence":"low","reason":"Flash flood: 8.0 mm in 3 h near Srinagar; zone 6 has low exposure to flash floods","landslide":0.008,"rockfall":0.014,"flash_flood":0.015,"snow_ice":0.0,"overall":0.015,"risk_low":0.0,"risk_high":0.215}]},"replay":{"label":"Replay, 25 Aug 2025 06:00 UTC (11:30 IST)","run_at":"2025-08-25T06:00:00Z","source":"scripts/round2/replay_2025.py: rules-v0.1 run on Open-Meteo archive weather (observed, not the forecast of that day)","rows":[{"zone_id":1,"horizon_hours":0,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 66 mm rain in 72 h near Nagrota; zone 1 has low exposure to landslides","landslide":0.079,"rockfall":0.068,"flash_flood":0.033,"snow_ice":0.0,"overall":0.079,"risk_low":0.029,"risk_high":0.129},{"zone_id":2,"horizon_hours":0,"level":"medium","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 50 mm rain in 72 h near Chenani; zone 2 is exposed to landslides","landslide":0.34,"rockfall":0.215,"flash_flood":0.05,"snow_ice":0.0,"overall":0.34,"risk_low":0.29,"risk_high":0.39},{"zone_id":3,"horizon_hours":0,"level":"high","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 65 mm rain in 72 h near Nashri; zone 3 is very exposed to landslides","landslide":0.71,"rockfall":0.6,"flash_flood":0.172,"snow_ice":0.0,"overall":0.71,"risk_low":0.66,"risk_high":0.76},{"zone_id":4,"horizon_hours":0,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 36 mm rain in 48 h near Digdol; zone 4 is very exposed to rockfall","landslide":0.386,"rockfall":0.657,"flash_flood":0.092,"snow_ice":0.0,"overall":0.657,"risk_low":0.607,"risk_high":0.707},{"zone_id":5,"horizon_hours":0,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 54 mm rain in 48 h near Navyug tunnel (Banihal side); zone 5 is exposed to rockfall","landslide":0.312,"rockfall":0.7,"flash_flood":0.072,"snow_ice":0.0,"overall":0.7,"risk_low":0.65,"risk_high":0.75},{"zone_id":6,"horizon_hours":0,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 39 mm rain in 48 h near Srinagar; zone 6 has low exposure to rockfall","landslide":0.043,"rockfall":0.073,"flash_flood":0.022,"snow_ice":0.0,"overall":0.073,"risk_low":0.023,"risk_high":0.123},{"zone_id":1,"horizon_hours":12,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 70 mm rain in 72 h near Nagrota; zone 1 has low exposure to landslides","landslide":0.086,"rockfall":0.068,"flash_flood":0.033,"snow_ice":0.0,"overall":0.086,"risk_low":0.0,"risk_high":0.186},{"zone_id":2,"horizon_hours":12,"level":"medium","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 56 mm rain in 72 h near Chenani; zone 2 is exposed to landslides","landslide":0.396,"rockfall":0.258,"flash_flood":0.014,"snow_ice":0.0,"overall":0.396,"risk_low":0.296,"risk_high":0.496},{"zone_id":3,"horizon_hours":12,"level":"high","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 74 mm rain in 72 h near Nashri; zone 3 is very exposed to landslides","landslide":0.823,"rockfall":0.6,"flash_flood":0.072,"snow_ice":0.0,"overall":0.823,"risk_low":0.723,"risk_high":0.923},{"zone_id":4,"horizon_hours":12,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 38 mm rain in 48 h near Ramban; zone 4 is very exposed to rockfall","landslide":0.437,"rockfall":0.703,"flash_flood":0.0,"snow_ice":0.0,"overall":0.703,"risk_low":0.603,"risk_high":0.803},{"zone_id":5,"horizon_hours":12,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 54 mm rain in 48 h near Qazigund; zone 5 is exposed to rockfall","landslide":0.357,"rockfall":0.7,"flash_flood":0.032,"snow_ice":0.0,"overall":0.7,"risk_low":0.6,"risk_high":0.8},{"zone_id":6,"horizon_hours":12,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 33 mm rain in 48 h near Anantnag (Bijbehara); zone 6 has low exposure to rockfall","landslide":0.043,"rockfall":0.057,"flash_flood":0.022,"snow_ice":0.0,"overall":0.057,"risk_low":0.0,"risk_high":0.157},{"zone_id":1,"horizon_hours":24,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 174 mm rain in 72 h (138 mm in 24 h) near Nagrota; zone 1 has low exposure to landslides","landslide":0.1,"rockfall":0.1,"flash_flood":0.1,"snow_ice":0.0,"overall":0.1,"risk_low":0.0,"risk_high":0.25},{"zone_id":2,"horizon_hours":24,"level":"medium","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 143 mm rain in 72 h (105 mm in 24 h) near Chenani; zone 2 is exposed to landslides","landslide":0.6,"rockfall":0.3,"flash_flood":0.3,"snow_ice":0.0,"overall":0.6,"risk_low":0.45,"risk_high":0.75},{"zone_id":3,"horizon_hours":24,"level":"high","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 127 mm rain in 72 h (69 mm in 24 h) near Nashri; zone 3 is very exposed to landslides","landslide":0.9,"rockfall":0.6,"flash_flood":0.8,"snow_ice":0.0,"overall":0.9,"risk_low":0.75,"risk_high":1.0},{"zone_id":4,"horizon_hours":24,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 81 mm rain in 48 h near Ramban; zone 4 is very exposed to rockfall","landslide":0.8,"rockfall":1.0,"flash_flood":0.447,"snow_ice":0.0,"overall":1.0,"risk_low":0.85,"risk_high":1.0},{"zone_id":5,"horizon_hours":24,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 81 mm rain in 48 h near Ramsoo; zone 5 is exposed to rockfall","landslide":0.5,"rockfall":0.7,"flash_flood":0.3,"snow_ice":0.0,"overall":0.7,"risk_low":0.55,"risk_high":0.85},{"zone_id":6,"horizon_hours":24,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 52 mm rain in 48 h near Anantnag (Bijbehara); zone 6 has low exposure to rockfall","landslide":0.096,"rockfall":0.1,"flash_flood":0.048,"snow_ice":0.0,"overall":0.1,"risk_low":0.0,"risk_high":0.25},{"zone_id":1,"horizon_hours":48,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 214 mm rain in 72 h (54 mm in 24 h) near Nagrota; zone 1 has low exposure to landslides","landslide":0.1,"rockfall":0.1,"flash_flood":0.1,"snow_ice":0.0,"overall":0.1,"risk_low":0.0,"risk_high":0.3},{"zone_id":2,"horizon_hours":48,"level":"medium","top_hazard":"landslide","confidence":"low","reason":"Landslide: 239 mm rain in 72 h (111 mm in 24 h) near Chenani; zone 2 is exposed to landslides","landslide":0.6,"rockfall":0.3,"flash_flood":0.3,"snow_ice":0.0,"overall":0.6,"risk_low":0.4,"risk_high":0.8},{"zone_id":3,"horizon_hours":48,"level":"high","top_hazard":"landslide","confidence":"low","reason":"Landslide: 203 mm rain in 72 h (105 mm in 24 h) near Nashri; zone 3 is very exposed to landslides","landslide":0.9,"rockfall":0.6,"flash_flood":0.8,"snow_ice":0.0,"overall":0.9,"risk_low":0.7,"risk_high":1.0},{"zone_id":4,"horizon_hours":48,"level":"high","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 129 mm rain in 48 h near Ramban; zone 4 is very exposed to rockfall","landslide":0.8,"rockfall":1.0,"flash_flood":0.397,"snow_ice":0.0,"overall":1.0,"risk_low":0.8,"risk_high":1.0},{"zone_id":5,"horizon_hours":48,"level":"high","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 130 mm rain in 48 h near Ramsoo; zone 5 is exposed to rockfall","landslide":0.5,"rockfall":0.7,"flash_flood":0.3,"snow_ice":0.0,"overall":0.7,"risk_low":0.5,"risk_high":0.9},{"zone_id":6,"horizon_hours":48,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 123 mm rain in 72 h (71 mm in 24 h) near Anantnag (Bijbehara); zone 6 has low exposure to landslides","landslide":0.1,"rockfall":0.1,"flash_flood":0.086,"snow_ice":0.0,"overall":0.1,"risk_low":0.0,"risk_high":0.3}],"day_before":[{"zone_id":1,"horizon_hours":0,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 44 mm rain in 48 h near Nagrota; zone 1 has low exposure to rockfall","landslide":0.048,"rockfall":0.085,"flash_flood":0.009,"snow_ice":0.0,"overall":0.085,"risk_low":0.035,"risk_high":0.135},{"zone_id":2,"horizon_hours":0,"level":"low","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 26 mm rain in 72 h near Chenani; zone 2 is exposed to landslides","landslide":0.141,"rockfall":0.122,"flash_flood":0.031,"snow_ice":0.0,"overall":0.141,"risk_low":0.091,"risk_high":0.191},{"zone_id":3,"horizon_hours":0,"level":"medium","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 37 mm rain in 48 h near Nashri; zone 3 is exposed to rockfall","landslide":0.357,"rockfall":0.403,"flash_flood":0.2,"snow_ice":0.0,"overall":0.403,"risk_low":0.353,"risk_high":0.453},{"zone_id":4,"horizon_hours":0,"level":"medium","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 25 mm rain in 48 h near Digdol; zone 4 is very exposed to rockfall","landslide":0.175,"rockfall":0.378,"flash_flood":0.0,"snow_ice":0.0,"overall":0.378,"risk_low":0.328,"risk_high":0.428},{"zone_id":5,"horizon_hours":0,"level":"medium","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 34 mm rain in 48 h near Navyug tunnel (Banihal side); zone 5 is exposed to rockfall","landslide":0.271,"rockfall":0.418,"flash_flood":0.195,"snow_ice":0.0,"overall":0.418,"risk_low":0.368,"risk_high":0.468},{"zone_id":6,"horizon_hours":0,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 34 mm rain in 48 h near Srinagar; zone 6 has low exposure to rockfall","landslide":0.054,"rockfall":0.059,"flash_flood":0.027,"snow_ice":0.0,"overall":0.059,"risk_low":0.009,"risk_high":0.109},{"zone_id":1,"horizon_hours":12,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 49 mm rain in 48 h near Nagrota; zone 1 has low exposure to rockfall","landslide":0.055,"rockfall":0.097,"flash_flood":0.017,"snow_ice":0.0,"overall":0.097,"risk_low":0.0,"risk_high":0.197},{"zone_id":2,"horizon_hours":12,"level":"low","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 37 mm rain in 72 h near Chenani; zone 2 is exposed to landslides","landslide":0.228,"rockfall":0.184,"flash_flood":0.05,"snow_ice":0.0,"overall":0.228,"risk_low":0.128,"risk_high":0.328},{"zone_id":3,"horizon_hours":12,"level":"high","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 50 mm rain in 72 h (37 mm in 24 h) near Nashri; zone 3 is very exposed to landslides","landslide":0.701,"rockfall":0.581,"flash_flood":0.2,"snow_ice":0.0,"overall":0.701,"risk_low":0.601,"risk_high":0.801},{"zone_id":4,"horizon_hours":12,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 39 mm rain in 48 h near Digdol; zone 4 is very exposed to rockfall","landslide":0.331,"rockfall":0.725,"flash_flood":0.092,"snow_ice":0.0,"overall":0.725,"risk_low":0.625,"risk_high":0.825},{"zone_id":5,"horizon_hours":12,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 48 mm rain in 48 h near Qazigund; zone 5 is exposed to rockfall","landslide":0.368,"rockfall":0.656,"flash_flood":0.195,"snow_ice":0.0,"overall":0.656,"risk_low":0.556,"risk_high":0.756},{"zone_id":6,"horizon_hours":12,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 39 mm rain in 48 h near Srinagar; zone 6 has low exposure to rockfall","landslide":0.062,"rockfall":0.073,"flash_flood":0.027,"snow_ice":0.0,"overall":0.073,"risk_low":0.0,"risk_high":0.173},{"zone_id":1,"horizon_hours":24,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 66 mm rain in 72 h near Nagrota; zone 1 has low exposure to landslides","landslide":0.079,"rockfall":0.068,"flash_flood":0.033,"snow_ice":0.0,"overall":0.079,"risk_low":0.0,"risk_high":0.229},{"zone_id":2,"horizon_hours":24,"level":"medium","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 50 mm rain in 72 h near Chenani; zone 2 is exposed to landslides","landslide":0.34,"rockfall":0.215,"flash_flood":0.05,"snow_ice":0.0,"overall":0.34,"risk_low":0.19,"risk_high":0.49},{"zone_id":3,"horizon_hours":24,"level":"high","top_hazard":"landslide","confidence":"medium","reason":"Landslide: 65 mm rain in 72 h near Nashri; zone 3 is very exposed to landslides","landslide":0.71,"rockfall":0.6,"flash_flood":0.172,"snow_ice":0.0,"overall":0.71,"risk_low":0.56,"risk_high":0.86},{"zone_id":4,"horizon_hours":24,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 36 mm rain in 48 h near Digdol; zone 4 is very exposed to rockfall","landslide":0.386,"rockfall":0.657,"flash_flood":0.092,"snow_ice":0.0,"overall":0.657,"risk_low":0.507,"risk_high":0.807},{"zone_id":5,"horizon_hours":24,"level":"high","top_hazard":"rockfall","confidence":"medium","reason":"Rockfall: 54 mm rain in 48 h near Navyug tunnel (Banihal side); zone 5 is exposed to rockfall","landslide":0.312,"rockfall":0.7,"flash_flood":0.072,"snow_ice":0.0,"overall":0.7,"risk_low":0.55,"risk_high":0.85},{"zone_id":6,"horizon_hours":24,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 39 mm rain in 48 h near Srinagar; zone 6 has low exposure to rockfall","landslide":0.043,"rockfall":0.073,"flash_flood":0.022,"snow_ice":0.0,"overall":0.073,"risk_low":0.0,"risk_high":0.223},{"zone_id":1,"horizon_hours":48,"level":"low","top_hazard":"landslide","confidence":"low","reason":"Landslide: 174 mm rain in 72 h (138 mm in 24 h) near Nagrota; zone 1 has low exposure to landslides","landslide":0.1,"rockfall":0.1,"flash_flood":0.1,"snow_ice":0.0,"overall":0.1,"risk_low":0.0,"risk_high":0.3},{"zone_id":2,"horizon_hours":48,"level":"medium","top_hazard":"landslide","confidence":"low","reason":"Landslide: 143 mm rain in 72 h (105 mm in 24 h) near Chenani; zone 2 is exposed to landslides","landslide":0.6,"rockfall":0.3,"flash_flood":0.3,"snow_ice":0.0,"overall":0.6,"risk_low":0.4,"risk_high":0.8},{"zone_id":3,"horizon_hours":48,"level":"high","top_hazard":"landslide","confidence":"low","reason":"Landslide: 127 mm rain in 72 h (69 mm in 24 h) near Nashri; zone 3 is very exposed to landslides","landslide":0.9,"rockfall":0.6,"flash_flood":0.8,"snow_ice":0.0,"overall":0.9,"risk_low":0.7,"risk_high":1.0},{"zone_id":4,"horizon_hours":48,"level":"high","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 81 mm rain in 48 h near Ramban; zone 4 is very exposed to rockfall","landslide":0.8,"rockfall":1.0,"flash_flood":0.447,"snow_ice":0.0,"overall":1.0,"risk_low":0.8,"risk_high":1.0},{"zone_id":5,"horizon_hours":48,"level":"high","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 81 mm rain in 48 h near Ramsoo; zone 5 is exposed to rockfall","landslide":0.5,"rockfall":0.7,"flash_flood":0.3,"snow_ice":0.0,"overall":0.7,"risk_low":0.5,"risk_high":0.9},{"zone_id":6,"horizon_hours":48,"level":"low","top_hazard":"rockfall","confidence":"low","reason":"Rockfall: 52 mm rain in 48 h near Anantnag (Bijbehara); zone 6 has low exposure to rockfall","landslide":0.096,"rockfall":0.1,"flash_flood":0.048,"snow_ice":0.0,"overall":0.1,"risk_low":0.0,"risk_high":0.3}]},"points":[{"id":"z1_nagrota","name":"Nagrota","zone_id":1,"lat":32.79085,"lng":74.90476,"source":"Nominatim 'Nagrota' -> OSM node 5306808243 (place=suburb); 0.11 km from NH-44 line","km_from_jammu":10.0},{"id":"z1_jakhani","name":"Udhampur (Jakhani)","zone_id":1,"lat":32.92197,"lng":75.13315,"source":"Nominatim 'Udhampur' -> OSM node 1977558902 (place=city); 0.49 km from NH-44 line","km_from_jammu":57.4},{"id":"z2_chenani","name":"Chenani","zone_id":2,"lat":33.03641,"lng":75.28389,"source":"Nominatim 'Chenani' -> OSM node 1423415153 (place=town); 0.56 km from NH-44 line","km_from_jammu":80.1},{"id":"z3_nashri","name":"Nashri","zone_id":3,"lat":33.0881,"lng":75.28678,"source":"Nominatim 'Nashri' -> OSM way 128930104 (highway=trunk); 0.00 km from NH-44 line","km_from_jammu":85.9},{"id":"z3_peerah","name":"Peerah","zone_id":3,"lat":33.17752,"lng":75.30027,"source":"Nominatim 'Peerah' -> OSM way 1445960461 (highway=trunk); 0.07 km from NH-44 line","km_from_jammu":97.7},{"id":"z3_seri","name":"Seri","zone_id":3,"lat":33.24981,"lng":75.2104,"source":"Nominatim 'Seri' -> OSM node 7913418554 (place=hamlet); 0.07 km from NH-44 line","km_from_jammu":111.1},{"id":"z4_ramban","name":"Ramban","zone_id":4,"lat":33.2387,"lng":75.24044,"source":"Nominatim 'Ramban' -> OSM node 434392578 (place=town); 0.11 km from NH-44 line","km_from_jammu":107.9},{"id":"z4_digdol","name":"Digdol","zone_id":4,"lat":33.30284,"lng":75.17981,"source":"Nominatim 'Digdaal' -> OSM node 7913418538 (place=hamlet); 0.21 km from NH-44 line","km_from_jammu":122.3},{"id":"z4_marog","name":"Marog","zone_id":4,"lat":33.2648,"lng":75.18839,"source":"Nominatim 'Marog' -> OSM node 7913418546 (place=hamlet); 0.18 km from NH-44 line","km_from_jammu":115.0},{"id":"z5_ramsoo","name":"Ramsoo","zone_id":5,"lat":33.33652,"lng":75.1924,"source":"Nominatim 'Ramsu' -> OSM node 7925415169 (place=hamlet); 0.05 km from NH-44 line","km_from_jammu":127.8},{"id":"z5_banihal","name":"Banihal","zone_id":5,"lat":33.43789,"lng":75.19549,"source":"Nominatim 'Banihal' -> OSM node 342119133 (place=town); 0.14 km from NH-44 line","km_from_jammu":143.5},{"id":"z5_navyug_south","name":"Navyug tunnel (Banihal side)","zone_id":5,"lat":33.48916,"lng":75.17274,"source":"Nominatim 'Banihal Qazigund Tunnel' -> southern end of OSM way 316685070 (highway=motorway); 0.00 km from NH-44 line","km_from_jammu":150.3},{"id":"z5_qazigund","name":"Qazigund","zone_id":5,"lat":33.59347,"lng":75.16582,"source":"Nominatim 'Qazigund' -> OSM node 342119126 (place=town); 0.06 km from NH-44 line","km_from_jammu":162.9},{"id":"z6_bijbehara","name":"Anantnag (Bijbehara)","zone_id":6,"lat":33.79352,"lng":75.10616,"source":"Nominatim 'Bijbehara' -> OSM node 342119164 (place=town); 1.71 km from NH-44 line","km_from_jammu":186.8},{"id":"z6_srinagar","name":"Srinagar","zone_id":6,"lat":34.07474,"lng":74.82044,"source":"Nominatim 'Srinagar' -> OSM node 273658993 (place=city); 0.03 km from NH-44 line","km_from_jammu":232.6}],"incidents":[{"date":"2018-02-06","zone_id":"5","place":"Ramsu","lat":"33.3412","lng":"75.1925","hazard_type":"landslide","hours_closed":"24","trucks_stranded":"300","source_url":"https://timesofindia.indiatimes.com/india/jk-highway-closed-after-landslide-in-ramban/articleshow/62802288.cms"},{"date":"2019-05-09","zone_id":"4","place":"Digdol","lat":"33.282971","lng":"75.178749","hazard_type":"landslide","hours_closed":"48","trucks_stranded":"500","source_url":"https://www.indiatoday.in/india/story/jammu-srinagar-national-highway-shut-after-landslide-hits-ramban-1520838-2019-05-09"},{"date":"2020-03-04","zone_id":"3","place":"Peera","lat":"33.1710957","lng":" 75.2989106","hazard_type":"landslide","hours_closed":"24","trucks_stranded":"200","source_url":"https://www.indiatvnews.com/news/india/jammu-and-kashmir-highway-shut-landslides-594862"},{"date":"2021-01-24","zone_id":"5","place":"Banihal","lat":"33.4333","lng":"75.2000","hazard_type":"snow_ice","hours_closed":"48","trucks_stranded":"500","source_url":"https://www.ndtv.com/india-news/amid-heavy-snow-2-found-dead-inside-stranded-vehicle-on-jammu-srinagar-highway-2357449"},{"date":"2024-03-02","zone_id":"3","place":"Dalwas","lat":"33.1944","lng":"75.2972","hazard_type":"landslide","hours_closed":"48","trucks_stranded":"1500","source_url":"https://timesofindia.indiatimes.com/india/after-2-day-closure-one-way-traffic-resumes-on-jammu-srinagar-national-highway/articleshow/108215100.cms"},{"date":"2024-04-16","zone_id":"5","place":"Kishtwari Pather","lat":"33.402846","lng":"75.196819","hazard_type":"landslide","hours_closed":"15","trucks_stranded":"600","source_url":"https://kashmirobserver.net/2024/04/16/kashmir-highway-partially-restored-stranded-traffic-being-cleared/"}]}</script>
+<script>
+(() => {
+  'use strict';
+/* Shared by every RouteGuard Round 2 page: data, vocabulary, components, contrast maths.
+   build.py wraps shared.js + one page script in a single function scope. */
+  const D = JSON.parse(document.getElementById('rg-data').textContent);
+  const C = D.tokens.color;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const icon = (n, cls = 'ico') => `<svg class="${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
+  };
+
+  /* ---------------------------------------------------------------- words
+     English is the source text. Every string on the phone goes through tr('Zone {z}', { z: 4 }), which fills the
+     {placeholders}. When the app goes multilingual (Hindi and Urdu are planned), a table of translations keyed by
+     the English text goes into LANG and nothing else changes. */
+  const LANG = {};
+  const tr = (s, v) => { let o = LANG[s] || s; if (v) o = o.replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m)); return o; };
+
+  /* ---------------------------------------------------------------- shared vocabulary */
+  const ZONE = {
+    1: { name: 'Jammu → Udhampur', short: 'Jammu' },
+    2: { name: 'Udhampur → Nashri', short: 'Chenani' },
+    3: { name: 'Nashri → Ramban', short: 'Nashri' },
+    4: { name: 'Ramban → Ramsoo', short: 'Ramban' },
+    5: { name: 'Ramsoo → Qazigund', short: 'Banihal' },
+    6: { name: 'Qazigund → Srinagar', short: 'Srinagar' },
+  };
+  const HAZ = { landslide: 'Landslide', rockfall: 'Rockfall', flash_flood: 'Flash flood', snow_ice: 'Snow / ice' };
+  const HAZ_ICON = { landslide: 'hazard-landslide', rockfall: 'hazard-rockfall', flash_flood: 'hazard-flash-flood', snow_ice: 'hazard-snow-ice' };
+  const ADV = {
+    SEND: { cls: 'd-send', icon: 'decision-send', word: 'SEND' },
+    HOLD: { cls: 'd-hold', icon: 'decision-hold', word: 'HOLD' },
+    RAIL: { cls: 'd-rail', icon: 'decision-rail', word: 'RAIL' },
+    DIVERT: { cls: 'd-divert', icon: 'decision-divert', word: 'DIVERT' },
+  };
+  const LV = { low: 0, medium: 1, high: 2 };
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const HL = { 0: 'now', 12: '+12 h', 24: '+24 h', 48: '+48 h' };
+  const AT = { 0: 'right now', 12: 'at +12 h', 24: 'at +24 h', 48: 'at +48 h' };
+  const SRC = {
+    police: { cls: 'rp-police', label: 'Police official', icon: 'decision-hold' },
+    verified: { cls: 'rp-verified', label: 'Verified driver', icon: 'decision-send' },
+    unconfirmed: { cls: 'rp-unconfirmed', label: 'Unconfirmed driver', icon: 'status-offline-queue' },
+  };
+
+  /* ---------------------------------------------------------------- components (also used in Figma) */
+  function decisionBanner(adv, why, extra = '') {
+    const a = ADV[adv];
+    return `<div class="decision ${a.cls}" data-advice="${adv}"><div class="stripe"></div><div class="body">
+      <div class="head">${icon(a.icon)}<span>${esc(tr(a.word))}</span></div>
+      <div class="why">${esc(why)}</div>${extra}</div></div>`;
+  }
+  function levelBadge(level) {
+    return `<span class="badge lv-${level}">${level === 'high' ? '▲▲ ' : level === 'medium' ? '▲ ' : ''}${esc(tr(level + ' risk'))}</span>`;
+  }
+  function confBadge(conf) { return `<span class="badge cf-${conf}">${esc(tr(conf + ' confidence'))}</span>`; }
+  function zoneCard(z, r, opts = {}) {
+    return `<div class="zone-card lv-${r.level}" data-zone="${z}">
+      <div class="row"><strong>${esc(tr('Zone {z} · {name}', { z, name: tr(ZONE[z].name) }))}</strong></div>
+      <div class="row">${levelBadge(r.level)}${confBadge(r.confidence)}</div>
+      <div class="row"><span class="score num">${r.overall.toFixed(2)}</span><span class="muted num">${esc(tr('range {a} to {b}', { a: r.risk_low.toFixed(2), b: r.risk_high.toFixed(2) }))}</span></div>
+      <div style="display:flex;gap:8px;align-items:center">${icon(HAZ_ICON[r.top_hazard], 'ico sm')}<span>${esc(r.reason)}</span></div>
+      ${opts.extra || ''}</div>`;
+  }
+  const SYNC = {
+    live: { cls: 's-live', icon: 'nav-map' },
+    offline: { cls: 's-offline', icon: 'status-offline-queue' },
+    stale: { cls: 's-stale', icon: 'decision-hold' },
+    queued: { cls: 's-queued', icon: 'status-offline-queue' },
+    error: { cls: 's-error', icon: 'hazard-rockfall' },
+  };
+  function syncInner(kind, text) { return `${icon(SYNC[kind].icon, 'ico sm')}<span>${esc(text)}</span>`; }
+  function reportPill(src, text) {
+    const s = SRC[src];
+    return `<span class="rpill ${s.cls}">${icon(s.icon, 'ico sm')}<span>${esc(tr(s.label))}${text ? ': ' + esc(text) : ''}</span></span>`;
+  }
+  const NAV = [
+    { id: 'map', label: 'Map', icon: 'nav-map' },
+    { id: 'strip', label: '48h', icon: 'nav-strip' },
+    { id: 'advisor', label: 'Advisor', icon: 'nav-advisor' },
+    { id: 'board', label: 'Board', icon: 'nav-board' },
+    { id: 'report', label: 'Report', icon: 'nav-report' },
+  ];
+  function bottomNav(active) {
+    return NAV.map(n => `<button data-nav="${n.id}" ${n.id === active ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${esc(tr(n.label))}</span></button>`).join('');
+  }
+
+
+  /* ---------------------------------------------------------------- contrast (WCAG 2.1) */
+  const lum = hex => {
+    const v = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const grade = r => (r >= 7 ? 'AAA' : r >= 4.5 ? 'AA' : r >= 3 ? 'AA large / UI' : 'fail');
+
+/* Clickable prototype.
+   Risk rows are real job output (see the data note). People, trucks, phones and road reports are sample data.
+   decide() is a stand-in for lib/decide.ts: it follows the Round 1 rules, but the shelf-life and price
+   values are placeholders until the team's advice table lands.
+   Every word on the phone goes through tr() (shared.js), so a translation table can be added when the app goes multilingual. */
+  /* ---------------------------------------------------------------- prototype data */
+  const SCEN = {
+    live: { rows: D.live.rows, label: D.live.label, month: 11, when: '10 Nov 18:34 UTC', banner: ['Live · scores from the {when} run', { when: '10 Nov 18:34 UTC' }] },
+    replay: { rows: D.replay.rows, label: D.replay.label, month: 8, when: '25 Aug 2025 06:00 UTC', banner: ['Replay · {when} run', { when: '25 Aug 2025 06:00 UTC' }] },
+    daybefore: { rows: D.replay.day_before, label: 'Replay, 24 Aug 2025 06:00 UTC (a day before the closure)', month: 8, when: '24 Aug 2025 06:00 UTC', banner: ['Replay · {when} run', { when: '24 Aug 2025 06:00 UTC' }] },
+  };
+  const SHELF = { 'Delicious': 21, 'Kullu Delicious': 18, 'Maharaji': 28, 'Ambri': 35 }; // placeholder days
+  const PRICE = { 'Delicious': 60, 'Kullu Delicious': 55, 'Maharaji': 45, 'Ambri': 80 }; // placeholder Rs/kg
+  const DEST = {
+    azadpur: { name: 'Azadpur (Delhi)', zones: [1, 2, 3, 4, 5, 6], valley: false, hours: 22 },
+    narwal: { name: 'Narwal (Jammu)', zones: [1, 2, 3, 4, 5, 6], valley: false, hours: 9 },
+    parimpora: { name: 'Parimpora (Srinagar)', zones: [6], valley: true, hours: 2 },
+  };
+  const TRUCK = { multi: 'Multi-axle (10+ wheels)', light: 'Light 6-wheeler' };
+  const SAMPLE_TRUCKS = [
+    { truck: 'JK03 F 2214', variety: 'Delicious', days: 12, tonnes: 10, dest: 'azadpur', type: 'multi', phone: '98•• ••• 214', seen: ['Budgam', 14] },
+    { truck: 'JK22 C 8810', variety: 'Kullu Delicious', days: 15, tonnes: 8, dest: 'azadpur', type: 'multi', phone: '70•• ••• 810', seen: ['Sopore', 40] },
+    { truck: 'JK01 AB 3301', variety: 'Maharaji', days: 5, tonnes: 6, dest: 'narwal', type: 'light', phone: '94•• ••• 301', seen: ['Shopian', 8] },
+    { truck: 'JK13 D 0921', variety: 'Ambri', days: 20, tonnes: 9, dest: 'parimpora', type: 'light', phone: '60•• ••• 921', seen: ['Pulwama', 25] },
+  ];
+  const SAMPLE_REPORTS = {
+    live: [{ src: 'unconfirmed', hazard: 'rockfall', zone: 4, place: 'Marog', mins: 25 }],
+    replay: [{ src: 'police', hazard: 'landslide', zone: 4, place: 'Digdol', mins: 40, note: 'closed both ways' },
+      { src: 'verified', hazard: 'landslide', zone: 3, place: 'Seri', mins: 70 },
+      { src: 'unconfirmed', hazard: 'flash_flood', zone: 3, place: 'Nashri', mins: 15 }],
+    daybefore: [{ src: 'unconfirmed', hazard: 'rockfall', zone: 4, place: 'Digdol', mins: 30 }],
+  };
+  const GPS = { lat: 33.30284, lng: 75.17981, zone: 4, place: 'Digdol' }; // points.json z4_digdol
+  const ROLE = { grower: 'Grower / Trader', agent: 'Transport Agent', driver: 'Truck Driver', police: 'Traffic Police (TCU)' };
+  const ROLE_TAB = { grower: 'map', agent: 'board', driver: 'report', police: 'report' };
+  const PEOPLE = { // the four personas (05_Personas); sample numbers
+    grower: { name: 'Haji Ghulam Nabi', phone: '9419011180' },
+    agent: { name: 'Tariq Ahmad', phone: '7006122290' },
+    driver: { name: 'Gurpreet Singh', phone: '9876504521', verified: true },
+    police: { name: 'Insp. Rajesh Sharma', phone: '9419100007' },
+  };
+  const CODE = '418207'; // the SMS code in this prototype
+  const STATUS = { closed: 'closed both ways', oneway: 'one-way only', open: 'open' };
+
+  const DEFAULT = () => ({
+    scenario: 'replay', network: 'online', edge: 'normal', role: 'grower', device: 'mobile',
+    auth: null, tab: 'map', back: 'map', horizon: 0, zone: 4, sheet: null, drawer: false, dialog: null, sms: false,
+    lot: { variety: 'Delicious', days: 12, tonnes: 10, dest: 'azadpur', type: 'multi', truck: 'JK05 G 7712' },
+    advice: null, committed: [], newId: null, boardFilter: 'all',
+    report: { step: 1, hazard: null, zone: null }, queue: [], sent: [], overrides: {}, pendingDone: {},
+    tcu: { zone: 4, status: 'closed', hazard: 'landslide' },
+    me: null, alertZones: [3, 4, 5], seen: {}, fresh: [],
+    signin: freshSignin('9876543210'),
+  });
+  function freshSignin(phone) {
+    return { phone: phone || '', code: '', err: null, sentAt: 0, busy: false, name: 'Gurpreet Singh', role: 'driver',
+      truck: 'JK05 G 7712', agent: '70061 22290', firm: '', village: '', loc: true, alerts: true, errs: {}, failed: false };
+  }
+  let S = DEFAULT();
+  let FAST = false; // the self-test skips the short "Sending…" waits
+
+  const me = () => S.me || { ...PEOPLE[S.role], role: S.role };
+  const initials = n => n.replace(/^(Haji|Insp\.)\s+/, '').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const digits = s => String(s).replace(/\D/g, '');
+  const fmtPhone = p => { const d = digits(p).slice(0, 10); return d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d; };
+  const maskPhone = p => { const d = digits(p); return d.slice(0, 5) + ' x' + d.slice(6); };
+  const hz = k => tr(HAZ[k]).toLowerCase();
+  const later = (fn, ms) => (FAST ? fn() : setTimeout(fn, ms));
+
+  function rows() {
+    return SCEN[S.scenario].rows.map(r => {
+      const o = S.overrides[r.zone_id];
+      if (!o) return r;
+      const x = { ...r, confidence: 'high', local: true };
+      if (o.status === 'closed' && r.horizon_hours <= 12) {
+        // an official closure is a fact, not a forecast: score 1.00, no range
+        x.level = 'high'; x.top_hazard = o.hazard; x.overall = 1; x.risk_low = 1; x.risk_high = 1;
+        x[o.hazard] = 1;
+        x.reason = tr('TCU official: zone {z} closed ({haz}). Score set to 1.00 and confidence to High by police.', { z: r.zone_id, haz: hz(o.hazard) });
+      } else if (r.horizon_hours === 0) {
+        x.reason = tr('TCU official: zone {z} {status}. Confidence set to High by police.', { z: r.zone_id, status: tr(STATUS[o.status]) });
+      } else x.local = false;
+      return x;
+    });
+  }
+  const get = (z, h) => rows().find(r => r.zone_id === z && r.horizon_hours === h);
+  const zoneName = z => tr('Zone {z} ({name})', { z, name: tr(ZONE[z].name) });
+
+  function decide(lot) {
+    const d = DEST[lot.dest];
+    let w = null;
+    for (const z of d.zones) for (const h of [0, 12, 24]) {
+      const r = get(z, h);
+      if (!w || LV[r.level] > LV[w.level] || (LV[r.level] === LV[w.level] && r.overall > w.overall && r.level !== 'low')) w = { ...r, z, h };
+    }
+    const highZones = d.zones.filter(z => get(z, 24).level === 'high' && get(z, 48).level === 'high');
+    const shut48 = highZones.length > 0;
+    const spoil = Math.min(1, lot.days / SHELF[lot.variety]);
+    const value = lot.tonnes * PRICE[lot.variety] / 100; // lakh rupees
+    const priority = +(spoil * value).toFixed(2);
+    const month = SCEN[S.scenario].month;
+    const v = { zone: zoneName(w.z), at: tr(AT[w.h]) };
+    let advice, why, delay;
+    if (w.level === 'low') {
+      advice = 'SEND'; delay = 'none expected';
+      why = d.zones.length === 1 ? tr('Zone {z} on your route stays low for 24 h. Leave in the next 12 h.', { z: d.zones[0] })
+        : tr('All {n} zones on your route stay low for 24 h. Leave in the next 12 h.', { n: d.zones.length });
+    } else if (w.level === 'medium') {
+      if (lot.type === 'light' && !d.valley && month >= 5 && month <= 11) {
+        advice = 'DIVERT'; delay = '+4 h (longer road)';
+        why = tr('{zone} is medium {at}. A light truck can take Mughal Road (Shopian to Bufliaz) instead of NH-44.', v);
+      } else {
+        advice = 'HOLD'; delay = '+6 h';
+        why = tr('{zone} is medium {at}. Wait 6 h and check again before loading.', v);
+      }
+    } else if (shut48 && !d.valley && spoil >= 0.5) {
+      advice = 'RAIL'; delay = '+24 h by road, rail avoids it';
+      why = tr(highZones.length > 1 ? 'Zones {zs} stay high at +24 h and +48 h, and this fruit has used {pct}% of its shelf life. Book a Budgam–Delhi parcel train slot.'
+        : 'Zone {zs} stays high at +24 h and +48 h, and this fruit has used {pct}% of its shelf life. Book a Budgam–Delhi parcel train slot.', { zs: highZones.join(', '), pct: Math.round(spoil * 100) });
+    } else {
+      advice = 'DIVERT'; delay = '+24 h by road';
+      why = d.valley ? tr('{zone} is high {at}. Keep the lot at a CA store near Pulwama until it clears.', v)
+        : tr('{zone} is high {at}. The fruit can wait: send it to a CA store in the valley or sell at Parimpora.', v);
+    }
+    return { advice, why, delay, priority, spoil, value, worst: w, conf: w.confidence, shut48 };
+  }
+  function eta(t) {
+    const a = t.d, h = DEST[t.dest].hours;
+    if (a.advice === 'RAIL') return tr('by parcel train from Budgam');
+    if (a.advice === 'SEND') return tr('about {h} h', { h });
+    if (a.advice === 'HOLD') return tr('about {h} h, after the 6 h hold', { h: h + 6 });
+    return a.delay.startsWith('+4') ? tr('about {h} h by Mughal Road', { h: h + 4 }) : tr('waits at a valley CA store');
+  }
+  const seenText = t => (t.seen ? tr('{place}, {m} min ago', { place: tr(t.seen[0]), m: t.seen[1] }) : tr('At the orchard, not left yet'));
+
+  function boardList() {
+    const all = [...SAMPLE_TRUCKS.map((t, i) => ({ ...t, id: 's' + i, sample: true })), ...S.committed];
+    return all.map(t => ({ ...t, d: decide(t) })).sort((a, b) => b.d.priority - a.d.priority);
+  }
+  function reports() {
+    const base = SAMPLE_REPORTS[S.scenario].map((r, i) => ({ ...r, id: 'r' + i, sample: true }));
+    const tcu = Object.entries(S.overrides).map(([z, o]) => ({ id: 'tcu' + z, src: 'police', hazard: o.hazard, zone: +z, place: ZONE[z].short, mins: 0, note: STATUS[o.status] }));
+    const sent = S.sent.map(r => ({ ...r, src: S.pendingDone[r.id] === 'ok' ? 'verified' : 'unconfirmed' }));
+    return [...tcu, ...sent.filter(r => S.pendingDone[r.id] !== 'no'), ...base.map(r => S.pendingDone[r.id] === 'ok' ? { ...r, src: 'verified' } : r).filter(r => S.pendingDone[r.id] !== 'no')];
+  }
+  const reportText = r => `${hz(r.hazard)} · ${tr(r.place)}${r.note ? ', ' + tr(r.note) : ''} · ${r.mins ? tr('{m} min ago', { m: r.mins }) : tr('just now')}`;
+  function cacheBytes() {
+    const slim = rows().map(r => [r.zone_id, r.horizon_hours, r.level[0], +r.overall.toFixed(2), r.confidence[0], r.top_hazard]);
+    return new TextEncoder().encode(JSON.stringify({ run: SCEN[S.scenario].when, rows: slim })).length;
+  }
+
+  /* alerts for the signed-in user: police updates, verified reports and high forecasts in their alert zones */
+  function alerts() {
+    const out = [], zs = S.alertZones;
+    reports().filter(r => r.src === 'police').forEach(r => out.push({ id: 'p' + r.id + r.note, tone: 'police', zone: r.zone, h: 0,
+      head: tr('Police: zone {z} {what}', { z: r.zone, what: tr(r.note || 'update') }), sub: `${tr(HAZ[r.hazard])} · ${tr(r.place)} · ${r.mins ? tr('{m} min ago', { m: r.mins }) : tr('just now')}` }));
+    reports().filter(r => r.src === 'verified' && zs.includes(r.zone)).forEach(r => out.push({ id: 'v' + r.id, tone: 'verified', zone: r.zone, h: 0,
+      head: tr('{haz} confirmed at {place}', { haz: tr(HAZ[r.hazard]), place: tr(r.place) }), sub: tr('Verified driver report, zone {z} · {m} min ago', { z: r.zone, m: r.mins || 1 }) }));
+    zs.forEach(z => { const h = [0, 12, 24, 48].find(x => get(z, x).level === 'high');
+      if (h !== undefined && !reports().some(r => r.src === 'police' && r.zone === z)) out.push({ id: 'f' + S.scenario + z + h, tone: 'high', zone: z, h,
+        head: h === 0 ? tr('Zone {z} is high risk now', { z }) : tr('Zone {z} turns high risk {at}', { z, at: tr(AT[h]) }), sub: tr(ZONE[z].name) + ' · ' + tr('{conf} confidence', { conf: tr(get(z, h).confidence) }) }); });
+    if (S.network === 'stale') out.push({ id: 'stale', tone: 'stale', head: tr('Scores are 3 h old'), sub: tr('The hourly run was missed; showing the last good scores.') });
+    if (S.queue.length) out.push({ id: 'q' + S.queue.length, tone: 'queued', head: tr(S.queue.length > 1 ? '{n} reports waiting to send' : '{n} report waiting to send', { n: S.queue.length }), sub: tr('They send by themselves when you have signal.') });
+    return out;
+  }
+  const unread = () => alerts().filter(a => !S.seen[a.id]).length;
+  function openAlerts() { const list = alerts(); S.fresh = list.filter(a => !S.seen[a.id]).map(a => a.id); list.forEach(a => { S.seen[a.id] = true; }); }
+
+  /* ---------------------------------------------------------------- map */
+  const PTS = [...D.points].sort((a, b) => a.km_from_jammu - b.km_from_jammu);
+  const MAP = (() => {
+    const W = 358, H = 380, lat0 = 33.4, k = 262;
+    const latMax = Math.max(...PTS.map(p => p.lat)) + 0.03, lngMid = (Math.max(...PTS.map(p => p.lng)) + Math.min(...PTS.map(p => p.lng))) / 2;
+    const xy = (lat, lng) => [150 + (lng - lngMid) * k * Math.cos(lat0 * Math.PI / 180), 14 + (latMax - lat) * k];
+    const pts = PTS.map(p => ({ ...p, xy: xy(p.lat, p.lng) }));
+    const r = 6.5, hw = Math.sqrt(3) * r;
+    const segDist = (p, a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+      const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L));
+      return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+    };
+    const hexes = [];
+    for (let row = 0; row * 1.5 * r < H; row++) for (let col = -1; col * hw < W; col++) {
+      const c = [col * hw + (row % 2 ? hw / 2 : 0), row * 1.5 * r];
+      let best = 1e9;
+      for (let i = 0; i < pts.length - 1; i++) best = Math.min(best, segDist(c, pts[i].xy, pts[i + 1].xy));
+      if (best > r * 1.7) continue;
+      let near = pts[0], nd = 1e9;
+      pts.forEach(p => { const dd = Math.hypot(p.xy[0] - c[0], p.xy[1] - c[1]); if (dd < nd) { nd = dd; near = p; } });
+      const poly = [0, 1, 2, 3, 4, 5].map(i => { const a = Math.PI / 180 * (60 * i - 30); return `${(c[0] + r * Math.cos(a)).toFixed(1)},${(c[1] + r * Math.sin(a)).toFixed(1)}`; }).join(' ');
+      hexes.push({ zone: near.zone_id, poly, c });
+    }
+    return { W, H, xy, pts, hexes };
+  })();
+  const LABELS = [['z1_nagrota', 'Jammu (Nagrota)'], ['z2_chenani', 'Chenani'], ['z4_ramban', 'Ramban'], ['z4_digdol', 'Digdol'], ['z5_banihal', 'Banihal'], ['z5_qazigund', 'Qazigund'], ['z6_srinagar', 'Srinagar']];
+  function mapSvg(h, big) {
+    const fill = { low: C['risk.low.map'], medium: C['risk.medium.map'], high: C['risk.high.map'] };
+    const lv = {}; for (let z = 1; z <= 6; z++) lv[z] = get(z, h).level;
+    const hexes = MAP.hexes.map(x => `<polygon class="hex${x.zone === S.zone ? ' sel' : ''}" data-zone="${x.zone}" points="${x.poly}" fill="${fill[lv[x.zone]]}"/>`
+      + (lv[x.zone] !== 'low' ? `<polygon points="${x.poly}" fill="url(#pat-${lv[x.zone]})" pointer-events="none"/>` : '')).join('');
+    const route = `<polyline points="${MAP.pts.map(p => p.xy.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="3 3" pointer-events="none"/>`;
+    const labels = LABELS.map(([id, t]) => { const p = MAP.pts.find(q => q.id === id); const left = id === 'z6_srinagar';
+      return `<text x="${(p.xy[0] + (left ? -14 : 22)).toFixed(1)}" y="${(p.xy[1] + 4).toFixed(1)}" text-anchor="${left ? 'end' : 'start'}" font-size="12" font-weight="600" fill="${C['text.primary']}">${esc(tr(t))}</text>`; }).join('');
+    const pins = reports().map((r, i) => { const p = MAP.pts.filter(q => q.zone_id === r.zone)[i % MAP.pts.filter(q => q.zone_id === r.zone).length]; const c = r.src === 'police' ? C['rail.fill'] : r.src === 'verified' ? C['send.fill'] : C['text.secondary'];
+      return `<g pointer-events="none" transform="translate(${(p.xy[0] - 40).toFixed(1)},${(p.xy[1] - 10).toFixed(1)})"><rect width="20" height="20" rx="10" fill="#FFFFFF" stroke="${c}" stroke-width="2" ${r.src === 'unconfirmed' ? 'stroke-dasharray="3 2"' : ''}/><use href="#i-${HAZ_ICON[r.hazard]}" x="3" y="3" width="14" height="14" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>`; }).join('');
+    const said = [1, 2, 3, 4, 5, 6].map(z => tr('Zone {z} {level}', { z, level: tr(lv[z]) })).join(', ');
+    return `<svg viewBox="0 0 ${MAP.W} ${MAP.H}" ${big ? 'style="height:100%;width:auto;max-width:100%"' : ''} role="img" aria-label="${esc(tr('NH-44 risk map at {when}.', { when: tr(HL[h]) }) + ' ' + said)}.">
+      <defs><pattern id="pat-medium" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="6" fill="rgba(255,255,255,.45)"/></pattern>
+      <pattern id="pat-high" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M0 0 5 5M5 0 0 5" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/></pattern></defs>
+      ${hexes}${route}${labels}${pins}</svg>`;
+  }
+
+  /* ---------------------------------------------------------------- small parts */
+  const TITLES = { map: 'Risk map', strip: '48-hour strip', advisor: 'Dispatch advisor', board: 'Shipment board', report: 'Report a hazard', alerts: 'Alerts', profile: 'Profile and settings' };
+  const T = (s, v) => esc(tr(s, v)); // translated and escaped, for HTML
+  const hl = h => (h === 0 ? tr('Now') : tr(HL[h]));
+  const spinner = () => '<span class="spin" aria-hidden="true"></span>';
+  const ferr = (msg, id) => `<div class="ferr"${id ? ` id="${id}"` : ''} role="alert">${icon('nav-report', 'ico sm')}<span>${esc(msg)}</span></div>`;
+  const milestone = () => '<span class="ms" aria-hidden="true"><b>NH</b><i>44</i></span>';
+  const horizonChips = () => `<div class="scroll-x" role="group" aria-label="${T('Forecast time')}">${[0, 12, 24, 48].map(h => `<button class="chip" data-h="${h}" aria-pressed="${S.horizon === h}">${esc(hl(h))}</button>`).join('')}</div>`;
+  const legend = () => `<div class="legend" aria-hidden="true"><span><i style="background:${C['risk.low.map']}"></i>${T('Low')}</span><span><i style="background:${C['risk.medium.map']};background-image:repeating-linear-gradient(45deg,transparent 0 3px,rgba(255,255,255,.5) 3px 5px)"></i>${T('Medium')}</span><span><i style="background:${C['risk.high.map']};background-image:repeating-linear-gradient(45deg,transparent 0 2px,rgba(255,255,255,.5) 2px 3px),repeating-linear-gradient(-45deg,transparent 0 2px,rgba(255,255,255,.5) 2px 3px)"></i>${T('High')}</span></div>`;
+  const zoneButtons = h => `<div class="zone-btns">${[1, 2, 3, 4, 5, 6].map(z => { const r = get(z, h); return `<button class="zbtn lv-${r.level}" data-zone="${z}" aria-label="${T('Zone {z} {name}: {level} risk {score}', { z, name: tr(ZONE[z].name), level: tr(r.level), score: r.overall.toFixed(2) })}">Z${z} ${T(ZONE[z].short)}<span class="num">${esc(tr(r.level).toUpperCase())} ${r.overall.toFixed(2)}</span></button>`; }).join('')}</div>`;
+  const reportList = () => { const rs = reports(); return rs.length ? `<div class="label">${T('Road reports (sample)')}</div><div class="stack">${rs.map(r => `<div>${reportPill(r.src, reportText(r))}</div>`).join('')}</div>` : ''; };
+  const sw = (k, title, sub) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.signin[k]}" data-sw="${k}"><span class="sw-t"><strong>${T(title)}</strong><span class="muted">${T(sub)}</span></span><span class="knob" aria-hidden="true"></span></button>`;
+
+  /* ---------------------------------------------------------------- sign-in screens (Flow D) */
+  function scrWelcome() {
+    const si = S.signin;
+    const msg = { phone: 'Enter all 10 digits of your mobile number.', nosignal: 'No signal right now. Sign-in needs one SMS. Your number is kept; try again when you have signal.',
+      server: 'We could not send the code just now. Your number is kept; try again in a minute.' }[si.err];
+    return `<div class="auth">
+      <div class="brand">${milestone()}<span>RouteGuard</span></div>
+      <p class="lead">${T('Know before you load: where NH-44 may close in the next 48 hours, and what to do with your lot.')}</p>
+      <ul class="gets"><li>${icon('nav-strip')}<span>${T('Risk for each of the 6 zones, from now to 48 hours ahead')}</span></li><li>${icon('nav-advisor')}<span>${T('One answer for your lot: send, hold, rail or divert')}</span></li><li>${icon('status-offline-queue')}<span>${T('Works in the gorge with no signal')}</span></li></ul>
+      <label class="field"><span>${T('Mobile number')}</span><span class="tel${si.err === 'phone' ? ' bad' : ''}"><span class="cc">+91</span><input id="au-phone" type="text" inputmode="numeric" autocomplete="tel-national" maxlength="11" value="${esc(fmtPhone(si.phone))}" aria-describedby="${msg ? 'au-err ' : ''}au-help"${si.err === 'phone' ? ' aria-invalid="true"' : ''}></span></label>
+      ${msg ? ferr(tr(msg), 'au-err') : ''}
+      <button class="btn primary wide" id="au-send" ${si.busy ? 'disabled' : ''}>${si.busy ? spinner() + T('Sending code…') : T('Send code')}</button>
+      <p class="muted" id="au-help" style="margin:0">${T('No password. We send a 6-digit code to this number by SMS.')}</p></div>`;
+  }
+  const resendLeft = () => Math.max(0, 30 - Math.floor((Date.now() - S.signin.sentAt) / 1000));
+  const resendHtml = () => { const l = resendLeft(); return l > 0 ? `<p class="muted" style="margin:0">${T('Send a new code in 0:{s}', { s: String(l).padStart(2, '0') })}</p>` : `<button class="btn wide" id="au-resend">${T('Send a new code')}</button>`; };
+  function scrOtp() {
+    const si = S.signin;
+    const msg = { wrong: 'That code is wrong. Check the SMS and try again.', expired: 'That code has expired. Send a new code; your number is kept.', short: 'Type all 6 digits of the code.' }[si.err];
+    return `<div class="auth">
+      <button class="btn ghost back" id="au-back">← ${T('Change number')}</button>
+      <h2 class="h">${T('Enter the 6-digit code')}</h2>
+      <p class="muted" style="margin:0">${T('Sent by SMS to +91 {p}.', { p: maskPhone(si.phone) })}</p>
+      <div class="otp${si.err ? ' bad' : ''}"><input id="au-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="${esc(si.code)}" aria-label="${T('6-digit code')}"${si.err ? ' aria-invalid="true" aria-describedby="au-err"' : ''}>
+        <div class="boxes" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map(i => `<span class="${i === Math.min(si.code.length, 5) ? 'cur' : ''}">${esc(si.code[i] || '')}</span>`).join('')}</div></div>
+      ${msg ? ferr(tr(msg), 'au-err') : ''}
+      <button class="btn primary wide" id="au-verify" ${si.busy ? 'disabled' : ''}>${si.busy ? spinner() + T('Checking…') : T('Verify')}</button>
+      <div id="au-resend-box">${resendHtml()}</div></div>`;
+  }
+  function scrCreate() {
+    const si = S.signin, e = si.errs;
+    const card = (k, t, sub) => `<label><input type="radio" name="role" value="${k}" ${si.role === k ? 'checked' : ''}><span><strong>${T(t)}</strong><br><span class="muted">${T(sub)}</span></span></label>`;
+    const fld = (name, label, val, help) => `<label class="field"><span>${T(label)}</span><input type="text" name="${name}" value="${esc(val)}" autocomplete="off">${help ? `<span class="muted help">${T(help)}</span>` : ''}</label>`;
+    const extra = si.role === 'driver' ? fld('truck', 'Truck number', si.truck) + fld('agent', "Your agent's phone", si.agent, 'Your agent confirms you. Until then your reports show as unconfirmed.')
+      : si.role === 'agent' ? fld('firm', 'Firm name', si.firm || 'Ahmad Transport, Sopore') : si.role === 'grower' ? fld('village', 'Village or orchard area', si.village || 'Shopian') : '';
+    return `<form class="auth form" id="au-create" novalidate>
+      <h2 class="h">${T('Create your account')}</h2>
+      <label class="field"><span>${T('Full name')}</span><input type="text" name="name" value="${esc(si.name)}" autocomplete="name"${e.name ? ' aria-invalid="true"' : ''}></label>${e.name ? ferr(tr('Enter your name as your agent knows it.')) : ''}
+      <div class="field"><span>${T('I am a')}</span><div class="radio-cards" role="radiogroup" aria-label="${T('I am a')}">${card('grower', 'Grower / trader', 'I decide when to send my lots')}${card('agent', 'Transport agent', 'I run trucks and drivers')}${card('driver', 'Truck driver', 'I drive NH-44 and report hazards')}</div></div>${e.role ? ferr(tr('Choose one of the three.')) : ''}
+      ${extra}
+      <div class="field"><span>${T('You choose what we use')}</span>${sw('loc', 'Location, to tag your reports', 'Off: you pick your zone by hand.')}${sw('alerts', 'Alerts for zones on your route', 'Police closures and high-risk warnings.')}</div>
+      <details class="why"><summary>${T('What we keep, and for how long')}</summary><p>${T('Your phone number, name and role, and the reports you send. Other users never see your number. Delete your account any time from Profile.')}</p></details>
+      ${si.failed ? ferr(tr('We could not save your account. Nothing you typed is lost; try again.')) : ''}
+      <button class="btn primary wide" type="submit" id="au-create-go" ${si.busy ? 'disabled' : ''}>${si.busy ? spinner() + T('Creating your account…') : T('Create account')}</button>
+      <p class="muted" style="margin:0">${T('Police and TCU accounts are added by an admin.')}</p></form>`;
+  }
+
+  /* ---------------------------------------------------------------- app screens */
+  function scrMap() {
+    const h = S.horizon;
+    return `${horizonChips()}<div class="mapbox">${mapSvg(h)}</div>${legend()}
+      <p class="muted" style="margin:0">${T('Cells are drawn along the route for this prototype; the app uses H3 cells from our corridor file.')}</p>
+      ${zoneButtons(h)}${reportList()}`;
+  }
+  function scrStrip() {
+    let w = null; rows().forEach(r => { if (!w || LV[r.level] > LV[w.level] || (r.level === w.level && r.overall > w.overall)) w = r; });
+    const head = w.level === 'low' ? tr('All 6 zones stay low for 48 h. Worst: zone {z} at {s} ({when}).', { z: w.zone_id, s: w.overall.toFixed(2), when: tr(HL[w.horizon_hours]) })
+      : tr('Worst on the route: zone {z} ({place}) is {level} {at}.', { z: w.zone_id, place: tr(ZONE[w.zone_id].short), level: tr(w.level), at: tr(AT[w.horizon_hours]) });
+    return `<div class="card sand" style="padding:12px"><strong>${esc(head)}</strong></div>
+      <table class="strip"><thead><tr><th class="z" scope="col">${T('Zone')}</th>${[0, 12, 24, 48].map(h => `<th scope="col">${esc(hl(h))}</th>`).join('')}</tr></thead><tbody>
+      ${[1, 2, 3, 4, 5, 6].map(z => `<tr><th class="z" scope="row">${z} ${T(ZONE[z].short)}</th>${[0, 12, 24, 48].map(h => { const r = get(z, h);
+        return `<td><button class="cellbtn lv-${r.level}" data-zone="${z}" data-h="${h}" aria-label="${T('Zone {z} at {when}: {level} risk {score}', { z, when: tr(HL[h]), level: tr(r.level), score: r.overall.toFixed(2) })}"><span>${r.overall.toFixed(2)}</span><span class="lv">${T(r.level === 'medium' ? 'med' : r.level)}</span></button></td>`; }).join('')}</tr>`).join('')}
+      </tbody></table><p class="muted" style="margin:0">${T('Medium cells have stripes and high cells cross-hatching, so the level reads without colour. Tap a cell to see why.')}</p>`;
+  }
+  function scrAdvisor() {
+    const l = S.lot;
+    if (S.advice) {
+      const a = S.advice;
+      return `${decisionBanner(a.advice, a.why)}
+        <div class="label">${T('Zone that drives this')}</div>${zoneCard(a.worst.z, a.worst)}
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+          <div class="card" style="padding:12px"><div class="label">${T('Expected delay')}</div><strong>${T(a.delay)}</strong></div>
+          <div class="card" style="padding:12px"><div class="label">${T('Priority')}</div><strong class="num">${a.priority.toFixed(2)}</strong><div class="muted">${T('{pct}% shelf life × Rs {v} lakh', { pct: Math.round(a.spoil * 100), v: a.value.toFixed(1) })}</div></div></div>
+        <p class="muted" style="margin:0">${T('{t} t {variety}, picked {d} days ago, to {dest}, {truck}.', { t: l.tonnes, variety: l.variety, d: l.days, dest: tr(DEST[l.dest].name), truck: tr(TRUCK[l.type]).toLowerCase() })} ${T('Shelf-life and price values are placeholders until our advice table lands.')}</p>
+        <button class="btn primary wide" id="commit">${icon('nav-board')}${T('Commit {truck} to the board', { truck: l.truck })}</button>
+        <button class="btn wide" id="change">${T('Change lot')}</button>`;
+    }
+    const radio = (name, opts, cur) => `<div class="radio-cards" role="radiogroup">${Object.entries(opts).map(([v, t]) => `<label><input type="radio" name="${name}" value="${v}" ${v === cur ? 'checked' : ''}><span>${T(t)}</span></label>`).join('')}</div>`;
+    return `<form class="form" id="lotform" novalidate>
+      <label class="field"><span>${T('Variety')}</span><select name="variety">${Object.keys(SHELF).map(v => `<option ${v === l.variety ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+        <label class="field"><span>${T('Days since picking')}</span><input type="number" name="days" min="0" max="60" inputmode="numeric" value="${l.days}"></label>
+        <label class="field"><span>${T('Tonnes')}</span><input type="number" name="tonnes" min="1" max="30" inputmode="decimal" value="${l.tonnes}"></label></div>
+      <div class="field"><span>${T('Destination')}</span>${radio('dest', Object.fromEntries(Object.entries(DEST).map(([k, v]) => [k, v.name])), l.dest)}</div>
+      <div class="field"><span>${T('Truck')}</span>${radio('type', TRUCK, l.type)}</div>
+      <label class="field"><span>${T('Truck number')}</span><input type="text" name="truck" value="${esc(l.truck)}" autocomplete="off"></label>
+      <button class="btn primary wide" type="submit" id="getadvice">${icon('nav-advisor')}${T('Get advice')}</button></form>`;
+  }
+  function shipCard(t, i) {
+    const a = ADV[t.d.advice];
+    return `<button class="ship${t.id === S.newId ? ' new' : ''}" data-ship="${esc(t.id)}" aria-label="${T('Truck {truck}, rank {r}: {advice}. Open details.', { truck: t.truck, r: i + 1, advice: tr(a.word) })}"><span class="top"><span class="rank">#${i + 1}</span><strong class="num">${esc(t.truck)}</strong><span class="badge" style="--c-bg:var(--${t.d.advice.toLowerCase()}-bg);--c-text:var(--${t.d.advice.toLowerCase()}-text)">${icon(a.icon, 'ico sm')}${T(a.word)}</span></span>
+      <span class="kv"><span>${esc(t.tonnes + ' t ' + t.variety)}</span><span>${T('to {dest}', { dest: tr(DEST[t.dest].name) })}</span><span>${T('priority')} <span class="num">${t.d.priority.toFixed(2)}</span></span></span>
+      <span class="kv"><span>${T('Last seen: {s}', { s: seenText(t) })}</span><span>${T('ETA: {e}', { e: eta(t) })}</span></span>
+      ${t.sample ? '' : `<span class="pill ok" style="justify-self:start">${T('just committed')}</span>`}</button>`;
+  }
+  function scrBoard() {
+    const list = boardList();
+    const shown = list.filter(t => S.boardFilter === 'all' || (S.boardFilter === 'moving' ? ['SEND', 'RAIL', 'DIVERT'].includes(t.d.advice) : t.d.advice === 'HOLD'));
+    const tabs = `<div class="tabrow" role="tablist" aria-label="${T('Filter trucks')}">${[['all', 'All'], ['moving', 'Moving'], ['held', 'Held']].map(([k, t]) => `<button role="tab" data-filter="${k}" aria-selected="${S.boardFilter === k}">${T(t)}</button>`).join('')}</div>`;
+    const body = shown.length ? shown.map(t => shipCard(t, list.indexOf(t))).join('') : `<div class="empty">${icon('nav-board')}<strong>${T('No trucks in this filter')}</strong></div>`;
+    return `${tabs}<p class="muted" style="margin:0">${T('Ranked by priority = spoilage × load value. Tap a truck for its detail. Sample trucks and masked phones.')}</p><div class="stack">${body}</div>`;
+  }
+  function scrReport() {
+    if (S.role === 'police') return scrTcu();
+    const rp = S.report;
+    const steps = `<div class="steps" role="img" aria-label="${T('Step {n} of 3', { n: rp.step })}">${[1, 2, 3].map(i => `<span class="${i <= rp.step ? 'on' : ''}"></span>`).join('')}</div>`;
+    if (rp.step === 1) {
+      return `${steps}<h3 style="margin:0">${T('What did you see?')}</h3><div class="hazgrid">${Object.entries(HAZ).map(([k, t]) => `<button class="hazbtn" data-haz="${k}" aria-pressed="${rp.hazard === k}">${icon(HAZ_ICON[k])}<span>${T(t)}</span></button>`).join('')}</div>
+        <div class="callout" style="margin:0">${T(S.network === 'offline' ? 'No signal right now. Your report will wait on this phone and send by itself.' : 'Reports reach the TCU control room and drivers behind you.')}</div>`;
+    }
+    if (rp.step === 2) {
+      const gpsOff = S.edge === 'error';
+      const where = gpsOff
+        ? `<div class="callout warn" style="margin:0"><strong>${T('Location is off.')}</strong> ${T('Pick the zone you are in.')}</div><div class="scroll-x">${[1, 2, 3, 4, 5, 6].map(z => `<button class="chip" data-rzone="${z}" aria-pressed="${rp.zone === z}">Z${z} ${T(ZONE[z].short)}</button>`).join('')}</div>`
+        : `<div class="card" style="padding:12px"><div class="label">${T('Your location (GPS)')}</div><div class="coords">${GPS.lat.toFixed(5)}, ${GPS.lng.toFixed(5)}</div><div>${T('Near {place}, zone {z} ({name})', { place: tr(GPS.place), z: GPS.zone, name: tr(ZONE[GPS.zone].name) })}</div></div>`;
+      return `${steps}<h3 style="margin:0">${icon(HAZ_ICON[rp.hazard], 'ico sm')} ${T('{haz}: where?', { haz: tr(HAZ[rp.hazard]) })}</h3><div class="photo">${T('Add a photo (optional)')}</div>${where}
+        <button class="btn report wide" id="rp-place" ${gpsOff && !rp.zone ? 'disabled' : ''}>${T('This is the place')}</button><button class="btn wide" id="rp-back">${T('Back')}</button>`;
+    }
+    const z = rp.zone || GPS.zone;
+    return `${steps}<h3 style="margin:0">${T('Send this report?')}</h3><div class="card" style="padding:12px;display:grid;gap:6px">${reportPill('unconfirmed', hz(rp.hazard))}<div>${T('Zone {z}, {place}', { z, place: tr(rp.zone ? ZONE[z].short : GPS.place) })}</div><div class="muted">${T('It shows as unconfirmed until police or a second driver confirms it.')}</div></div>
+      <button class="btn report wide" id="rp-send">${icon('nav-report')}${T(S.network === 'offline' ? 'Save and send when online' : 'Send report')}</button><button class="btn wide" id="rp-back">${T('Back')}</button>`;
+  }
+  function tcuForm(compact) {
+    const t = S.tcu;
+    return `<form class="form" id="tcuform">
+        <label class="field"><span>${T('Zone')}</span><select name="zone">${[1, 2, 3, 4, 5, 6].map(z => `<option value="${z}" ${z === t.zone ? 'selected' : ''}>${T('Zone {z} · {name}', { z, name: tr(ZONE[z].name) })}</option>`).join('')}</select></label>
+        <div class="field"><span>${T('Road status')}</span><div class="radio-cards${compact ? ' row3' : ''}" role="radiogroup">${[['closed', 'Closed both ways'], ['oneway', 'One-way only'], ['open', 'Open']].map(([v, l]) => `<label><input type="radio" name="status" value="${v}" ${v === t.status ? 'checked' : ''}><span>${T(l)}</span></label>`).join('')}</div></div>
+        <label class="field"><span>${T('Cause')}</span><select name="hazard">${Object.entries(HAZ).map(([k, v]) => `<option value="${k}" ${k === t.hazard ? 'selected' : ''}>${T(v)}</option>`).join('')}</select></label>
+        <button class="btn rail wide" type="submit" id="tcu-publish">${T('Publish and alert drivers in the zone')}</button></form>`;
+  }
+  function pendingList() {
+    const pend = reports().filter(r => r.src === 'unconfirmed');
+    return `<div class="label">${T('Driver reports waiting ({n})', { n: pend.length })}</div>
+      <div class="stack">${pend.length ? pend.map(r => `<div class="ship"><div>${reportPill('unconfirmed', reportText(r))}</div><div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-confirm="${r.id}">${T('Confirm')}</button><button class="btn" data-reject="${r.id}">${T('Reject')}</button></div></div>`).join('') : `<p class="muted">${T('No reports waiting.')}</p>`}</div>`;
+  }
+  function scrTcu() { return `<div class="label">${T('TCU official advisory')}</div>${tcuForm()}${pendingList()}`; }
+  function scrAlerts() {
+    const list = alerts();
+    if (!S.alertZones.length) return `<div class="empty">${icon('nav-alerts')}<strong>${T('Alerts are off')}</strong><p class="muted" style="margin:0">${T('Pick the zones on your route in Profile to get police closures and high-risk warnings.')}</p><button class="btn primary" data-go="profile">${T('Choose alert zones')}</button></div>`;
+    if (!list.length) return `<div class="empty">${icon('nav-alerts')}<strong>${T('No alerts for zones {zs}', { zs: S.alertZones.join(', ') })}</strong><p class="muted" style="margin:0">${T('We alert you when police close a zone or a zone on your route turns high risk.')}</p><button class="btn" data-go="profile">${T('Change alert zones')}</button></div>`;
+    return `<p class="muted" style="margin:0">${T('For zones {zs}. Tap an alert to see the zone.', { zs: S.alertZones.join(', ') })}</p><div class="stack">${list.map(a => `<button class="alert a-${a.tone}" ${a.zone ? `data-zone="${a.zone}" data-h="${a.h}"` : 'data-open="drawer"'}>${S.fresh.includes(a.id) ? `<span class="tag">${T('New')}</span>` : ''}<strong>${esc(a.head)}</strong><span>${esc(a.sub)}</span></button>`).join('')}</div>`;
+  }
+  function scrProfile() {
+    const u = me();
+    const badge = u.role === 'driver' ? (u.verified ? `<span class="badge" style="--c-bg:var(--send-bg);--c-text:var(--send-text)">${T('Verified by your agent')}</span>` : `<span class="badge" style="--c-bg:var(--hold-bg);--c-text:var(--hold-text)">${T('Waiting for your agent')}</span>`)
+      : u.role === 'police' ? `<span class="badge" style="--c-bg:var(--rail-bg);--c-text:var(--rail-text)">${T('Added by admin')}</span>` : '';
+    return `<div class="who"><span class="av" aria-hidden="true">${esc(initials(u.name))}</span><div><strong class="nm">${esc(u.name)}</strong><div class="muted">+91 ${esc(maskPhone(u.phone))}</div><div class="tags"><span class="badge" style="--c-bg:var(--bg-surface);--c-text:var(--text-primary)">${T(ROLE[u.role])}</span>${badge}</div></div></div>
+      <div class="field"><span>${T('Alert zones')}</span><div class="chips-wrap" role="group" aria-label="${T('Alert zones')}">${[1, 2, 3, 4, 5, 6].map(z => `<button class="chip" data-az="${z}" aria-pressed="${S.alertZones.includes(z)}">Z${z} ${T(ZONE[z].short)}</button>`).join('')}</div></div>
+      <div class="card" style="padding:12px;display:grid;gap:2px"><div class="label">${T('Offline data')}</div><div>${T('{kb} KB on this phone · scores from the {when} run', { kb: (cacheBytes() / 1024).toFixed(1), when: SCEN[S.scenario].when })}</div></div>
+      <button class="btn wide" id="pf-signout">${T('Sign out')}</button>
+      <button class="btn wide danger" id="pf-delete">${T('Delete my account')}</button>
+      <p class="muted" style="margin:0">${T('Unsent reports stay on this phone and still send after you sign out.')}</p>`;
+  }
+
+  function skeleton() { return `<div class="skel" style="height:48px"></div><div class="skel" style="height:300px"></div><div class="skel" style="height:56px"></div><div class="skel" style="height:56px"></div><p class="muted" role="status" style="margin:0">${T('Loading the latest scores…')}</p>`; }
+  function emptyState() {
+    const E = {
+      map: ['nav-map', 'No scores for this hour yet', 'The hourly job runs at 7 minutes past the hour. The last scores will show here.', 'Check again', 'retry'],
+      strip: ['nav-strip', 'No forecast to show', 'The 48-hour strip fills after the next run.', 'Check again', 'retry'],
+      advisor: ['nav-advisor', 'No lots yet', 'Add your first lot to get advice.', 'Add a lot', 'normal'],
+      board: ['nav-board', 'No trucks on the board', 'Commit a lot from the advisor and it shows here, ranked.', 'Plan a lot', 'advisor'],
+      report: ['nav-report', 'No reports from your zone', 'Seen debris or water on the road? Report it in 3 taps.', 'Report a hazard', 'normal'],
+    }[S.tab];
+    if (!E) return null;
+    return `<div class="empty">${icon(E[0])}<strong>${T(E[1])}</strong><p class="muted" style="margin:0">${T(E[2])}</p><button class="btn primary" data-empty="${E[4]}">${T(E[3])}</button></div>`;
+  }
+  function errorState() {
+    if ((S.tab === 'report' && S.role !== 'police') || S.tab === 'profile') return null; // report shows the GPS-denied fallback instead
+    return `<div class="empty">${icon('hazard-rockfall')}<strong>${T("Can't reach RouteGuard")}</strong><p class="muted" style="margin:0">${T('Showing nothing rather than old scores as new. Check your signal and try again, or open the offline copy.')}</p>
+      <button class="btn primary" data-empty="retry">${T('Try again')}</button><button class="btn" data-open="drawer">${T('Open offline copy')}</button></div>`;
+  }
+
+  function bannerState() {
+    if (S.edge === 'error' && errorState()) return ['error', tr("Can't reach the server · tap to retry")];
+    const q = S.queue.length;
+    if (S.network === 'offline') return q ? ['queued', tr(q > 1 ? 'Offline · {n} reports waiting to send' : 'Offline · {n} report waiting to send', { n: q })] : ['offline', tr('Offline · cached scores from 2 h ago, {kb} KB', { kb: (cacheBytes() / 1024).toFixed(1) })];
+    if (S.network === 'stale') return ['stale', tr('Scores are 3 h old · the hourly job missed a run')];
+    return ['live', tr(...SCEN[S.scenario].banner)];
+  }
+
+  /* ---------------------------------------------------------------- sheets and dialogs */
+  function sheetZone() {
+    const z = S.sheet.zone, h = S.sheet.h ?? S.horizon, r = get(z, h);
+    const bars = Object.entries(HAZ).map(([k, t]) => `<div class="b"><span>${T(t)}</span><div class="track"><div class="fill" style="width:${Math.round(r[k] * 100)}%"></div></div><span class="num">${r[k].toFixed(2)}</span></div>`).join('');
+    const inc = D.incidents.filter(i => +i.zone_id === z);
+    return `<div class="grab"></div><div class="sh-head"><h3 id="sheet-title" style="margin:0">${T('Zone {z} · {when}', { z, when: tr(HL[h]) })}</h3><button class="btn ghost" data-close aria-label="${T('Close')}">✕</button></div>
+      ${zoneCard(z, r)}
+      <div class="label">${T('Hazard scores')}</div><div class="bars">${bars}</div>
+      <div class="label">${T('Outlook')}</div><div class="scroll-x">${[0, 12, 24, 48].map(hh => `<button class="chip" data-sh="${hh}" aria-pressed="${hh === h}">${esc(hl(hh))} ${get(z, hh).level === 'high' ? '▲▲' : get(z, hh).level === 'medium' ? '▲' : '·'}</button>`).join('')}</div>
+      <div class="label">${T('Past closures here (incidents.csv)')}</div>
+      ${inc.length ? `<ul style="margin:0;padding-left:20px">${inc.map(i => `<li>${T('{date}: {place}, {haz}, closed {h} h, {n} trucks', { date: i.date, place: tr(i.place), haz: HAZ[i.hazard_type] ? hz(i.hazard_type) : i.hazard_type, h: i.hours_closed, n: i.trucks_stranded })}</li>`).join('')}</ul>` : `<p class="muted" style="margin:0">${T('None logged yet.')}</p>`}
+      <button class="btn primary wide" data-plan>${T('Plan a lot through this zone')}</button>`;
+  }
+  function sheetShip() {
+    const list = boardList(), i = list.findIndex(x => x.id === S.sheet.id), t = list[i];
+    if (!t) return '';
+    const kv = (k, v) => `<dt>${T(k)}</dt><dd>${esc(v)}</dd>`;
+    const zs = DEST[t.dest].zones;
+    return `<div class="grab"></div><div class="sh-head"><h3 id="sheet-title" style="margin:0"><span class="num" style="font-size:18px">${esc(t.truck)}</span> · #${i + 1}</h3><button class="btn ghost" data-close aria-label="${T('Close')}">✕</button></div>
+      ${decisionBanner(t.d.advice, t.d.why)}
+      <dl class="kvs">${kv('Lot', `${t.tonnes} t ${t.variety}, ${tr('picked {d} days ago', { d: t.days })}`)}${kv('Going to', tr(DEST[t.dest].name))}${kv('Last seen', seenText(t))}${kv('ETA', eta(t))}${kv('Expected delay', tr(t.d.delay))}${kv('Priority', `${t.d.priority.toFixed(2)} (${tr('{pct}% shelf life × Rs {v} lakh', { pct: Math.round(t.d.spoil * 100), v: t.d.value.toFixed(1) })})`)}${kv('Driver', t.phone)}</dl>
+      <div class="label">${T('Zones on this route')}</div>
+      <table class="strip"><thead><tr><th class="z" scope="col">${T('Zone')}</th>${[0, 24, 48].map(h => `<th scope="col">${esc(hl(h))}</th>`).join('')}</tr></thead><tbody>${zs.map(z => `<tr><th class="z" scope="row">${z} ${T(ZONE[z].short)}</th>${[0, 24, 48].map(h => { const r = get(z, h); return `<td><button class="cellbtn lv-${r.level}" data-zone="${z}" data-h="${h}" aria-label="${T('Zone {z} at {when}: {level} risk {score}', { z, when: tr(HL[h]), level: tr(r.level), score: r.overall.toFixed(2) })}"><span>${r.overall.toFixed(2)}</span><span class="lv">${T(r.level === 'medium' ? 'med' : r.level)}</span></button></td>`; }).join('')}</tr>`).join('')}</tbody></table>
+      <button class="btn primary wide" data-call="${esc(t.phone)}">${T('Call the driver')}</button>`;
+  }
+  function sheetDrawer() {
+    const kb = (cacheBytes() / 1024).toFixed(1);
+    const q = S.queue;
+    return `<div class="grab"></div><div class="sh-head"><h3 id="sheet-title" style="margin:0">${T('Offline and sync')}</h3><button class="btn ghost" data-close aria-label="${T('Close')}">✕</button></div>
+      <div class="sync ${SYNC[bannerState()[0]].cls}" style="border-radius:8px">${syncInner(...bannerState())}</div>
+      <div class="card" style="padding:12px;display:grid;gap:4px"><div class="label">${T('Cached on this phone')}</div>
+        <div>${T('{n} zone scores (6 zones × 4 times) from the {when} run', { n: rows().length, when: SCEN[S.scenario].when })}</div>
+        <div><span class="num">${kb} KB</span> · ${T('budget under 5 KB, so it loads on 2G')}</div></div>
+      <div class="label">${T('Reports waiting ({n})', { n: q.length })}</div>
+      ${q.length ? `<div class="stack">${q.map(r => `<div>${reportPill('unconfirmed', `${hz(r.hazard)}, ${tr('zone {z}', { z: r.zone })}`)}</div>`).join('')}</div>` : `<p class="muted" style="margin:0">${T('Nothing waiting.')}</p>`}
+      <button class="btn primary wide" id="sendnow" ${S.network === 'offline' || !q.length ? 'disabled' : ''}>${T('Send now')}</button>
+      <div class="label">${T('Works offline')}</div><ul style="margin:0;padding-left:20px"><li>${T('Map and 48-hour strip from the cached scores')}</li><li>${T('Advisor on the cached scores, marked as cached')}</li><li>${T('Reports, queued until there is signal')}</li></ul>`;
+  }
+  function recipients(z) { return boardList().filter(t => DEST[t.dest].zones.includes(z)).length; }
+  function dialogHtml() {
+    const d = S.dialog;
+    let title, body, ok, cls = 'primary';
+    if (d.type === 'signout') {
+      title = tr('Sign out?');
+      body = S.queue.length ? tr(S.queue.length > 1 ? '{n} reports are still waiting to send. They stay on this phone and send when you have signal.' : '{n} report is still waiting to send. It stays on this phone and sends when you have signal.', { n: S.queue.length })
+        : tr('You can sign in again with your mobile number and a new code.');
+      ok = tr('Sign out');
+    } else if (d.type === 'delete') {
+      title = tr('Delete your account?');
+      body = tr('Your name, phone number and trucks are erased within 30 days. Road reports you sent stay on the map without your name, so other drivers keep the warning. This cannot be undone.');
+      ok = tr('Delete account'); cls = 'report';
+    } else {
+      const n = recipients(d.zone);
+      title = tr('Publish this advisory?');
+      body = tr('Zone {z} · {name}: {status}. Cause: {haz}.', { z: d.zone, name: tr(ZONE[d.zone].name), status: tr(STATUS[d.status]), haz: hz(d.hazard) }) + ' '
+        + (n ? tr(n > 1 ? '{n} drivers routed through this zone get a push alert now.' : '{n} driver routed through this zone gets a push alert now.', { n }) : tr('No drivers are routed through this zone right now; the update still shows on the map.'));
+      ok = tr('Publish'); cls = 'rail';
+    }
+    return `<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-b"><h3 id="dlg-t">${esc(title)}</h3><p id="dlg-b" style="margin:0">${esc(body)}</p>
+      <div class="acts"><button class="btn ${cls} wide" id="dlg-ok">${esc(ok)}</button><button class="btn wide" id="dlg-cancel">${T('Cancel')}</button></div></div>`;
+  }
+
+  /* ---------------------------------------------------------------- desktop control room */
+  function desktop() {
+    const h = S.horizon, police = S.role === 'police';
+    const strip = `<table class="strip"><thead><tr><th class="z">${T('Zone')}</th>${[0, 12, 24, 48].map(x => `<th>${esc(hl(x))}</th>`).join('')}</tr></thead><tbody>${[1, 2, 3, 4, 5, 6].map(z => `<tr><th class="z">${z} ${T(ZONE[z].short)}</th>${[0, 12, 24, 48].map(x => { const r = get(z, x); return `<td><button class="cellbtn lv-${r.level}" data-zone="${z}" data-h="${x}"><span>${r.overall.toFixed(2)}</span><span class="lv">${T(r.level)}</span></button></td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+    const board = `<table class="t" style="font-size:14px"><thead><tr><th>#</th><th>${T('Truck')}</th><th>${T('Lot')}</th><th>${T('Last seen')}</th><th>${T('Advice')}</th><th>${T('Priority')}</th></tr></thead><tbody>${boardList().map((t, i) => `<tr><td>${i + 1}</td><td class="num" style="white-space:nowrap">${esc(t.truck)}</td><td>${esc(t.tonnes + ' t ' + t.variety)}<br><span class="muted">${T('to {dest}', { dest: tr(DEST[t.dest].name) })}</span></td><td>${esc(seenText(t))}</td><td><span class="badge" style="--c-bg:var(--${t.d.advice.toLowerCase()}-bg);--c-text:var(--${t.d.advice.toLowerCase()}-text)">${T(t.d.advice)}</span></td><td class="num">${t.d.priority.toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+    let w = null; rows().forEach(r => { if (!w || LV[r.level] > LV[w.level] || (r.level === w.level && r.overall > w.overall)) w = r; });
+    const right = police ? `<div class="label">${T('TCU official advisory')}</div>${tcuForm(true)}${pendingList()}`
+      : `${reportList() || `<div class="label">${T('Road reports')}</div><p class="muted">${T('No reports.')}</p>`}<div class="label">${T('Most at-risk zone · {when}', { when: tr(HL[w.horizon_hours]) })}</div>${zoneCard(w.zone_id, w)}`;
+    const [bk, bt] = bannerState();
+    return `<div class="desk"><div class="dhead"><div style="display:flex;gap:12px;align-items:center">${milestone()}<strong style="font:700 22px var(--f-display)">${T('RouteGuard control room')}</strong><span>${T('NH-44 Jammu to Srinagar · {role} view', { role: tr(ROLE[police ? 'police' : 'agent']) })}</span></div>
+      <div class="sync ${SYNC[bk].cls}" style="max-width:520px;border-radius:8px">${syncInner(bk, bt)}</div></div>
+      <div class="dbody"><div class="col"><div class="label">${T('Risk map · {when}', { when: tr(HL[h]) })}</div>${horizonChips()}<div class="mapbox" style="height:560px;display:grid;place-items:center">${mapSvg(h, true)}</div>${legend()}</div>
+      <div class="col"><div class="label">${T('48-hour strip')}</div>${strip}<div class="label">${T('Shipment board (sample trucks)')}</div>${board}</div>
+      <div class="col">${right}</div></div>
+      ${S.dialog ? `<div class="dscrim" data-cancel></div>${dialogHtml()}` : ''}<div class="toast" id="dtoast" role="status" aria-live="polite"></div></div>`;
+  }
+
+  /* ---------------------------------------------------------------- render */
+  const phone = $('#phone'), stage = $('#stage');
+  let deskEl = null, lastKey = null, lastDialog = null, timer = null, TOAST = null, toastT;
+  function headerHtml() {
+    const sub = S.tab === 'alerts' || S.tab === 'profile';
+    const title = S.role === 'police' && S.tab === 'report' ? tr('TCU console') : tr(TITLES[S.tab]);
+    const n = unread();
+    return `${sub ? `<button class="hbtn" id="ab-back" aria-label="${T('Back')}">←</button>` : ''}<div class="ttl"><div class="t">${esc(title)}</div><div class="role">${T(ROLE[me().role])}</div></div>
+      <button class="hbtn" id="ab-bell" aria-label="${T(n ? 'Alerts, {n} new' : 'Alerts', { n })}">${icon('nav-alerts')}${n ? `<span class="count small-ok">${n}</span>` : ''}</button>
+      <button class="hbtn" id="ab-me" aria-label="${T('Profile and settings')}"><span class="av">${esc(initials(me().name))}</span></button>`;
+  }
+  function render() {
+    ['scenario', 'network', 'edge', 'role', 'device'].forEach(k => { $('#sim-' + k).value = S[k]; });
+    $('#sim-session').value = S.auth ? 'out' : 'in';
+    $('#data-note').textContent = `${SCEN[S.scenario].label}. ${S.scenario === 'live' ? D.live.source : D.replay.source}. People, trucks, phones and road reports are sample data. Advice uses placeholder shelf-life and price values.`;
+    if (S.device === 'desktop') {
+      phone.style.display = 'none';
+      if (!deskEl) { deskEl = document.createElement('div'); stage.appendChild(deskEl); }
+      deskEl.innerHTML = desktop();
+      stage.classList.add('desktop-mode');
+      $('.proto-layout').style.gridTemplateColumns = '1fr';
+      showToast();
+      if (S.dialog && lastDialog !== S.dialog.type) $('#dlg-cancel', deskEl).focus();
+      lastDialog = S.dialog && S.dialog.type;
+      return;
+    }
+    phone.style.display = '';
+    if (deskEl) { deskEl.remove(); deskEl = null; }
+    stage.classList.remove('desktop-mode');
+    $('.proto-layout').style.gridTemplateColumns = '';
+    phone.classList.toggle('signed-out', !!S.auth);
+    const scr = $('#screen');
+    let html;
+    if (S.auth) {
+      html = { welcome: scrWelcome, otp: scrOtp, create: scrCreate }[S.auth]();
+    } else {
+      $('#appbar').innerHTML = headerHtml();
+      $('#appbar').classList.toggle('sub', S.tab === 'alerts' || S.tab === 'profile');
+      const [bk, bt] = bannerState();
+      const ban = $('#banner'); ban.className = 'sync ' + SYNC[bk].cls; ban.innerHTML = syncInner(bk, bt);
+      ban.setAttribute('aria-label', tr('Connection status. Opens the offline and sync drawer') + ': ' + bt);
+      $('#bnav').innerHTML = bottomNav(S.tab);
+      $('#bnav').setAttribute('aria-label', tr('Main'));
+      if (S.edge === 'loading' && S.tab !== 'profile') html = skeleton();
+      else if (S.edge === 'empty' && emptyState()) html = emptyState();
+      else if (S.edge === 'error' && errorState()) html = errorState();
+      else html = { map: scrMap, strip: scrStrip, advisor: scrAdvisor, board: scrBoard, report: scrReport, alerts: scrAlerts, profile: scrProfile }[S.tab]();
+    }
+    scr.innerHTML = html;
+    const key = (S.auth || S.tab) + (S.tab === 'report' ? S.report.step : '');
+    if (key !== lastKey) { scr.classList.remove('enter'); void scr.offsetWidth; scr.classList.add('enter'); scr.scrollTop = 0; lastKey = key; }
+    const sh = $('#sheet');
+    if (!S.auth && (S.sheet || S.drawer)) { sh.innerHTML = S.drawer ? sheetDrawer() : S.sheet.type === 'ship' ? sheetShip() : sheetZone(); phone.classList.add('open'); sh.removeAttribute('aria-hidden'); }
+    else { phone.classList.remove('open'); sh.innerHTML = ''; sh.setAttribute('aria-hidden', 'true'); }
+    const dl = $('#dialog');
+    if (S.dialog) { dl.innerHTML = dialogHtml(); phone.classList.add('dlg'); if (lastDialog !== S.dialog.type) $('#dlg-cancel').focus(); }
+    else { dl.innerHTML = ''; phone.classList.remove('dlg'); }
+    lastDialog = S.dialog && S.dialog.type;
+    $('#notice').innerHTML = S.auth === 'otp' && S.sms ? `<button class="sms" id="sms"><span class="from">${icon('nav-alerts', 'ico sm')}SMS · RouteGuard</span><span>${T('{code} is your RouteGuard code. It expires in 5 minutes. Tap to fill it in.', { code: CODE })}</span></button>` : '';
+    tick();
+    showToast();
+  }
+  /* the resend countdown only updates its own line, so typing is never interrupted */
+  function tick() {
+    clearInterval(timer);
+    if (S.auth !== 'otp' || resendLeft() === 0) return;
+    timer = setInterval(() => { const b = $('#au-resend-box'); if (!b || S.auth !== 'otp') { clearInterval(timer); return; } b.innerHTML = resendHtml(); if (!resendLeft()) clearInterval(timer); }, 1000);
+  }
+  function toast(msg) { TOAST = msg; }
+  function showToast() {
+    if (!TOAST) return;
+    const t = S.device === 'desktop' ? $('#dtoast') : $('#toast');
+    t.textContent = TOAST; TOAST = null; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  function flushQueue() {
+    if (!S.queue.length || S.network === 'offline') return 0;
+    const n = S.queue.length;
+    S.sent.push(...S.queue.map(r => ({ ...r, mins: 0 })));
+    S.queue = [];
+    toast(tr(n > 1 ? '{n} queued reports sent' : '{n} queued report sent', { n }));
+    return n;
+  }
+  function readLot() {
+    const f = $('#lotform'); if (!f) return;
+    const fd = new FormData(f);
+    S.lot = { variety: fd.get('variety'), days: Math.max(0, +fd.get('days') || 0), tonnes: Math.max(1, +fd.get('tonnes') || 1), dest: fd.get('dest'), type: fd.get('type'), truck: (fd.get('truck') || 'JK05 G 7712').toString().trim() || 'JK05 G 7712' };
+  }
+  function signIn(u, msg) {
+    S.me = u; S.role = u.role; S.auth = null; S.tab = ROLE_TAB[u.role]; S.sms = false; S.signin.busy = false;
+    S.report = { step: 1, hazard: null, zone: null };
+    toast(msg);
+  }
+  function sendCode() {
+    const si = S.signin;
+    if (digits(si.phone).length !== 10) { si.err = 'phone'; return; }
+    if (S.network === 'offline') { si.err = 'nosignal'; return; }
+    if (S.edge === 'error') { si.err = 'server'; return; }
+    si.err = null; si.busy = true;
+    later(() => { si.busy = false; si.code = ''; si.sentAt = Date.now(); S.auth = 'otp'; S.sms = true; render(); }, 700);
+  }
+  function verify() {
+    const si = S.signin;
+    if (si.code.length < 6) { si.err = 'short'; return; }
+    if (S.edge === 'error' || resendLeft() === 0 && Date.now() - si.sentAt > 300000) { si.err = 'expired'; return; }
+    if (si.code !== CODE) { si.err = 'wrong'; return; }
+    si.err = null; si.busy = true;
+    later(() => {
+      si.busy = false;
+      const d = digits(si.phone);
+      const known = S.me && digits(S.me.phone) === d ? S.me : Object.entries(PEOPLE).filter(([, p]) => p.phone === d).map(([role, p]) => ({ ...p, role }))[0];
+      if (known) signIn(known, tr('Welcome back, {name}.', { name: known.name }));
+      else { S.auth = 'create'; S.sms = false; si.errs = {}; }
+      render();
+    }, 600);
+  }
+  function readCreate(f) {
+    const fd = new FormData(f), si = S.signin;
+    ['name', 'truck', 'agent', 'firm', 'village'].forEach(k => { if (fd.has(k)) si[k] = String(fd.get(k)).trim(); });
+    si.role = fd.get('role') || null;
+  }
+  function createAccount(f) {
+    readCreate(f);
+    const si = S.signin;
+    si.errs = { name: !si.name, role: !si.role };
+    if (si.errs.name || si.errs.role) return;
+    if (S.edge === 'error' && !si.failed) { si.failed = true; return; } // first try fails in the error state; the retry works
+    si.failed = false; si.busy = true;
+    later(() => {
+      const u = { name: si.name, phone: si.phone, role: si.role, verified: si.role === 'driver' ? false : undefined };
+      S.alertZones = si.alerts ? [3, 4, 5] : [];
+      signIn(u, tr(si.role === 'driver' ? 'Account created. Your agent will confirm your truck.' : 'Account created. Welcome, {name}.', { name: si.name }));
+      render();
+    }, 700);
+  }
+
+  /* events: one delegated listener on the phone and the desktop view */
+  function onClick(e) {
+    phone.classList.remove('instant');
+    const t = e.target.closest('button, polygon.hex, .dscrim');
+    if (!t) { if (e.target.id === 'scrim') { if (S.dialog) S.dialog = null; else { S.sheet = null; S.drawer = false; } render(); } return; }
+    const d = t.dataset;
+    if (t.disabled) return;
+    if (t.id === 'au-send') { sendCode(); }
+    else if (t.id === 'au-back') { S.auth = 'welcome'; S.sms = false; S.signin.err = null; }
+    else if (t.id === 'au-verify') { verify(); }
+    else if (t.id === 'au-resend') { S.signin.sentAt = Date.now(); S.signin.err = null; S.signin.code = ''; S.sms = true; S.edge = S.edge === 'error' ? 'normal' : S.edge; }
+    else if (t.id === 'sms') { S.signin.code = CODE; S.signin.err = null; S.sms = false; }
+    else if (d.sw) { S.signin[d.sw] = !S.signin[d.sw]; const f = $('#au-create'); if (f) readCreate(f); }
+    else if (d.nav) { S.tab = d.nav; S.sheet = null; S.drawer = false; if (d.nav === 'report' && S.report.step > 3) S.report = { step: 1, hazard: null, zone: null }; }
+    else if (t.id === 'ab-bell') { if (S.tab !== 'alerts') S.back = S.tab; S.tab = 'alerts'; S.sheet = null; openAlerts(); }
+    else if (t.id === 'ab-me' || d.go === 'profile') { if (S.tab !== 'profile' && S.tab !== 'alerts') S.back = S.tab; S.tab = 'profile'; S.sheet = null; }
+    else if (t.id === 'ab-back') { S.tab = S.back || 'map'; }
+    else if (d.az) { const z = +d.az; S.alertZones = S.alertZones.includes(z) ? S.alertZones.filter(x => x !== z) : [...S.alertZones, z].sort(); }
+    else if (t.id === 'pf-signout') S.dialog = { type: 'signout' };
+    else if (t.id === 'pf-delete') S.dialog = { type: 'delete' };
+    else if (t.id === 'dlg-cancel' || d.cancel !== undefined) S.dialog = null;
+    else if (t.id === 'dlg-ok') {
+      const dg = S.dialog; S.dialog = null;
+      if (dg.type === 'signout') { const ph = me().phone; S.me = me(); S.auth = 'welcome'; S.signin = freshSignin(ph); S.tab = 'map'; toast(tr('Signed out. Unsent reports stay on this phone.')); }
+      else if (dg.type === 'delete') { S.me = null; S.auth = 'welcome'; S.signin = freshSignin(''); S.queue = []; S.tab = 'map'; toast(tr('Account deleted. Your reports stay on the map without your name.')); }
+      else {
+        S.tcu = { zone: dg.zone, status: dg.status, hazard: dg.hazard };
+        S.overrides[dg.zone] = { status: dg.status, hazard: dg.hazard };
+        S.zone = dg.zone;
+        const n = recipients(dg.zone);
+        toast(tr('Published. Zone {z} now shows police-confirmed, confidence High.', { z: dg.zone }) + ' ' + (n ? tr(n > 1 ? '{n} drivers alerted.' : '{n} driver alerted.', { n }) : tr('No drivers on this zone right now.')));
+      }
+    }
+    else if (t.id === 'banner' || d.open === 'drawer') { if (S.edge === 'error' && t.id === 'banner') { S.edge = 'normal'; toast(tr('Connected again')); } else { S.drawer = true; S.sheet = null; } }
+    else if (d.close !== undefined) { S.sheet = null; S.drawer = false; }
+    else if (d.ship) { S.sheet = { type: 'ship', id: d.ship }; }
+    else if (d.call) { toast(tr('Opening the phone app to call {p}', { p: d.call })); }
+    else if (d.h !== undefined && d.zone) { S.zone = +d.zone; S.sheet = { type: 'zone', zone: +d.zone, h: +d.h }; }
+    else if (d.h !== undefined) S.horizon = +d.h;
+    else if (d.sh !== undefined) S.sheet.h = +d.sh;
+    else if (d.zone) { S.zone = +d.zone; S.sheet = { type: 'zone', zone: +d.zone }; }
+    else if (d.plan !== undefined) { S.sheet = null; S.tab = 'advisor'; S.advice = null; }
+    else if (d.filter) S.boardFilter = d.filter;
+    else if (d.haz) { S.report.hazard = d.haz; S.report.step = 2; }
+    else if (d.rzone) S.report.zone = +d.rzone;
+    else if (t.id === 'rp-place') S.report.step = 3;
+    else if (t.id === 'rp-back') S.report.step = Math.max(1, S.report.step - 1);
+    else if (t.id === 'rp-send') {
+      const r = { id: 'u' + Date.now() + Math.random().toString(16).slice(2, 6), hazard: S.report.hazard, zone: S.report.zone || GPS.zone, place: S.report.zone ? ZONE[S.report.zone].short : GPS.place, src: 'unconfirmed' };
+      if (S.network === 'offline') { S.queue.push(r); toast(tr('Saved on this phone. It sends when you have signal.')); }
+      else { S.sent.push({ ...r, mins: 0 }); toast(tr('Report sent to the TCU control room')); }
+      S.report = { step: 1, hazard: null, zone: null }; S.tab = 'map';
+    }
+    else if (t.id === 'sendnow') flushQueue();
+    else if (t.id === 'commit') {
+      const id = 'c' + (S.committed.length + 1);
+      S.committed.push({ ...S.lot, id, phone: '98•• ••• 521' }); // Gurpreet Singh drives JK05 G 7712
+      S.newId = id; S.advice = null; S.tab = 'board'; S.boardFilter = 'all';
+      const rank = boardList().findIndex(x => x.id === id) + 1;
+      toast(tr('{truck} added to the board at #{rank}', { truck: S.lot.truck, rank }));
+    }
+    else if (t.id === 'change') S.advice = null;
+    else if (d.confirm) S.pendingDone[d.confirm] = 'ok';
+    else if (d.reject) S.pendingDone[d.reject] = 'no';
+    else if (d.empty) { if (d.empty === 'advisor') { S.tab = 'advisor'; } S.edge = 'normal'; }
+    else if (t.tagName === 'polygon') { S.zone = +t.dataset.zone; S.sheet = { type: 'zone', zone: S.zone }; }
+    else return;
+    render();
+  }
+  function onSubmit(e) {
+    e.preventDefault();
+    if (e.target.id === 'lotform') { readLot(); S.advice = decide(S.lot); }
+    if (e.target.id === 'au-create') createAccount(e.target);
+    if (e.target.id === 'tcuform') {
+      const fd = new FormData(e.target);
+      S.tcu = { zone: +fd.get('zone'), status: fd.get('status'), hazard: fd.get('hazard') };
+      S.dialog = { type: 'publish', ...S.tcu };
+    }
+    render();
+  }
+  /* typing never re-renders the screen: it updates the state and the one element that shows it */
+  function onInput(e) {
+    const t = e.target, si = S.signin;
+    if (t.id === 'au-phone') { si.phone = digits(t.value).slice(0, 10); if (si.err) { si.err = null; t.closest('.tel').classList.remove('bad'); t.removeAttribute('aria-invalid'); $('#au-err')?.remove(); } }
+    if (t.id === 'au-code') {
+      si.code = digits(t.value).slice(0, 6); if (t.value !== si.code) t.value = si.code;
+      $$('.otp .boxes span').forEach((b, i) => { b.textContent = si.code[i] || ''; b.classList.toggle('cur', i === Math.min(si.code.length, 5)); });
+      if (si.err) { si.err = null; t.closest('.otp').classList.remove('bad'); t.removeAttribute('aria-invalid'); $('#au-err')?.remove(); }
+    }
+  }
+  stage.addEventListener('click', onClick); // one listener: the phone and the desktop view both live in #stage
+  stage.addEventListener('submit', onSubmit);
+  stage.addEventListener('input', onInput);
+  stage.addEventListener('change', e => { if (e.target.name === 'role' && e.target.form && e.target.form.id === 'au-create') { readCreate(e.target.form); S.signin.errs.role = false; render(); } });
+  stage.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.id === 'au-phone') { e.preventDefault(); sendCode(); render(); }
+    if (e.key === 'Enter' && e.target.id === 'au-code') { e.preventDefault(); verify(); render(); }
+    if (e.key === 'Escape' && (S.dialog || S.sheet || S.drawer)) { if (S.dialog) S.dialog = null; else { S.sheet = null; S.drawer = false; } render(); }
+  });
+  ['scenario', 'network', 'edge', 'role', 'device'].forEach(k => $('#sim-' + k).addEventListener('change', e => {
+    S[k] = e.target.value;
+    if (k === 'role') { S.me = null; S.auth = null; S.tab = ROLE_TAB[S.role]; S.sheet = null; S.drawer = false; S.dialog = null; }
+    if (k === 'scenario') { S.advice = S.advice ? decide(S.lot) : null; S.overrides = {}; S.pendingDone = {}; }
+    if (k === 'network') flushQueue();
+    render();
+  }));
+  $('#sim-session').addEventListener('change', e => {
+    if (e.target.value === 'out') { S.auth = 'welcome'; S.signin = freshSignin('9876543210'); S.sheet = null; S.drawer = false; S.dialog = null; }
+    else { S.auth = null; S.sms = false; }
+    render();
+  });
+
+  /* ---------------------------------------------------------------- test hooks used by scripts/verify_round2_all.py */
+  function applyState(st) {
+    S = DEFAULT();
+    clearTimeout(toastT); TOAST = null; $('#toast').classList.remove('show');
+    if (!st || st.name === 'reset') { S.auth = 'welcome'; lastKey = null; render(); return true; }
+    Object.entries(st).forEach(([k, v]) => { if (k in S && k !== 'report' && k !== 'signin') S[k] = v; });
+    if (st.role && !st.tab) S.tab = ROLE_TAB[st.role];
+    if (st.report) S.report = { ...S.report, ...st.report };
+    if (st.signin) S.signin = { ...S.signin, ...st.signin };
+    if (st.auth === 'otp' && !(st.signin && st.signin.sentAt)) S.signin.sentAt = Date.now() - 6000;
+    if (st.queue) S.queue = st.queue.map((r, i) => ({ id: 'q' + i, src: 'unconfirmed', ...r }));
+    if (st.override) S.overrides = st.override;
+    if (S.tab === 'alerts') openAlerts();
+    if (st.run) S.advice = decide(S.lot);
+    phone.classList.add('instant');
+    render();
+    return true;
+  }
+  const DRIVER_Q = [{ hazard: 'rockfall', zone: 4, place: 'Digdol' }];
+  const AUDIT = [
+    { name: 'signin_welcome', auth: 'welcome' },
+    { name: 'signin_phone_error', auth: 'welcome', signin: { phone: '98765', err: 'phone' } },
+    { name: 'signin_no_signal', auth: 'welcome', network: 'offline', signin: { err: 'nosignal' } },
+    { name: 'signin_otp', auth: 'otp', sms: true, signin: { code: '4182' } },
+    { name: 'signin_otp_wrong', auth: 'otp', signin: { code: '418270', err: 'wrong' } },
+    { name: 'signin_otp_expired', auth: 'otp', edge: 'error', signin: { code: '418207', err: 'expired', sentAt: 1 } },
+    { name: 'signin_create', auth: 'create' },
+    { name: 'signin_create_errors', auth: 'create', signin: { name: '', role: null, errs: { name: true, role: true } } },
+    { name: 'map_replay', tab: 'map' },
+    { name: 'map_live', scenario: 'live', tab: 'map' },
+    { name: 'map_replay_plus24', tab: 'map', horizon: 24 },
+    { name: 'zone_sheet_replay', tab: 'map', sheet: { type: 'zone', zone: 4 } },
+    { name: 'strip_replay', tab: 'strip' },
+    { name: 'strip_daybefore', scenario: 'daybefore', tab: 'strip' },
+    { name: 'advisor_form', tab: 'advisor' },
+    { name: 'advice_send_live', scenario: 'live', tab: 'advisor', run: true },
+    { name: 'advice_rail_replay', tab: 'advisor', run: true },
+    { name: 'advice_divert_replay', tab: 'advisor', run: true, lot: { variety: 'Ambri', days: 4, tonnes: 9, dest: 'azadpur', type: 'multi', truck: 'JK13 D 0921' } },
+    { name: 'advice_send_valley_daybefore', scenario: 'daybefore', tab: 'advisor', run: true, lot: { variety: 'Delicious', days: 3, tonnes: 10, dest: 'parimpora', type: 'multi', truck: 'JK03 F 2214' } },
+    { name: 'board_agent', role: 'agent' },
+    { name: 'ship_detail', role: 'agent', sheet: { type: 'ship', id: 's0' } },
+    { name: 'board_empty', role: 'agent', edge: 'empty' },
+    { name: 'report_step1_offline', role: 'driver', network: 'offline' },
+    { name: 'report_step2_gps_denied', role: 'driver', edge: 'error', report: { step: 2, hazard: 'rockfall' } },
+    { name: 'report_step3', role: 'driver', report: { step: 3, hazard: 'landslide' } },
+    { name: 'offline_queue_drawer', role: 'driver', network: 'offline', drawer: true, queue: DRIVER_Q },
+    { name: 'stale_banner', network: 'stale', tab: 'map' },
+    { name: 'tcu_console', role: 'police' },
+    { name: 'tcu_publish_confirm', role: 'police', dialog: { type: 'publish', zone: 4, status: 'closed', hazard: 'landslide' } },
+    { name: 'tcu_after_publish', role: 'police', tab: 'map', scenario: 'live', override: { 4: { status: 'closed', hazard: 'landslide' } } },
+    { name: 'alerts_driver', role: 'driver', tab: 'alerts', network: 'stale', queue: DRIVER_Q },
+    { name: 'alerts_empty', role: 'driver', tab: 'alerts', scenario: 'live' },
+    { name: 'profile_driver', role: 'driver', tab: 'profile' },
+    { name: 'dialog_signout', role: 'driver', tab: 'profile', queue: DRIVER_Q, dialog: { type: 'signout' } },
+    { name: 'dialog_delete', role: 'driver', tab: 'profile', dialog: { type: 'delete' } },
+    { name: 'loading', edge: 'loading', tab: 'map' },
+    { name: 'error_offline_copy', edge: 'error', tab: 'map' },
+  ];
+  function selfTest() {
+    const fail = [];
+    const click = sel => { const el = typeof sel === 'string' ? stage.querySelector(sel) : sel; if (!el) { fail.push(`cannot find ${sel}`); return false; } el.click(); return true; };
+    const type = (sel, v) => { const el = stage.querySelector(sel); if (!el) { fail.push(`cannot find ${sel}`); return; } el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
+    const expect = (c, m) => { if (!c) fail.push(m); };
+    FAST = true;
+    try {
+      // Flow D: phone -> wrong code -> right code -> new account -> the driver's first tab
+      applyState({ name: 'test', auth: 'welcome' });
+      type('#au-phone', '98765'); click('#au-send');
+      expect(S.signin.err === 'phone' && !!$('#au-err'), 'a 5-digit number did not show the phone error');
+      type('#au-phone', '98765 43210'); click('#au-send');
+      expect(S.auth === 'otp' && !!$('#sms'), 'Send code did not open the OTP screen with the SMS');
+      type('#au-code', '111111'); click('#au-verify');
+      expect(S.signin.err === 'wrong' && !!$('#au-err'), 'a wrong code did not show the error');
+      click('#sms'); click('#au-verify');
+      expect(S.auth === 'create', 'a right code for a new number did not open Create account');
+      type('#au-create input[name=name]', ''); click('#au-create-go');
+      expect(S.signin.errs.name, 'an empty name was accepted');
+      type('#au-create input[name=name]', 'Gurpreet Singh'); click('#au-create-go');
+      expect(S.auth === null && S.role === 'driver' && S.tab === 'report' && S.me && S.me.verified === false, 'Create account did not sign in an unverified driver on the Report tab');
+      // returning user skips Create account
+      applyState({ name: 'test', auth: 'otp', signin: { phone: PEOPLE.grower.phone } });
+      type('#au-code', CODE); click('#au-verify');
+      expect(S.auth === null && S.role === 'grower' && S.tab === 'map', 'a known number did not go straight to the map');
+      // Flow A, live run: advisor -> SEND -> commit -> board
+      applyState({ name: 'test', scenario: 'live' });
+      click('[data-nav=advisor]');
+      expect(!!$('#lotform', phone), 'advisor form did not open');
+      click('#getadvice');
+      expect($('.decision', phone)?.dataset.advice === 'SEND', 'live run should give SEND for the default lot');
+      click('#commit');
+      expect(S.tab === 'board', 'commit did not open the board');
+      expect(!!$('.ship.new', phone), 'committed truck is not highlighted on the board');
+      const ranks = boardList().map(t => t.d.priority);
+      expect(ranks.every((v, i) => i === 0 || ranks[i - 1] >= v), 'board is not sorted by priority');
+      click('.ship.new');
+      expect(S.sheet && S.sheet.type === 'ship' && /orchard/.test($('#sheet').textContent), 'the committed truck has no detail sheet');
+      // Flow A, replay: same lot -> RAIL (zones 3-5 high at +24 and +48, 57% shelf life used)
+      applyState({ name: 'test' });
+      click('[data-nav=advisor]'); click('#getadvice');
+      expect($('.decision', phone)?.dataset.advice === 'RAIL', 'replay should give RAIL for the default lot');
+      // Flow B: offline driver report in 3 taps, queued, then sent when online
+      applyState({ name: 'test', role: 'driver', network: 'offline' });
+      click('[data-haz=rockfall]'); click('#rp-place'); click('#rp-send');
+      expect(S.queue.length === 1, 'offline report was not queued');
+      expect(/waiting/.test($('#banner').textContent), 'banner does not count the queued report');
+      const net = $('#sim-network'); net.value = 'online'; net.dispatchEvent(new Event('change'));
+      expect(S.queue.length === 0 && S.sent.length === 1, 'queued report was not sent when back online');
+      // Flow C: police publish a closure, confirm it -> zone 4 high, confidence high
+      applyState({ name: 'test', role: 'police', scenario: 'live' });
+      const zs = $('#tcuform select[name=zone]', phone); zs.value = '4';
+      click('#tcu-publish');
+      expect(S.dialog && S.dialog.type === 'publish' && !!$('#dlg-ok'), 'Publish did not ask for confirmation');
+      expect(get(4, 0).confidence !== 'high' || get(4, 0).level !== 'high', 'the closure was applied before it was confirmed');
+      click('#dlg-ok');
+      expect(get(4, 0).confidence === 'high' && get(4, 0).level === 'high', 'TCU closure did not set zone 4 to high / high confidence');
+      // alerts: the bell counts new ones, opening the inbox clears it, an alert opens its zone
+      applyState({ name: 'test', role: 'driver' });
+      const n0 = unread();
+      expect(n0 > 0 && /\d/.test($('#ab-bell').textContent), 'the bell shows no count in the replay');
+      click('#ab-bell');
+      expect(S.tab === 'alerts' && unread() === 0, 'opening alerts did not clear the count');
+      click('.alert[data-zone]');
+      expect(S.sheet && S.sheet.type === 'zone', 'an alert did not open its zone');
+      // profile: sign out asks first, then goes back to the welcome screen
+      applyState({ name: 'test', role: 'driver', queue: DRIVER_Q });
+      click('#ab-me'); click('#pf-signout');
+      expect(S.dialog && /waiting/.test($('#dialog').textContent), 'sign out did not warn about the waiting report');
+      click('#dlg-cancel');
+      expect(!S.dialog && S.auth === null, 'Cancel did not keep the user signed in');
+      click('#pf-signout'); click('#dlg-ok');
+      expect(S.auth === 'welcome' && S.queue.length === 1, 'sign out did not return to welcome with the report kept');
+      // edge states render
+      ['loading', 'empty', 'error'].forEach(ed => { applyState({ name: 'test', edge: ed }); expect($('#screen').textContent.trim().length > 0, `edge state ${ed} is blank`); });
+      // offline drawer shows a cache under 5 KB
+      applyState({ name: 'test', network: 'offline' });
+      expect(cacheBytes() < 5120, `cached summary is ${cacheBytes()} bytes, over 5 KB`);
+      click('#banner');
+      expect(phone.classList.contains('open') && /KB/.test($('#sheet').textContent), 'offline drawer did not open from the banner');
+    } catch (err) { fail.push('exception: ' + err.message); }
+    FAST = false;
+    applyState({ name: 'reset' });
+    return fail;
+  }
+  window.RG = { applyState, auditStates: () => AUDIT, selfTest, decide: lot => decide(lot), state: () => S };
+
+  S.auth = 'welcome';
+  render();
+
+})();
+</script>
+</body>
+</html>
