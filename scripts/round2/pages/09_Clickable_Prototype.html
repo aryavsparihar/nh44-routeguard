@@ -1,0 +1,36 @@
+<header class="proto-head">
+  <div class="wrap"><strong>RouteGuard</strong> · clickable prototype <span class="muted-inv">· Team 01 · Sangam Round 2</span></div>
+</header>
+<main class="wrap proto-main">
+  <div class="simbar no-print" aria-label="Simulation controls">
+    <label class="field"><span>Scenario</span><select id="sim-scenario"><option value="live">Live: 10 Nov 2026 run (low risk)</option><option value="replay">Replay: 25 Aug 2025 (zones 3 to 5 high)</option><option value="daybefore">Replay: 24 Aug 2025, a day earlier</option></select></label>
+    <label class="field"><span>Network</span><select id="sim-network"><option value="online">Online (4G)</option><option value="offline">Offline in the gorge (cached copy)</option><option value="stale">Online, but scores 3 h old</option></select></label>
+    <label class="field"><span>UI edge state</span><select id="sim-edge"><option value="normal">Normal</option><option value="loading">Loading skeleton</option><option value="empty">Empty</option><option value="error">Error / GPS denied</option></select></label>
+    <label class="field"><span>Role</span><select id="sim-role"><option value="grower">Grower / Trader</option><option value="agent">Transport Agent</option><option value="driver">Truck Driver</option><option value="police">Traffic Police (TCU)</option></select></label>
+    <label class="field"><span>Device</span><select id="sim-device"><option value="mobile">Mobile 390 × 844</option><option value="desktop">Desktop control room 1440 × 900</option></select></label>
+  </div>
+  <div class="proto-layout">
+    <div class="proto-stage" id="stage">
+      <div id="phone" aria-label="RouteGuard mobile prototype">
+        <div class="appbar"><div><div class="t" id="ab-title">Risk map</div><div class="role" id="ab-role">Grower / Trader</div></div><button class="btn ghost" id="ab-sync" aria-label="Open offline and sync drawer"><svg class="ico"><use href="#i-status-offline-queue"/></svg></button></div>
+        <button class="sync s-live" id="banner" aria-label="Connection status. Opens the offline and sync drawer"></button>
+        <div class="screen" id="screen"></div>
+        <nav class="bnav" id="bnav" aria-label="Main"></nav>
+        <div class="sheet-scrim" id="scrim"></div>
+        <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+    <aside class="proto-side no-print">
+      <div class="card sand"><h3 style="margin-top:0">Try these paths</h3>
+        <ol style="margin:0;padding-left:20px">
+          <li><strong>Flow A:</strong> Advisor → fill the lot → see the card → Commit. The truck appears on the Board, ranked.</li>
+          <li>Switch Scenario to <strong>Replay</strong>: the map turns red in zones 3 to 5 and the same lot gets RAIL or DIVERT.</li>
+          <li><strong>Flow B:</strong> Network = Offline, Role = Driver, Report: 3 taps, the report waits on the phone. Back online, it sends.</li>
+          <li><strong>Flow C:</strong> Role = Traffic Police, Report → Official advisory. Zone confidence becomes High.</li>
+          <li>Tap the top banner for the offline drawer, and any hex or strip cell for the explainer sheet.</li>
+        </ol></div>
+      <div class="card"><h3 style="margin-top:0">Data in this prototype</h3><p id="data-note" class="muted"></p></div>
+    </aside>
+  </div>
+</main>

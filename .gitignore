@@ -46,3 +46,4 @@ __pycache__/
 *.pyc
 .venv/
 .venv-ux/
+scripts/round2/.build/

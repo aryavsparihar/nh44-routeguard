@@ -1,0 +1,93 @@
+<header class="doc-head">
+  <div class="doc-kicker">Team 01 · RouteGuard · Sangam Round 2 (UI/UX)</div>
+  <h1>Design rationale</h1>
+  <p class="doc-meta">Why the app looks and works the way it does, how each screen covers our Round 1 features, and what the prototype data is.</p>
+</header>
+
+<h2>1 The job of the app</h2>
+<p>RouteGuard forecasts where NH-44 may close in the next 48 hours and gives each apple shipment one answer before it is loaded: send, hold, rail or divert. The loss is decided at the orchard, but today the warning only reaches the driver at Ramban. Every design choice below follows from that: the answer has to reach the grower early, be clear in one glance, and still work when there is no signal.</p>
+
+<h2>2 Screens and the Round 1 features</h2>
+<table class="t keep">
+  <thead><tr><th>Round 1 MVP feature</th><th>Screen in the prototype</th><th>Main user</th></tr></thead>
+  <tbody>
+    <tr><td>1 Live risk map, tap for reason and confidence</td><td>Risk map + zone sheet</td><td>Grower, everyone</td></tr>
+    <tr><td>2 48-hour strip per zone</td><td>48-hour strip</td><td>Grower, agent</td></tr>
+    <tr><td>3 Hazard layer (landslide, rockfall, flash flood, snow/ice)</td><td>Hazard icons on the map, hazard bars in the zone sheet</td><td>Everyone</td></tr>
+    <tr><td>4 Dispatch advisor with priority score</td><td>Advisor form + advice card</td><td>Grower, trader</td></tr>
+    <tr><td>5 Verified driver and police reports</td><td>Report (3 taps) and the TCU console</td><td>Driver, police</td></tr>
+    <tr><td>6 Shipment board</td><td>Board (mobile) and the desktop control room</td><td>Agent, police</td></tr>
+    <tr><td>7 Offline mode</td><td>Sync banner on every screen + offline drawer</td><td>Driver in the gorge</td></tr>
+  </tbody>
+</table>
+<p>The bottom navigation has five tabs (Map, 48h, Advisor, Board, Report). The offline drawer opens from the banner on any screen, so it does not need a tab. The sitemap (03_Sitemap) shows the full structure.</p>
+
+<h2>3 Decisions and why</h2>
+<h3>The answer comes first</h3>
+<p>The advice card shows one word (SEND, HOLD, RAIL or DIVERT) in 22 px bold with an icon, then one sentence saying why, then the zone that caused it. A grower deciding whether to load needs the answer before the detail. Each answer has its own icon shape (arrow, pause, train, branching arrow), so it still reads in black and white.</p>
+<h3>Colour that survives sunlight and colour blindness</h3>
+<p>We kept the Round 1 deck palette (terracotta, teal, ochre and navy on a warm off-white) and checked every text pair with the WCAG 2.1 formula. Three base colours failed as text, so we added darker versions for text use: terracotta ink <code>#A9481F</code>, ochre ink <code>#7A5A12</code> and a darker map ochre <code>#9A6E1F</code>. White on ochre is only 3.24:1, so HOLD never puts white text on ochre. Risk levels are never shown by colour alone: the word is always there, medium cells have stripes and high cells have cross-hatching.</p>
+<h3>Built for gloves and old phones</h3>
+<p>Every tap target is at least 48 × 48 px and the hazard buttons are 112 px tall. Body text is 14 px, form fields 16 px so the phone does not zoom in, and small labels are 12 px capitals only. Numbers use a monospace font so scores line up in the strip.</p>
+<h3>Offline first</h3>
+<p>The phone keeps a short text summary of the latest scores (under 5 KB, so it loads on 2G). A report made with no signal is saved on the phone and sends by itself later; the banner always says how many are waiting. If scores are more than 2 hours old, the banner turns ochre and says so: we never show old scores as new.</p>
+<h3>Fewest steps</h3>
+<p>Reporting a hazard takes three taps: what (four big buttons), where (GPS fills it in), send. Getting advice is one form with defaults, and one tap commits the truck to the agent's board. The police update is one form: zone, status, cause, publish.</p>
+<h3>Trust</h3>
+<p>Every score shows its confidence (low, medium, high) and a range, not one exact number. Reports are marked by source: police official (solid navy), verified driver (solid green), unconfirmed driver (dashed grey). A driver report stays unconfirmed until police or a second driver confirms it. A police closure sets the zone to high risk with high confidence and alerts drivers in that zone.</p>
+
+<h2>4 States we designed</h2>
+<table class="t keep">
+  <thead><tr><th>State</th><th>What the user sees</th></tr></thead>
+  <tbody>
+    <tr><td>Loading</td><td>Grey placeholders in the same layout, so nothing jumps when the scores arrive</td></tr>
+    <tr><td>Empty</td><td>A plain sentence (no scores yet, no trucks yet) and one button to fix it</td></tr>
+    <tr><td>Error</td><td>"Can't reach RouteGuard", a retry button and a link to the offline copy</td></tr>
+    <tr><td>Location off</td><td>The report screen asks the driver to tap their zone instead</td></tr>
+    <tr><td>Offline</td><td>Dark banner, cached scores, reports queued with a count</td></tr>
+    <tr><td>Stale scores</td><td>Ochre banner: "Scores are 3 h old"</td></tr>
+  </tbody>
+</table>
+
+<h2>5 How we checked accessibility</h2>
+<ul>
+  <li>Contrast: every text and background pair in the style guide is calculated, not eyeballed. All text is at least 4.5:1; decision badges at least 7:1.</li>
+  <li>Touch targets and text size: we measured every button and every text element in 21 states of the prototype (each screen, each role, offline, loading, empty, error).</li>
+  <li>Layout: the prototype fits a 390 px wide phone with no sideways scrolling.</li>
+</ul>
+
+<h2>6 Data in the prototype</h2>
+<ul>
+  <li><strong>Live run:</strong> the real output of our hourly risk job at 18:34 UTC on 10 Nov 2026, copied from our database. All six zones were low that night, so the advisor says SEND.</li>
+  <li><strong>Replay of the 2025 closure:</strong> our model (rules-v0.1, unchanged) run on archived weather for 24 and 25 August 2025, the days before and at the start of the 14-day closure. On 24 August zones 3 to 5 are already high at +12 h, which is about a day of warning. This replay uses the weather that actually happened, not the forecast available on that day, so it shows what the rules do with good inputs. The real backtest on forecasts is planned before the final.</li>
+  <li><strong>Sample data:</strong> truck numbers, driver phones and road reports are made up for the demo.</li>
+  <li><strong>Advice rules:</strong> the prototype follows the Round 1 rules, but the shelf-life days and prices are placeholders until our advice table is finished.</li>
+  <li><strong>Map cells:</strong> drawn along the route for the prototype. The app uses H3 cells from our corridor file.</li>
+</ul>
+
+<h2>7 Notes on the data flow diagrams</h2>
+<p>Level 0 has one process (RouteGuard) and five external entities. Level 1 splits it into five processes and seven data stores (D1 to D7). Solid lines run today; dashed ones are planned for 25 Nov. Flows are named with nouns. Data stores only connect to processes, and every store has data going in and out. Every Level 0 flow appears on Level 1 with the same name:</p>
+<table class="t keep">
+  <thead><tr><th>Entity</th><th>Data flow</th><th>Direction</th><th>Level 1 process</th></tr></thead>
+  <tbody>
+    <tr><td>E1 Open-Meteo API</td><td>hourly weather forecast + history</td><td>in</td><td>P1.0</td></tr>
+    <tr><td>E1 Open-Meteo API</td><td>weather point query (15 points)</td><td>out</td><td>P1.0</td></tr>
+    <tr><td>E2 Grower / Trader</td><td>lot details</td><td>in</td><td>P2.0</td></tr>
+    <tr><td>E2 Grower / Trader</td><td>advice card + zone risk</td><td>out</td><td>P2.0</td></tr>
+    <tr><td>E3 Transport Agent</td><td>shipment + driver details</td><td>in</td><td>P4.0</td></tr>
+    <tr><td>E3 Transport Agent</td><td>fleet board status</td><td>out</td><td>P4.0</td></tr>
+    <tr><td>E4 Truck Driver</td><td>hazard report</td><td>in</td><td>P3.0</td></tr>
+    <tr><td>E4 Truck Driver</td><td>zone push alert</td><td>out</td><td>P5.0</td></tr>
+    <tr><td>E5 Traffic Police / Admin (TCU)</td><td>official closure advisory</td><td>in</td><td>P3.0</td></tr>
+    <tr><td>E5 Traffic Police / Admin (TCU)</td><td>pending report queue</td><td>out</td><td>P3.0</td></tr>
+  </tbody>
+</table>
+<p>D7 is the phone's own storage (IndexedDB). It is a data store because it holds reports between two moments in time: P3.0 writes a report into it when there is no signal and reads it back to send later.</p>
+
+<h2>8 What comes next</h2>
+<ul>
+  <li>Test the report flow with drivers at Qazigund and the advisor with growers, and update the personas.</li>
+  <li>Replace the placeholder advice values with our finished advice table.</li>
+  <li>Run the backtest on archived forecasts and report lead time, hit rate and false alarms.</li>
+  <li>Add Urdu and Hindi labels.</li>
+</ul>
