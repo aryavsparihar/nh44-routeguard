@@ -1,0 +1,54 @@
+<svg font-family="Helvetica, Arial, sans-serif" class="dg" xmlns:xlink="http://www.w3.org/1999/xlink" data-diagram="l0" viewBox="0 0 1400 560" width="1400" height="560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1_DFD_Level_0_Context">
+<defs><marker id="ah-l0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#1E2D3A"/></marker></defs>
+<rect width="1400" height="560" fill="#FDF8F0"/>
+<polyline class="edge" data-id="l0_F1" data-src="l0_E1" data-tgt="l0_P0" points="620.0,120.0 620.0,214.6" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F2" data-src="l0_P0" data-tgt="l0_E1" points="780.0,214.6 780.0,120.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F3" data-src="l0_E2" data-tgt="l0_P0" points="260.0,260.0 552.3,260.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F4" data-src="l0_P0" data-tgt="l0_E2" points="527.5,300.0 260.0,300.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F5" data-src="l0_E3" data-tgt="l0_P0" points="260.0,380.0 527.5,380.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F6" data-src="l0_P0" data-tgt="l0_E3" points="552.3,420.0 260.0,420.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F7" data-src="l0_E4" data-tgt="l0_P0" points="1140.0,260.0 847.7,260.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F8" data-src="l0_P0" data-tgt="l0_E4" points="872.5,300.0 1140.0,300.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F9" data-src="l0_E5" data-tgt="l0_P0" points="1140.0,380.0 872.5,380.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<polyline class="edge" data-id="l0_F10" data-src="l0_P0" data-tgt="l0_E5" points="847.7,420.0 1140.0,420.0" fill="none" stroke="#1E2D3A" stroke-width="1.6" marker-end="url(#ah-l0)"/>
+<g class="node" data-id="l0_P0" data-kind="process" data-x="520" data-y="200" data-w="360" data-h="280"><ellipse cx="700.0" cy="340.0" rx="180.0" ry="140.0" fill="#F5EDE0" stroke="#2B5B54" stroke-width="2"/><text class="nt" x="700.0" y="323.0" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">0</text><text class="nt" x="700.0" y="340.0" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">RouteGuard NH-44 Prediction &amp;</text><text class="nt" x="700.0" y="357.0" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">Smart Apple Logistics System</text></g>
+<g class="node" data-id="l0_E1" data-kind="entity" data-x="600" data-y="40" data-w="200" data-h="80"><rect x="600" y="40" width="200" height="80" fill="#FFFFFF" stroke="#1E2D3A" stroke-width="2"/><text class="nt" x="700.0" y="71.5" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">E1</text><text class="nt" x="700.0" y="88.5" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">Open-Meteo API</text></g>
+<g class="node" data-id="l0_E2" data-kind="entity" data-x="60" data-y="240" data-w="200" data-h="80"><rect x="60" y="240" width="200" height="80" fill="#FFFFFF" stroke="#1E2D3A" stroke-width="2"/><text class="nt" x="160.0" y="271.5" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">E2</text><text class="nt" x="160.0" y="288.5" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">Grower / Trader</text></g>
+<g class="node" data-id="l0_E3" data-kind="entity" data-x="60" data-y="360" data-w="200" data-h="80"><rect x="60" y="360" width="200" height="80" fill="#FFFFFF" stroke="#1E2D3A" stroke-width="2"/><text class="nt" x="160.0" y="391.5" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">E3</text><text class="nt" x="160.0" y="408.5" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">Transport Agent</text></g>
+<g class="node" data-id="l0_E4" data-kind="entity" data-x="1140" data-y="240" data-w="200" data-h="80"><rect x="1140" y="240" width="200" height="80" fill="#FFFFFF" stroke="#1E2D3A" stroke-width="2"/><text class="nt" x="1240.0" y="271.5" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">E4</text><text class="nt" x="1240.0" y="288.5" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">Truck Driver</text></g>
+<g class="node" data-id="l0_E5" data-kind="entity" data-x="1140" data-y="360" data-w="200" data-h="80"><rect x="1140" y="360" width="200" height="80" fill="#FFFFFF" stroke="#1E2D3A" stroke-width="2"/><text class="nt" x="1240.0" y="383.0" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">E5</text><text class="nt" x="1240.0" y="400.0" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">Traffic Police / Admin</text><text class="nt" x="1240.0" y="417.0" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">(TCU)</text></g>
+<g class="elabel" data-id="l0_F1"><rect class="pill" x="559.2" y="150.3" width="121.6" height="34.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="620.0" y="159.8" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">hourly weather</text>
+<text x="620.0" y="174.8" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">forecast + history</text>
+</g>
+<g class="elabel" data-id="l0_F2"><rect class="pill" x="725.4" y="150.3" width="109.1" height="34.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="780.0" y="159.8" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">weather point</text>
+<text x="780.0" y="174.8" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">query (15 points)</text>
+</g>
+<g class="elabel" data-id="l0_F3"><rect class="pill" x="370.4" y="250.5" width="71.4" height="19.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="406.1" y="260.0" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">lot details</text>
+</g>
+<g class="elabel" data-id="l0_F4"><rect class="pill" x="349.8" y="283.0" width="88.0" height="34.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="393.8" y="292.5" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">advice card +</text>
+<text x="393.8" y="307.5" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">zone risk</text>
+</g>
+<g class="elabel" data-id="l0_F5"><rect class="pill" x="348.0" y="363.0" width="91.6" height="34.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="393.8" y="372.5" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">shipment +</text>
+<text x="393.8" y="387.5" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">driver details</text>
+</g>
+<g class="elabel" data-id="l0_F6"><rect class="pill" x="345.3" y="410.5" width="121.6" height="19.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="406.1" y="420.0" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">fleet board status</text>
+</g>
+<g class="elabel" data-id="l0_F7"><rect class="pill" x="946.7" y="250.5" width="94.2" height="19.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="993.9" y="260.0" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">hazard report</text>
+</g>
+<g class="elabel" data-id="l0_F8"><rect class="pill" x="955.5" y="290.5" width="101.4" height="19.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="1006.2" y="300.0" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">zone push alert</text>
+</g>
+<g class="elabel" data-id="l0_F9"><rect class="pill" x="928.2" y="370.5" width="156.2" height="19.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="1006.2" y="380.0" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">official closure advisory</text>
+</g>
+<g class="elabel" data-id="l0_F10"><rect class="pill" x="926.3" y="410.5" width="135.0" height="19.0" rx="4" fill="#FDF8F0" stroke="#D8CFC2" stroke-width="1"/>
+<text x="993.9" y="420.0" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#1E2D3A">pending report queue</text>
+</g>
+</svg>
