@@ -54,16 +54,24 @@ def test_retries_then_succeeds():
     assert n["i"] == 3 and set(out) == {"a", "b"}
 
 
-def test_gives_up_after_3_retries():
+def test_gives_up_after_4_retries_with_growing_waits():
     n = {"i": 0}
 
     def handler(req):
         n["i"] += 1
         raise httpx.ConnectTimeout("timeout", request=req)
 
-    with pytest.raises(WeatherFetchError):
-        fetch(POINTS, client(handler), sleep=lambda s: None)
-    assert n["i"] == 4  # 1 try + 3 retries
+    waits = []
+    with pytest.raises(WeatherFetchError, match="after 5 tries"):
+        fetch(POINTS, client(handler), sleep=waits.append)
+    assert n["i"] == 5  # 1 try + 4 retries
+    assert waits == [10, 30, 60, 120]
+
+
+def test_worst_case_fits_in_the_workflow_timeout():
+    worst_s = (openmeteo.RETRIES + 1) * openmeteo.TIMEOUT_S + sum(openmeteo.BACKOFF_S)
+    assert worst_s < 8 * 60  # risk-job.yml allows 10 min, leave room for setup and writes
+    assert len(openmeteo.BACKOFF_S) == openmeteo.RETRIES
 
 
 def test_bad_request_is_not_retried():

@@ -86,3 +86,43 @@ The new role is in the user's session token only after it refreshes (up to about
 ### When deploying (later)
 
 The same three Clerk values go into Azure Container Apps secrets (BUILD_PROMPT section 4.1), never into the image or the repo. Production needs a Clerk **production** instance and a domain we own; that is a separate step on deploy day.
+
+## Risk job timing
+
+The risk job (`.github/workflows/risk-job.yml`) runs on GitHub Actions. GitHub's own hourly schedule skipped most hours (it ran every 6 to 12 hours in November 2026), so Supabase starts it instead:
+
+- `pg_cron` calls `private.dispatch_risk_job()` at **:07 and :37** every hour (migration `20261124210000_risk_job_scheduler.sql`). The function asks GitHub's API to start the workflow on `main`.
+- Each automatic run skips if the last run is under 40 minutes old. So :07 runs, and :37 only runs if :07 failed (a retry).
+- GitHub's own `7 * * * *` schedule is still there as a fallback, with the same skip rule.
+- The **Run workflow** button always runs (its default is 0).
+
+### The GitHub token (once, and again when it expires)
+
+The function needs a GitHub token in Supabase Vault. Never paste it into chat, a file or the repo.
+
+1. GitHub → your profile picture → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+2. Name: `routeguard-risk-scheduler`. Expiration: a custom date just after the round. Resource owner: you.
+3. Repository access: **Only select repositories** → `nh44-routeguard`.
+4. Permissions → Repository permissions → **Actions: Read and write**. Leave everything else at "No access". (Metadata: read-only is added by GitHub on its own.)
+5. **Generate token** and copy it.
+6. Supabase dashboard → project `mzublcdqgntejkvvoozh` → **Integrations** → **Vault** → **Add new secret**. Name: `github_risk_dispatch_token`, value: the token. Save.
+
+To renew: generate a new token the same way and edit the secret's value in Vault. Nothing else changes.
+
+### Is it working?
+
+- GitHub → **Actions** → **Risk job**: runs labelled "workflow_dispatch" at about :07 every hour, green. Runs at :37 that say "skipped: the last run was … min ago" are normal.
+- `/status` shows the last run under 60 minutes old.
+- What GitHub answered (kept for a few hours), in the Supabase SQL editor:
+
+  ```sql
+  select created, status_code, left(content, 200) as content
+  from net._http_response order by created desc limit 5;
+  ```
+
+  204 means GitHub started the run. 401 or 403 means the token is wrong, expired or missing "Actions: Read and write". No rows and a warning in the Postgres logs ("no github_risk_dispatch_token in Vault") means the secret is missing.
+- The pg_cron history: `select start_time, status, return_message from cron.job_run_details order by start_time desc limit 5;`
+
+### Before a demo
+
+Press **Actions → Risk job → Run workflow** about 10 minutes before. If the weather service times out, run it once more.

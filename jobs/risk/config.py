@@ -12,6 +12,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPO_ROOT / "lib" / "risk" / "config.json"
+REASON_CODES_PATH = REPO_ROOT / "lib" / "risk" / "reason_codes.json"
 
 HAZARDS = ("landslide", "rockfall", "flash_flood", "snow_ice")
 
@@ -33,3 +34,8 @@ def load_config(path: Path = CONFIG_PATH) -> dict[str, Any]:
 
 def exposure(cfg: dict[str, Any], zone_id: int, hazard: str) -> float:
     return float(cfg["exposure"][str(zone_id)][hazard])
+
+
+def load_reason_codes(path: Path = REASON_CODES_PATH) -> dict[str, list[str]]:
+    """{reason_code: [param names]}, shared with the app's translations."""
+    return json.loads(path.read_text())["codes"]

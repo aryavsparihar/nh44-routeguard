@@ -9,6 +9,7 @@
 Usage
   python jobs/run_risk.py --dry-run   # fetch + score + print, writes nothing, no key needed
   python jobs/run_risk.py             # needs SUPABASE_URL and SUPABASE_SECRET_KEY
+  python jobs/run_risk.py --skip-if-fresh-min 40   # do nothing if the last run is under 40 min old
 
 Keys come from the environment (GitHub Actions secrets) or a gitignored jobs/.env.
 They are never printed.
@@ -77,6 +78,7 @@ def print_table(rows: list[dict[str, Any]]) -> None:
         rng = f"{r['risk_low']:.2f}-{r['risk_high']:.2f}"
         print(f"{r['zone_id']:>4} {r['horizon_hours']:>3} {r['overall']:>7.3f} {rng:>11} {r['level']:<6} "
               f"{(r['top_hazard'] or '-'):<11} {r['confidence']:<6} {r['reason']}")
+        print(f"{'':>34} {r['reason_code']} {json.dumps(r['reason_params'], ensure_ascii=False)}")
 
 
 def read_history(db: Supabase) -> set[tuple[int, str]]:
@@ -99,10 +101,29 @@ def existing_hexes(db: Supabase, hexes: list[Hex]) -> list[Hex]:
     return [h for h in hexes if h.h3_index in known]
 
 
+def minutes_since_last_run(db: Supabase, now: datetime) -> float | None:
+    """Age of the newest zone run in minutes, or None if there is none yet."""
+    rows = db.select("latest_risk", {"select": "run_at", "h3_index": "is.null", "limit": "1"})
+    if not rows:
+        return None
+    return (now - datetime.fromisoformat(rows[0]["run_at"])).total_seconds() / 60
+
+
+def non_negative_int(text: str) -> int:
+    n = int(text)
+    if n < 0:
+        raise argparse.ArgumentTypeError("must be 0 or more")
+    return n
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Fetch weather and score NH-44 closure risk.")
     ap.add_argument("--dry-run", action="store_true", help="fetch and score, print a table, write nothing")
     ap.add_argument("--data-dir", type=Path, default=DATA_DIR, help="folder with the hexagon CSVs (default: data/)")
+    ap.add_argument("--skip-if-fresh-min", type=non_negative_int, default=0, metavar="N",
+                    help="exit without doing anything if the newest run is under N minutes old "
+                         "(0 = always run). Automatic triggers use 40, so a retry or a late "
+                         "duplicate doesn't write a second run in the same hour.")
     args = ap.parse_args(argv)
 
     cfg = load_config()
@@ -123,6 +144,18 @@ def main(argv: list[str] | None = None) -> int:
             print("ERROR: SUPABASE_URL and SUPABASE_SECRET_KEY must be set (or use --dry-run).", file=sys.stderr)
             return 2
         db = Supabase(url, key)
+
+        if args.skip_if_fresh_min:
+            try:
+                age = minutes_since_last_run(db, now)
+            except SupabaseWriteError as e:
+                db.close()
+                print(f"ERROR: {e}", file=sys.stderr)
+                return 1
+            if age is not None and age < args.skip_if_fresh_min:
+                db.close()
+                print(f"skipped: the last run was {age:.0f} min ago (under {args.skip_if_fresh_min} min)")
+                return 0
 
     # 1. weather: if this fails, stop before writing anything
     try:

@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(86);
+select plan(89);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -345,6 +345,15 @@ select throws_ok(
   $$ insert into public.official_updates (kind, title, source_url, source_name, issued_at, valid_until, created_by)
      values ('closure', 'Bad dates', 'https://example.com/x', 'x', now(), now() - interval '1 hour', 'user_testpolice') $$,
   '23514', null::text, 'official updates refuse valid_until before issued_at');
+
+-- Risk job scheduler (A6): only the owner and pg_cron can start the job.
+set local role postgres;
+select is(has_function_privilege('anon', 'private.dispatch_risk_job()', 'execute'), false,
+  'anon cannot start the risk job');
+select is(has_function_privilege('authenticated', 'private.dispatch_risk_job()', 'execute'), false,
+  'signed-in users cannot start the risk job');
+select is((select schedule from cron.job where jobname = 'risk-job-dispatch'), '7,37 * * * *',
+  'pg_cron starts the risk job at :07 and :37');
 
 select * from finish();
 

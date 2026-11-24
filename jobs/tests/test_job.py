@@ -207,13 +207,74 @@ def test_check_run_ok_and_failures(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://abcdefghijklmnopqrst.supabase.co")
     monkeypatch.setenv("SUPABASE_SECRET_KEY", "not-a-real-key-for-tests")
     fresh = datetime.now(timezone.utc).isoformat()
-    full = [{"run_at": fresh, "zone_id": z, "horizon_hours": h} for z in range(1, 7) for h in (0, 12, 24, 48)]
+    full = [{"run_at": fresh, "zone_id": z, "horizon_hours": h, "reason_code": "none"}
+            for z in range(1, 7) for h in (0, 12, 24, 48)]
     monkeypatch.setattr(check_run, "Supabase", _fake_latest(full))
     assert check_run.main([]) == 0
     monkeypatch.setattr(check_run, "Supabase", _fake_latest(full[:23]))
     assert check_run.main([]) == 1
     monkeypatch.setattr(check_run, "Supabase", _fake_latest([]))
     assert check_run.main([]) == 1
+    no_code = [{**r, "reason_code": None} for r in full]
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(no_code))
+    assert check_run.main([]) == 1
+    unknown = [{**r, "reason_code": "made_up"} for r in full]
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(unknown))
+    assert check_run.main([]) == 1
     old = [{**r, "run_at": "2026-01-01T00:00:00+00:00"} for r in full]
     monkeypatch.setattr(check_run, "Supabase", _fake_latest(old))
     assert check_run.main([]) == 1
+
+
+# --- --skip-if-fresh-min ------------------------------------------------------
+def _skip_db(last_run_at, calls):
+    class FakeDb:
+        def __init__(self, *a):
+            pass
+
+        def select(self, table, params):
+            calls.append(table)
+            assert table == "latest_risk"
+            return [] if last_run_at is None else [{"run_at": last_run_at.isoformat()}]
+
+        def close(self):
+            pass
+
+    return FakeDb
+
+
+@pytest.mark.parametrize("minutes_ago, skips", [(10, True), (39, True), (41, False), (None, False)])
+def test_skip_if_fresh(monkeypatch, capsys, minutes_ago, skips):
+    monkeypatch.setenv("SUPABASE_URL", "https://abcdefghijklmnopqrst.supabase.co")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "not-a-real-key-for-tests")
+    monkeypatch.setattr(run_risk, "datetime", _FrozenDatetime)
+    last = None if minutes_ago is None else T - timedelta(minutes=minutes_ago)
+    calls = []
+    monkeypatch.setattr(run_risk, "Supabase", _skip_db(last, calls))
+    fetched = []
+
+    def fake_fetch(pts):
+        fetched.append(1)
+        raise WeatherFetchError("stop here; only the skip decision is under test")
+
+    monkeypatch.setattr(run_risk, "fetch", fake_fetch)
+    code = run_risk.main(["--skip-if-fresh-min", "40"])
+    if skips:
+        assert code == 0 and fetched == [] and "skipped" in capsys.readouterr().out
+    else:
+        assert code == 1 and fetched == [1]  # went on to fetch weather
+
+
+def test_skip_0_never_reads_the_last_run(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "https://abcdefghijklmnopqrst.supabase.co")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "not-a-real-key-for-tests")
+    calls = []
+    monkeypatch.setattr(run_risk, "Supabase", _skip_db(T, calls))
+    monkeypatch.setattr(run_risk, "fetch", lambda pts: (_ for _ in ()).throw(WeatherFetchError("x")))
+    assert run_risk.main([]) == 1
+    assert calls == []
+
+
+def test_skip_rejects_negative_minutes():
+    with pytest.raises(SystemExit):
+        run_risk.main(["--dry-run", "--skip-if-fresh-min", "-5"])
