@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   web:
-    name: Web app (lint, typecheck, build, bundle check)
+    name: Web app (audit, lint, typecheck, test, build, bundle check)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -23,6 +23,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Known vulnerabilities: high or critical anywhere fails; for the
+      # packages that ship in the app (not dev tools), moderate already fails.
+      - name: npm audit (all dependencies, high and up)
+        run: npm audit --audit-level=high
+
+      - name: npm audit (production dependencies, moderate and up)
+        run: npm audit --omit=dev --audit-level=moderate
+
+      - name: Every env var the app reads is in .env.example
+        run: bash scripts/ci/check-env-example.sh
+
+      - name: No dangerouslySetInnerHTML
+        run: bash scripts/ci/check-no-inner-html.sh
 
       - name: Lint
         run: npm run lint
@@ -37,7 +51,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: No secret keys in the browser bundle
+      - name: No secret keys in the browser bundle or prerendered pages
         run: bash scripts/ci/check-bundle-secrets.sh
 
   gitleaks:
