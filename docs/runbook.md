@@ -91,7 +91,13 @@ The Clerk values go to Azure as described in "Deploy to Azure (first time)" belo
 
 The web app talks to Postgres directly with Drizzle (`src/server/db`), logged in as `routeguard_app`. That login can't read anything by itself: every query switches to `anon` or `authenticated` first, so RLS applies (migration `20261125120000_app_db_role.sql`, `docs/decisions.md` "ORM"). The Python job and `seed.mjs` still use the secret key over HTTP.
 
-Once per database, after the migration is applied:
+Once per database, after the migration is applied. The quick way, in your own terminal (it sets a new random password, writes `DATABASE_URL` into `.env.local`, and never prints the password):
+
+```bash
+npm run db:set-app-password
+```
+
+Then skip to step 4. By hand instead:
 
 1. Make a password on your Mac. It goes to your password manager, never into chat or git:
 
