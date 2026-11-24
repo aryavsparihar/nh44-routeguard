@@ -26,3 +26,7 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-10** · `latest_risk` view with `security_invoker = true` · The view follows the caller's RLS instead of bypassing it.
 - **2026-11-10** · `--dry-run` reads nothing from the database · Teammates can run it with no key at all. Confidence then falls back to exposure.
 - **2026-11-10** · After each hourly run, `check_run.py` checks for 24 fresh zone rows · A run that "succeeds" but writes nothing still turns red.
+
+## Round 3: hosting
+
+- **2026-11-24** · Host only on Google Cloud Run, on the free tier; Vercel is dropped completely · The working demo app already runs on Cloud Run, and moving it two days before the round is risk for no marks. The free tier covers our traffic at no cost. Rejected: keeping Vercel for PR previews (two hosts to explain and keep in sync). The `vercel.json` and `bom1` entries above are history; Step 0 in `docs/round3/BUILD_PROMPT.md` removes the leftovers.
