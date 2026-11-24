@@ -27,6 +27,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-10** · `--dry-run` reads nothing from the database · Teammates can run it with no key at all. Confidence then falls back to exposure.
 - **2026-11-10** · After each hourly run, `check_run.py` checks for 24 fresh zone rows · A run that "succeeds" but writes nothing still turns red.
 
+## Round 3: hosting
+
+- **2026-11-24** · Drop Vercel completely · We want the app on a real cloud host, with one place to explain and pay for. Rejected: keeping Vercel for PR previews (two hosts to keep in sync). The `vercel.json` and `bom1` entries above are history; Step 0 in `docs/round3/BUILD_PROMPT.md` removes the leftovers.
+- **2026-11-24** · Host on Azure Container Apps, on Aryaveer's Azure for Students subscription · Google Cloud was the first choice (the demo app runs on Cloud Run), but its billing setup failed for us. Azure for Students needs no card, so it can't bill us; the US$100 credit runs to Nov 2027. Container Apps scales to zero when idle and up to 3 replicas under load. Rejected: AWS (needs a card, same problem as Google), Render (sleeps, slow first load during a demo).
+- **2026-11-24** · No Azure resources until we're ready to deploy; images in GitHub Container Registry, not Azure Container Registry · The credit is all we have. ACR charges every day it exists; GHCR is free for our size.
+
 ## Round 3: API foundation (A1)
 
 - **2026-11-24** · Every API route is wrapped in `withApi()` (`src/server/http/`) · One place for request ids, logging, the role check, the Origin check and problem+json errors, so each route stays short and no route can forget them.
