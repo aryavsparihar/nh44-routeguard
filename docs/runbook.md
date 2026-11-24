@@ -47,6 +47,7 @@ Created so far (development instance):
 | Email | Role | Created |
 |---|---|---|
 | `admin+clerk_test@example.com` | admin | 24 Nov 2026, to test A2 |
+| `driver+clerk_test@example.com` | driver (onboarded through the API) | 24 Nov 2026, to test A4 |
 
 ### 5. Check it works
 
@@ -75,6 +76,8 @@ police and admin are never self-service, and only an admin can grant them. So th
    with `npx supabase db query --remote -f <file>`. It runs as the database owner, so RLS doesn't stop it.
 
 Every later admin is made by an existing admin through the API.
+
+Done for the development project on 24 Nov 2026: `admin+clerk_test@example.com` has its row (audit entry with actor role `bootstrap`).
 
 ### 7. After a role change
 
