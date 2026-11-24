@@ -331,7 +331,10 @@ select is(
    order by id limit 1),
   'user_testadmin | admin | Demo police account for the round | req-pgtap-1 | grower > police',
   'a role change is audited with actor, reason, request id and both roles');
-select is((select count(*) from public.audit_log where action = 'user.role_changed'),
+-- Only this test's users: the real log already holds role changes (the first
+-- admin, the demo driver), and those must not change the count.
+select is((select count(*) from public.audit_log
+           where action = 'user.role_changed' and target_id like 'user\_test%'),
   3::bigint, 'every role change wrote exactly one audit row');
 
 -- Check constraints (the database refuses bad rows even if a route forgets).
