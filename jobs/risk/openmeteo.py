@@ -17,8 +17,13 @@ PAST_DAYS = 3
 # run after 00:00 UTC today can't see 48 h ahead.
 FORECAST_DAYS = 3
 TIMEOUT_S = 30
-RETRIES = 3  # 1 try + 3 retries
-BACKOFF_S = (2, 5, 10)
+CONNECT_TIMEOUT_S = 15
+# 1 try + 4 retries, waiting 10 s, 30 s, 60 s, 120 s: about 3.5 min of waiting.
+# The failures we saw (Nov 2026) were TLS handshake timeouts that a short wait
+# didn't outlast. Worst case (5 x 30 s + 220 s) stays inside the workflow's
+# 10-minute limit.
+RETRIES = 4
+BACKOFF_S = (10, 30, 60, 120)
 
 
 class WeatherFetchError(RuntimeError):
@@ -39,7 +44,7 @@ def build_params(points: list[dict[str, Any]]) -> dict[str, Any]:
 def fetch_raw(points: list[dict[str, Any]], client: httpx.Client | None = None, sleep=time.sleep) -> list[dict]:
     """One request for every point. Retries on network errors, 429 and 5xx."""
     own = client is None
-    client = client or httpx.Client(timeout=TIMEOUT_S, headers={"User-Agent": "risk-job/0.1"})
+    client = client or httpx.Client(timeout=httpx.Timeout(TIMEOUT_S, connect=CONNECT_TIMEOUT_S), headers={"User-Agent": "risk-job/0.1"})
     last: Exception | None = None
     try:
         for attempt in range(RETRIES + 1):
