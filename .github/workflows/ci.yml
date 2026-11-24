@@ -30,6 +30,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit tests (Vitest)
+        run: npm test
+
       # No env vars here on purpose: the app must build without any keys.
       - name: Build
         run: npm run build
