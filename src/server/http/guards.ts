@@ -18,6 +18,14 @@ export function requireAccess(caller: Caller | null, access: Access): void {
   }
 }
 
+// For routes whose access isn't "public". withApi() has already made sure
+// there is a caller, but TypeScript can't see that, so handlers call this to
+// get a Caller instead of Caller | null.
+export function requireCaller(caller: Caller | null): Caller {
+  if (!caller) throw new AuthError();
+  return caller;
+}
+
 const STATE_CHANGING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // CSRF protection. A browser always sends Origin on these methods, and a

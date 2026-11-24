@@ -67,3 +67,29 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · Policy helpers live in a `private` schema · The Data API only exposes `public`, so nobody can call them over `/rest/v1/rpc`.
 - **2026-11-24** · `audit_log` rows come only from `write_audit()`, which takes the actor from the token; a trigger refuses every update, delete and truncate · Nobody can write an entry in someone else's name or remove one, not even the database owner.
 - **2026-11-24** · RLS tests run with pgTAP on the real database inside one transaction that is rolled back · We have no Docker for a local database. Nothing the tests insert stays.
+
+## Round 3: roles (A4)
+
+- **2026-11-24** · `proxy.ts` only sends signed-out visitors of `/board`, `/report/new` and `/admin/...` to sign-in, with a plain path check instead of `createRouteMatcher` · `createRouteMatcher` is deprecated in `@clerk/nextjs` 7 because path matching in the proxy can miss how Next resolves a route. Clerk and the Next 16 auth guide both say to check access next to the data. So each page calls `requirePageRole()`, and the proxy is only a quick first check. This changes section 8, which named `createRouteMatcher`.
+- **2026-11-24** · API paths are not protected in `proxy.ts` · `auth.protect()` answers a signed-out API call with 404, which would break our 401 problem+json contract. `withApi()` already checks every route, and `app/api/routes.test.ts` fails if a route skips `withApi()`.
+- **2026-11-24** · Role changes write the database first, then Clerk · RLS trusts the role in the Clerk token. If Clerk went first and the database failed, someone would hold police or admin power with no `users` row and no audit entry. With the database first, a failure in between is fixed by sending the same request again.
+- **2026-11-24** · Admin role changes go through the `admin_set_role` database function, which writes the audit row in the same transaction · A role can't change without a record, even if the API crashes halfway. A user token can't write `users.role` at all (column grants), so the function is the only way in.
+- **2026-11-24** · Admins can't change their own role · Stops an admin from locking themselves (or the last admin) out by mistake. Another admin has to do it.
+- **2026-11-24** · An admin can give a role to a Clerk user who has no `users` row yet · The demo police account can't onboard itself (police isn't self-service), so the admin's change creates the row.
+- **2026-11-24** · Added `GET /api/v1/me` · The onboarding screen needs to know whether the user has picked a role. It is in the API contract (section 6); `PATCH` and `DELETE /me` come later.
+- **2026-11-24** · Wrong role on a page shows the 404 page · Next 16's `forbidden()` is still experimental, and a 404 doesn't admit the page exists.
+- **2026-11-24** · The first admin is set up by hand once (runbook step 6) · police/admin are never self-service and only an admin can grant them, so the first one needs a start outside the API. Its audit row says "bootstrap".
+- **2026-11-24** · No rate limit on the role endpoints yet · Section 10 asks for 5 role attempts per user per hour, but the shared rate limiter (section 17) doesn't exist yet. Both routes carry a `TODO(rate-limit)`.
+
+
+## Round 3: security (A5)
+
+- **2026-11-24** · The Content-Security-Policy has no nonce and allows inline scripts (`'unsafe-inline'`) · Next 16's CSP guide says nonces need every page rendered on each request and don't work with Partial Prerendering, which we use (`cacheComponents`). Section 16's fallback: a strict policy without nonces. Scripts still load only from our origin, Clerk and Cloudflare's captcha; React escapes all text and CI bans `dangerouslySetInnerHTML`. Subresource Integrity (experimental in Next 16) is the way to drop `'unsafe-inline'` later.
+- **2026-11-24** · The Clerk and Supabase hosts in the CSP come from the public env vars · The Clerk publishable key is base64 of our instance's host, so decoding it gives the exact host for development and production with no `*.clerk.accounts.dev` wildcard. Without keys (CI builds), the hosts are left out.
+- **2026-11-24** · Clerk's bot protection is allowed on any port (`https://*.protect.clerk.com:*` in `connect-src`) · In the browser check, Clerk's sign-in probed those hosts on ports 8443, 18443, 2082 and 992, and the CSP blocked them. The hosts are Clerk's own; only the port is open.
+- **2026-11-24** · `eval` is allowed in development only · React uses it for better error messages in development. Production blocks it (checked in the browser: `eval` and `new Function` throw).
+- **2026-11-24** · `CSP_REPORT_ONLY=1` turns the policy into report-only · An emergency switch for deploy day if the policy breaks something we didn't test. There is no report collector; violations show in the browser console.
+- **2026-11-24** · The policy was checked in a local browser rather than shipped as report-only first · We have no production users yet, so a report-only period would collect nothing. We ran `next start`, loaded `/`, `/status` and Clerk's sign-in form, and read the console: no violations under the enforced policy.
+- **2026-11-24** · HSTS without `preload` · Preload is a promise that the whole domain stays https forever, and we don't own a domain yet (Azure Container Apps gives us one).
+- **2026-11-24** · The 7 moderate `npm audit` findings in lint tooling are left as they are · They are in `minimatch` via `typescript-eslint`, which never ships in the app. 0 high, 0 critical, 0 in production dependencies. CI fails on high anywhere and on moderate in production dependencies.
+- **2026-11-24** · CI also scans prerendered pages for secret keys, checks that every env var is in `.env.example`, and bans `dangerouslySetInnerHTML` · Prerendered HTML and RSC payloads go to the browser too, not just `.next/static`. The other two turn CLAUDE.md rules into checks.

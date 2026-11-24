@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(75);
+select plan(86);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -100,6 +100,8 @@ select is((select count(*) from public.road_status), 2::bigint, 'anon: reads roa
 
 select throws_ok($$ select public.write_audit('test.anon') $$, '42501', null::text,
   'anon: cannot call write_audit');
+select throws_ok($$ select public.admin_set_role('user_testdriver', 'admin', 'x') $$, '42501', null::text,
+  'anon: cannot call admin_set_role');
 
 -- ===========================================================================
 -- Driver
@@ -274,6 +276,23 @@ select throws_ok($$ update public.audit_log set reason = 'changed' $$,
 select throws_ok($$ delete from public.audit_log $$,
   '42501', null::text, 'admin: cannot delete from audit_log');
 
+-- Role changes (admin_set_role)
+select lives_ok($$ select public.admin_set_role('user_testgrower', 'police', 'Demo police account for the round', 'req-pgtap-1') $$,
+  'admin: can make someone police with a reason');
+select lives_ok($$ select public.admin_set_role('user_testgrower', 'grower', 'Demo over', 'req-pgtap-2') $$,
+  'admin: can move someone back to grower');
+select lives_ok($$ select public.admin_set_role('user_testghost', 'police', 'Demo police account', 'req-pgtap-3') $$,
+  'admin: can give a role to a user who has no row yet');
+select throws_ok($$ select public.admin_set_role('user_testadmin', 'grower', 'Oops') $$,
+  '42501', null::text, 'admin: cannot change their own role');
+select throws_ok($$ select public.admin_set_role('user_testdriver', 'agent', '   ') $$,
+  '22023', null::text, 'admin: cannot change a role without a reason');
+
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+
+select throws_ok($$ select public.admin_set_role('user_testdriver', 'admin', 'I want to be admin') $$,
+  '42501', null::text, 'driver: cannot call admin_set_role');
+
 -- ===========================================================================
 -- Back to the owner: check what the updates above really did, and that
 -- audit_log stays append-only even for the owner.
@@ -299,6 +318,21 @@ select is((select state::text from public.road_status where item = 'mughal_road'
   'unknown', 'a grower did not change road_status');
 select is((select display_name from public.users where id = 'user_testdriver'),
   'Renamed driver', 'the driver''s display name changed');
+
+select is((select role || ':' || verification_level from public.users where id = 'user_testgrower'),
+  'grower:email', 'leaving police drops the official level');
+select is((select role || ':' || verification_level from public.users where id = 'user_testghost'),
+  'police:official', 'a new police row is created as official');
+select is(
+  (select actor_id || ' | ' || actor_role || ' | ' || reason || ' | ' || request_id || ' | '
+          || (meta ->> 'from') || ' > ' || (meta ->> 'to')
+   from public.audit_log
+   where action = 'user.role_changed' and target_id = 'user_testgrower'
+   order by id limit 1),
+  'user_testadmin | admin | Demo police account for the round | req-pgtap-1 | grower > police',
+  'a role change is audited with actor, reason, request id and both roles');
+select is((select count(*) from public.audit_log where action = 'user.role_changed'),
+  3::bigint, 'every role change wrote exactly one audit row');
 
 -- Check constraints (the database refuses bad rows even if a route forgets).
 select throws_ok($$ insert into public.shipments (tonnes) values (50) $$,
