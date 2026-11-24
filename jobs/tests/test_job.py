@@ -207,12 +207,19 @@ def test_check_run_ok_and_failures(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://abcdefghijklmnopqrst.supabase.co")
     monkeypatch.setenv("SUPABASE_SECRET_KEY", "not-a-real-key-for-tests")
     fresh = datetime.now(timezone.utc).isoformat()
-    full = [{"run_at": fresh, "zone_id": z, "horizon_hours": h} for z in range(1, 7) for h in (0, 12, 24, 48)]
+    full = [{"run_at": fresh, "zone_id": z, "horizon_hours": h, "reason_code": "none"}
+            for z in range(1, 7) for h in (0, 12, 24, 48)]
     monkeypatch.setattr(check_run, "Supabase", _fake_latest(full))
     assert check_run.main([]) == 0
     monkeypatch.setattr(check_run, "Supabase", _fake_latest(full[:23]))
     assert check_run.main([]) == 1
     monkeypatch.setattr(check_run, "Supabase", _fake_latest([]))
+    assert check_run.main([]) == 1
+    no_code = [{**r, "reason_code": None} for r in full]
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(no_code))
+    assert check_run.main([]) == 1
+    unknown = [{**r, "reason_code": "made_up"} for r in full]
+    monkeypatch.setattr(check_run, "Supabase", _fake_latest(unknown))
     assert check_run.main([]) == 1
     old = [{**r, "run_at": "2026-01-01T00:00:00+00:00"} for r in full]
     monkeypatch.setattr(check_run, "Supabase", _fake_latest(old))

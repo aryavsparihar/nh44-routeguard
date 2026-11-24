@@ -1,4 +1,5 @@
-"""Check that the newest run wrote one zone row per zone per horizon, recently.
+"""Check that the newest run wrote one zone row per zone per horizon, recently,
+each with a reason_code from lib/risk/reason_codes.json.
 
 Used by the risk-job workflow right after run_risk.py, so a silent failure
 (e.g. 0 rows written) still turns the run red.
@@ -12,7 +13,7 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 
-from risk.config import load_config
+from risk.config import load_config, load_reason_codes
 from risk.db import Supabase, SupabaseWriteError
 
 
@@ -27,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     db = Supabase(url, key)
     try:
-        rows = db.select("latest_risk", {"select": "run_at,zone_id,horizon_hours", "h3_index": "is.null"})
+        rows = db.select("latest_risk", {"select": "run_at,zone_id,horizon_hours,reason_code", "h3_index": "is.null"})
     except SupabaseWriteError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
@@ -45,6 +46,11 @@ def main(argv: list[str] | None = None) -> int:
           f"{len(rows)} zone rows, {len(pairs)} zone/horizon pairs")
     if len(rows) != expected or len(pairs) != expected:
         print(f"ERROR: expected {expected} zone rows.", file=sys.stderr)
+        return 1
+    codes = load_reason_codes()
+    bad = sorted({str(r.get("reason_code")) for r in rows if r.get("reason_code") not in codes})
+    if bad:
+        print(f"ERROR: zone rows with a missing or unknown reason_code: {', '.join(bad)}", file=sys.stderr)
         return 1
     if age > timedelta(minutes=args.max_age_min):
         print(f"ERROR: newest run is older than {args.max_age_min} min.", file=sys.stderr)

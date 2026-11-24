@@ -77,6 +77,7 @@ def print_table(rows: list[dict[str, Any]]) -> None:
         rng = f"{r['risk_low']:.2f}-{r['risk_high']:.2f}"
         print(f"{r['zone_id']:>4} {r['horizon_hours']:>3} {r['overall']:>7.3f} {rng:>11} {r['level']:<6} "
               f"{(r['top_hazard'] or '-'):<11} {r['confidence']:<6} {r['reason']}")
+        print(f"{'':>34} {r['reason_code']} {json.dumps(r['reason_params'], ensure_ascii=False)}")
 
 
 def read_history(db: Supabase) -> set[tuple[int, str]]:

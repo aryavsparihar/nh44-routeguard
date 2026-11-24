@@ -29,6 +29,7 @@ class HazardPick:
     score: float
     trigger: Trigger
     point_name: str
+    point_id: str = ""
 
 
 def r3(x: float) -> float:
@@ -53,7 +54,7 @@ def pick_hazards(
             factor = slope_factor if hazard in slope_hazards else 1.0
             score = min(1.0, exposure(cfg, zone_id, hazard) * t.score * factor)
             if best is None or score > best.score:
-                best = HazardPick(score, t, point_names.get(pid, pid))
+                best = HazardPick(score, t, point_names.get(pid, pid), pid)
         if best is None:
             raise ValueError(f"zone {zone_id} has no weather points")
         out[hazard] = best
@@ -168,6 +169,47 @@ def reason(zone_id: int, top_hazard: str | None, pick: HazardPick | None, cfg: d
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+def exposure_band(e: float) -> str:
+    """Same cut-offs as exposure_words(), as a code the app can translate."""
+    if e >= 0.8:
+        return "very_high"
+    if e >= 0.5:
+        return "high"
+    if e >= 0.3:
+        return "some"
+    return "low"
+
+
+def _round(x: float) -> float | int:
+    """The number _num() would print, as a number: whole from 10 up (and 0), else 1 decimal."""
+    return int(round(x)) if x >= 10 or x == 0 else round(x, 1)
+
+
+def reason_code_and_params(
+    zone_id: int, top_hazard: str | None, pick: HazardPick | None, cfg: dict[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    """The same reason as reason(), as a code plus params, so the app can show it in
+    English, Hindi or Urdu. Every code is listed in lib/risk/reason_codes.json."""
+    if top_hazard is None or pick is None:
+        return "none", {"zone": zone_id}
+    f = pick.trigger.facts
+    where = {"place": pick.point_id, "zone": zone_id,
+             "exposure": exposure_band(exposure(cfg, zone_id, top_hazard))}
+    if top_hazard == "landslide":
+        rain = {"mm": _round(f["rain_mm"]), "hours": f["hours"]}
+        if f["burst"]:
+            return "landslide_rain_burst", {**rain, "burst_mm": _round(f["burst_mm"]),
+                                            "burst_hours": f["burst_hours"], **where}
+        return "landslide_rain", {**rain, **where}
+    if top_hazard == "rockfall":
+        code = "rockfall_freeze_thaw" if f["freeze_thaw"] else "rockfall_rain"
+        return code, {"mm": _round(f["rain_mm"]), "hours": f["hours"], **where}
+    if top_hazard == "flash_flood":
+        return "flash_flood_burst", {"mm": _round(f["burst_mm"]), "hours": f["burst_hours"], **where}
+    return "snow_ice", {"snow_cm": _round(f["snow_cm"]), "depth_m": round(f["depth_m"], 2),
+                        "black_ice": "yes" if f["black_ice"] else "no", **where}
+
+
 def build_row(
     *,
     zone_id: int,
@@ -183,6 +225,8 @@ def build_row(
     scores = {h: r3(p.score) for h, p in picks.items()}
     overall, top = overall_and_top(scores)
     low, high = score_range(overall, horizon_h, cfg)
+    top_pick = picks[top] if top else None
+    code, params = reason_code_and_params(zone_id, top, top_pick, cfg)
     return {
         "run_at": run_at.isoformat(),
         "h3_index": h3_index,
@@ -195,6 +239,8 @@ def build_row(
         "risk_high": r3(high),
         "level": level(overall, cfg),
         "confidence": confidence(zone_id, top, horizon_h, cfg, history, reports, now),
-        "reason": reason(zone_id, top, picks[top] if top else None, cfg),
+        "reason": reason(zone_id, top, top_pick, cfg),  # English, for older clients
+        "reason_code": code,
+        "reason_params": params,
         "model_version": cfg["model_version"],
     }

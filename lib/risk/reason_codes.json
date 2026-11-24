@@ -1,0 +1,12 @@
+{
+  "_note": "Every reason_code the risk job writes to risk_scores, with the names of its reason_params. The app turns code + params into a sentence in English, Hindi or Urdu (one message per code). place = weather point id from jobs/points.json (translate by id). exposure = very_high | high | some | low. black_ice = yes | no. Numbers are rounded like the English reason. jobs/tests/test_reasons.py checks the job only writes what is listed here.",
+  "codes": {
+    "none": ["zone"],
+    "landslide_rain": ["mm", "hours", "place", "zone", "exposure"],
+    "landslide_rain_burst": ["mm", "hours", "burst_mm", "burst_hours", "place", "zone", "exposure"],
+    "rockfall_rain": ["mm", "hours", "place", "zone", "exposure"],
+    "rockfall_freeze_thaw": ["mm", "hours", "place", "zone", "exposure"],
+    "flash_flood_burst": ["mm", "hours", "place", "zone", "exposure"],
+    "snow_ice": ["snow_cm", "depth_m", "black_ice", "place", "zone", "exposure"]
+  }
+}
