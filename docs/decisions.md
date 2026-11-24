@@ -36,3 +36,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · `getCaller()` returns "signed out" until A2 wires in Clerk · The plan says not to pick a Clerk app before the demo app's code is in the repo. Protected routes answer an honest 401 until then, and tests mock the caller.
 - **2026-11-24** · Logs carry a 12-character SHA-256 hash of the user id and the path without the query string · We can follow one user's requests without storing who they are, and query strings can hold personal data.
 - **2026-11-24** · vitest 5.1.0 rather than 5.1.1, and `@types/node` 20 → 24 · 5.1.1 was six days old (we use releases at least two weeks old). vitest 5 needs Node 22+ types, and we run Node 24 locally and in CI.
+
+## Round 3: Clerk and Supabase (A2)
+
+- **2026-11-24** · Clerk application `app_3MY5xJ8fczFe0sOEafACBTW6tNY`, installed by hand (`@clerk/nextjs` 7.9.25) instead of `clerk init` · It is the app picked in the Clerk dashboard. `init` writes keys into env files and can create a new app; we put keys in `.env.local` ourselves. 7.9.25 is the newest release at least two weeks old.
+- **2026-11-24** · With no Clerk keys, Clerk is skipped and everyone is signed out · CI builds with no keys, and teammates can run the app before they have them. Same pattern as the Supabase env check. `NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=1` stops Clerk from creating a throwaway app in development.
+- **2026-11-24** · The role comes from the `metadata.role` session claim and must match one of our six roles exactly · Users can't edit Clerk public metadata from the browser, and checking the value means a broken or unexpected claim gives "no role" instead of access.
+- **2026-11-24** · Supabase gets Clerk's default session token, no JWT template · Supabase's native Clerk integration reads the session token directly. Clerk's JWT-template route for Supabase is deprecated (since 1 April 2025).
+- **2026-11-24** · The server Supabase client uses only the publishable key; no secret-key "admin" client yet · Nothing in A2 needs to bypass RLS, and the secret key has so far lived only in GitHub Actions. We decide when the queue worker needs it (section 17).
+- **2026-11-24** · Supabase calls time out after 5 s; no answer or a 502/503/504 gives a 503, other database errors a generic 500 · Clients can tell "try again" apart from a bug. Logs keep only the error code and message, because Postgres details can quote row values.
