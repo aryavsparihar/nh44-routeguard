@@ -9,6 +9,59 @@ permissions:
   contents: read
 
 jobs:
+  web:
+    name: Web app (lint, typecheck, build, bundle check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests (Vitest)
+        run: npm test
+
+      # No env vars here on purpose: the app must build without any keys.
+      - name: Build
+        run: npm run build
+
+      - name: No secret keys in the browser bundle
+        run: bash scripts/ci/check-bundle-secrets.sh
+
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The action lists the PR's commits through the GitHub API, which needs
+    # pull-requests: read. Job permissions replace the top-level ones, so
+    # contents: read is repeated here.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # gitleaks needs the commits, not just the latest files
+
+      # Personal-account repos need no GITLEAKS_LICENSE.
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Comments on the PR would need write access. A red check is enough.
+          GITLEAKS_ENABLE_COMMENTS: false
+
   pytest:
     runs-on: ubuntu-latest
     timeout-minutes: 10
