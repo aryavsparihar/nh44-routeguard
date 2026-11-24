@@ -139,3 +139,6 @@ jobs:
 
       - name: Run tests (fake weather, no network, no keys)
         run: python -m pytest jobs/tests -q
+
+      - name: Validate incidents.csv (section 14)
+        run: python scripts/validate_incidents.py
