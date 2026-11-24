@@ -77,6 +77,11 @@ jobs:
       - name: Update the container app
         run: |
           az config set extension.use_dynamic_install=yes_without_prompt
+          # Our server listens on 3000 (the app is created with a sample image on 80).
+          az containerapp ingress update \
+            --name "$AZURE_CONTAINERAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --target-port 3000 --output none
           az containerapp update \
             --name "$AZURE_CONTAINERAPP_NAME" \
             --resource-group "$AZURE_RESOURCE_GROUP" \

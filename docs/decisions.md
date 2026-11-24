@@ -115,6 +115,6 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · Images go to GitHub Container Registry, keeping the last 2 · Section 4.1: Azure Container Registry charges every day it exists. GHCR is free for this.
 - **2026-11-24** · The deploy workflow runs on every push to `main`, but only when the repo variable `DEPLOY_ENABLED` is `true` · Until the Azure resources exist, every merge would otherwise fail.
 - **2026-11-24** · `deploymentId` is the commit SHA · Next's version-skew protection: a browser still running the old version reloads instead of breaking during a deploy.
-- **2026-11-24** · CI builds and smoke-tests the Docker image on every PR · None of us has Docker running locally, so this is where the Dockerfile is proven before deploy day.
+- **2026-11-24** · CI builds and smoke-tests the Docker image on every PR · Docker isn't installed on the machine we build on, so this is where the Dockerfile is proven before deploy day.
 - **2026-11-24** · `HOSTNAME=0.0.0.0` in the image · With `127.0.0.1`, the standalone server failed to reach itself on `localhost` (seen locally: "Failed to proxy … socket hang up").
 - **2026-11-24** · Sentry and an uptime check are not in A7 · Both are P1 and need new accounts. `/ready` is ready for an uptime check when we add one.

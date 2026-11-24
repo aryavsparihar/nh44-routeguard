@@ -194,10 +194,10 @@ az containerapp env create --name $ENV --resource-group $RG --location $LOC --lo
 Created with Microsoft's sample image first; the first deploy replaces it.
 
 ```bash
-az containerapp create --name $APP --resource-group $RG --environment $ENV --image mcr.microsoft.com/k8se/quickstart:latest --ingress external --target-port 3000 --cpu 0.5 --memory 1.0Gi --min-replicas 0 --max-replicas 3
+az containerapp create --name $APP --resource-group $RG --environment $ENV --image mcr.microsoft.com/k8se/quickstart:latest --ingress external --target-port 80 --cpu 0.5 --memory 1.0Gi --min-replicas 0 --max-replicas 3
 ```
 
-(The sample image listens on port 80, so the app URL shows an error until the first deploy. That's expected.)
+(The sample image listens on port 80. The first deploy switches the app to our image and port 3000.)
 
 Pulling our private image from GitHub Container Registry needs a **classic** GitHub token with only `read:packages`: GitHub → Settings → Developer settings → Personal access tokens → **Tokens (classic)** → Generate new token (classic), tick only `read:packages`, expiry just after the round. Then:
 
