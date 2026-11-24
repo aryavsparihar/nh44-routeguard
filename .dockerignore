@@ -1,0 +1,22 @@
+# Keep keys, local builds and team notes out of the Docker build context.
+# The image only needs the Next.js app (see Dockerfile).
+.env*
+!.env.example
+.git
+.github
+.next
+node_modules
+**/.venv*
+.vercel
+.DS_Store
+.pytest_cache
+*.tsbuildinfo
+coverage
+jobs
+supabase
+data
+docs
+team-guides
+ui ux round
+test
+seed.js
