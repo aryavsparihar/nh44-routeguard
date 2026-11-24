@@ -11,14 +11,18 @@
     "test": "vitest run",
     "db:push": "supabase db push --remote",
     "db:test": "bash scripts/db/rls-test.sh",
-    "db:types": "supabase gen types typescript --remote --schema public > lib/database.types.ts"
+    "db:types": "supabase gen types typescript --remote --schema public > lib/database.types.ts",
+    "db:schema": "node scripts/db/gen-drizzle-schema.mjs",
+    "db:orm-check": "node --env-file-if-exists=.env.local scripts/db/orm-check.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.25",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+    "drizzle-orm": "0.45.4",
     "next": "16.4.6",
     "pino": "10.4.0",
+    "postgres": "3.4.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
