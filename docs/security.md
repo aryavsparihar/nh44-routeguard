@@ -27,9 +27,16 @@ Migrations: `supabase/migrations/20261124160006_rls_helpers.sql` and `2026112416
 | `shipments` | the owner agent, the creator, the assigned driver; admins | growers, traders and agents create as themselves; the owner agent updates and can't hand it to another agent | other agent's shipment hidden and unchanged |
 | `verifications` | admins | server functions only (A4, P1) | driver can't verify themselves |
 | `audit_log` | admins | only through `write_audit()`; no update, delete or truncate, even by the owner | all three blocked, actor taken from token |
+| `admin_set_role()` (function) | – | admins only, never on themselves, reason required; writes the role and the audit row in one transaction | non-admin, self-change, empty reason blocked; audit row checked |
 | `idempotency_keys` | your own | your own | someone else's key blocked |
 | `weather_readings` | nobody | risk job only | – |
 
 Signed-out visitors (`anon`) have no access at all to `users`, `reports`, `shipments`, `verifications`, `report_confirmations`, `report_flags`, `audit_log` and `idempotency_keys`.
 
 The tests also check that every table in `public` has RLS on, and that the database refuses 50 tonnes, a 281-character note and an official update that ends before it starts.
+
+## Roles
+
+- A user picks grower, trader, agent or driver once (`POST /api/v1/me/onboarding`). police and admin are granted only by an admin with a reason (`PATCH /api/v1/admin/users/{id}/role`), and every change is in `audit_log`.
+- The role lives in Clerk `publicMetadata.role` (users can't edit it) and is mirrored in `users.role`. The database is written first, then Clerk, so the token never holds a role the database and the audit log don't know about.
+- Pages: `proxy.ts` sends signed-out visitors of `/board`, `/report/new` and `/admin/...` to sign-in; each page then checks the role with `requirePageRole()`. API routes: `withApi()` checks every route, and `app/api/routes.test.ts` fails if a route skips it.

@@ -48,6 +48,9 @@ export { notSupported as GET, notSupported as PUT, notSupported as PATCH, notSup
 | Dynamic segment like `[id]` | `withApi<{ id: string }>(..., async ({ params }) => ...)` |
 | Methods you don't support | `notAllowed([...])`, as above, so clients get a JSON 405 |
 | Log something | `log.info({ zone }, "message")`. Never log bodies, tokens, phone numbers or query strings |
+| The caller in a non-public route | `requireCaller(caller)` gives a `Caller` instead of `Caller \| null` |
+| Talk to the database | `const db = await getDb()` (`src/server/db.ts`): the caller's token, so RLS applies; 503 if Supabase isn't set up |
+| Record a privileged action | `await writeAudit(db, { action, targetType, targetId, reason, requestId })` (`src/server/audit.ts`) |
 
 Shared zod pieces live in `src/server/schemas/common.ts`: `cleanText(max)`, `truckNumber`, `corridorLat`, `corridorLng`, `pageQuery`. Always end objects with `.strict()`.
 
@@ -56,5 +59,8 @@ Shared zod pieces live in `src/server/schemas/common.ts`: `cleanText(max)`, `tru
 - Don't catch errors just to return a response yourself. Throw an `ApiError` and let `withApi()` format it.
 - Never put user input into Supabase `.or()`, `.filter()` or `.textSearch()` strings. Use `.eq()`, `.in()`, `.gte()` with values that passed zod.
 - Writes (POST, PUT, PATCH, DELETE) need an `Origin` header that matches our host. Browsers send it. In curl or Postman, add `Origin: http://localhost:3000`.
-- Until A2 lands, `getCaller()` returns "signed out", so any non-public route answers 401. In tests, mock `./caller` (see `with-api.test.ts`).
+- In tests, mock the caller (see `with-api.test.ts` and `src/server/users/users.routes.test.ts`).
+- Every exported handler in a `route.ts` under `app/api` must be `withApi(...)` or `notAllowed(...)`. `app/api/routes.test.ts` fails the build otherwise.
+- Admin and police actions need a `reason` in the body and an audit row. Write the audit row in the same database function as the change when you can (like `admin_set_role`); otherwise call `writeAudit()` right after the change.
+- Pages: start every protected page with `await requirePageRole([...])` (`src/server/auth/page.ts`). `proxy.ts` only sends signed-out visitors to sign-in; it doesn't check roles.
 - Put a `*.test.ts` next to your route and call the exported `GET`/`POST` directly with a `NextRequest`. `npm test` runs them.

@@ -40,7 +40,7 @@ Put these in `.env.local` yourself (never in chat, never committed):
 
 ### 4. Test users (ask the team first)
 
-Clerk test emails `name+clerk_test@example.com` take the code `424242` and send no real email. Create one per role (BUILD_PROMPT section 19). Set a role on a test user in Clerk → Users → the user → Metadata → **Public**: `{ "role": "agent" }`. This is only for test users; real users get roles through the onboarding and admin endpoints (A4).
+Clerk test emails `name+clerk_test@example.com` take the code `424242` and send no real email. Create one per role (BUILD_PROMPT section 19). Give a test user a role the same way real users get one: they call `POST /api/v1/me/onboarding` (grower, trader, agent, driver), or an admin calls `PATCH /api/v1/admin/users/{id}/role` with a reason (any role, audited). Don't set roles by hand in the Clerk dashboard any more: that skips our `users` row and the audit log. The one exception is the first admin, below.
 
 Created so far (development instance):
 
@@ -51,11 +51,34 @@ Created so far (development instance):
 ### 5. Check it works
 
 1. `npm run dev`.
-2. Get a session token for a test user. Sign-in screens come with A4; until then, use `@clerk/testing` or Clerk's Backend API. Session tokens are short-lived, so get a fresh one right before each try.
+2. Get a session token for a test user. Until the sign-in screens exist (D2), use `@clerk/testing` or Clerk's Backend API. Session tokens are short-lived, so get a fresh one right before each try.
 3. Call a protected route with the header `Authorization: Bearer <session token>` (and `Origin: http://localhost:3000` on POST/PATCH/DELETE).
    - No token → 401.
    - The wrong role → 403.
    - The right role → 200.
+
+### 6. The first admin (once per database)
+
+police and admin are never self-service, and only an admin can grant them. So the very first admin needs a hand-made start:
+
+1. In Clerk → Users → the admin user → Metadata → **Public**: `{ "role": "admin" }`.
+2. Give them a `users` row and an audit entry. Ask the team first, then run (replace the id):
+   ```sql
+   begin;
+   insert into public.users (id, role, verification_level)
+     values ('user_REPLACE_ME', 'admin', 'official')
+     on conflict (id) do update set role = 'admin', verification_level = 'official';
+   insert into public.audit_log (actor_id, actor_role, action, target_type, target_id, reason)
+     values (null, 'bootstrap', 'user.role_changed', 'user', 'user_REPLACE_ME', 'Bootstrap: first admin, set by hand');
+   commit;
+   ```
+   with `npx supabase db query --remote -f <file>`. It runs as the database owner, so RLS doesn't stop it.
+
+Every later admin is made by an existing admin through the API.
+
+### 7. After a role change
+
+The new role is in the user's session token only after it refreshes (up to about a minute). The app calls `getToken({ skipCache: true })` after onboarding; for anyone else, "refresh to see your new role". Responses from both role endpoints include `token_refresh_needed: true`.
 
 ### When deploying (later)
 

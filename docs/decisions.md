@@ -67,3 +67,17 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · Policy helpers live in a `private` schema · The Data API only exposes `public`, so nobody can call them over `/rest/v1/rpc`.
 - **2026-11-24** · `audit_log` rows come only from `write_audit()`, which takes the actor from the token; a trigger refuses every update, delete and truncate · Nobody can write an entry in someone else's name or remove one, not even the database owner.
 - **2026-11-24** · RLS tests run with pgTAP on the real database inside one transaction that is rolled back · We have no Docker for a local database. Nothing the tests insert stays.
+
+## Round 3: roles (A4)
+
+- **2026-11-24** · `proxy.ts` only sends signed-out visitors of `/board`, `/report/new` and `/admin/...` to sign-in, with a plain path check instead of `createRouteMatcher` · `createRouteMatcher` is deprecated in `@clerk/nextjs` 7 because path matching in the proxy can miss how Next resolves a route. Clerk and the Next 16 auth guide both say to check access next to the data. So each page calls `requirePageRole()`, and the proxy is only a quick first check. This changes section 8, which named `createRouteMatcher`.
+- **2026-11-24** · API paths are not protected in `proxy.ts` · `auth.protect()` answers a signed-out API call with 404, which would break our 401 problem+json contract. `withApi()` already checks every route, and `app/api/routes.test.ts` fails if a route skips `withApi()`.
+- **2026-11-24** · Role changes write the database first, then Clerk · RLS trusts the role in the Clerk token. If Clerk went first and the database failed, someone would hold police or admin power with no `users` row and no audit entry. With the database first, a failure in between is fixed by sending the same request again.
+- **2026-11-24** · Admin role changes go through the `admin_set_role` database function, which writes the audit row in the same transaction · A role can't change without a record, even if the API crashes halfway. A user token can't write `users.role` at all (column grants), so the function is the only way in.
+- **2026-11-24** · Admins can't change their own role · Stops an admin from locking themselves (or the last admin) out by mistake. Another admin has to do it.
+- **2026-11-24** · An admin can give a role to a Clerk user who has no `users` row yet · The demo police account can't onboard itself (police isn't self-service), so the admin's change creates the row.
+- **2026-11-24** · Added `GET /api/v1/me` · The onboarding screen needs to know whether the user has picked a role. It is in the API contract (section 6); `PATCH` and `DELETE /me` come later.
+- **2026-11-24** · Wrong role on a page shows the 404 page · Next 16's `forbidden()` is still experimental, and a 404 doesn't admit the page exists.
+- **2026-11-24** · The first admin is set up by hand once (runbook step 6) · police/admin are never self-service and only an admin can grant them, so the first one needs a start outside the API. Its audit row says "bootstrap".
+- **2026-11-24** · No rate limit on the role endpoints yet · Section 10 asks for 5 role attempts per user per hour, but the shared rate limiter (section 17) doesn't exist yet. Both routes carry a `TODO(rate-limit)`.
+
