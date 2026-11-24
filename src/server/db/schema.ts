@@ -106,6 +106,7 @@ export const incidents = pgTable("incidents", {
   confidence: confidenceLevel(),
   notes: text(),
   is_demo: boolean().default(sql`false`).notNull(),
+  external_id: text(),
 }).enableRLS();
 
 export const latestRisk = pgView("latest_risk", {

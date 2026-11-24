@@ -135,6 +135,7 @@ export type Database = {
           date_basis: string | null
           event_end_date: string | null
           evidence_quote: string | null
+          external_id: string | null
           hazard_type: Database["public"]["Enums"]["hazard_type"]
           hours_basis: string | null
           hours_closed: number | null
@@ -166,6 +167,7 @@ export type Database = {
           date_basis?: string | null
           event_end_date?: string | null
           evidence_quote?: string | null
+          external_id?: string | null
           hazard_type: Database["public"]["Enums"]["hazard_type"]
           hours_basis?: string | null
           hours_closed?: number | null
@@ -197,6 +199,7 @@ export type Database = {
           date_basis?: string | null
           event_end_date?: string | null
           evidence_quote?: string | null
+          external_id?: string | null
           hazard_type?: Database["public"]["Enums"]["hazard_type"]
           hours_basis?: string | null
           hours_closed?: number | null
