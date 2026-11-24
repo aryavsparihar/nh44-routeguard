@@ -4,7 +4,7 @@ Protecting Kashmir's apple harvest from NH-44 highway closures through AI disrup
 
 Project Ananta Hackathon · Team 01
 
-**Live:** https://nh44-routeguard.vercel.app
+**Live:** moving to Azure in Round 3. The link goes here once it's deployed. Until then, run it locally (see Setup).
 
 ## What it does
 
@@ -21,14 +21,14 @@ Drivers and police can also report live hazards from the road.
 
 ## Status
 
-Phase 0 is done: the app, database and deploys are connected, and an hourly job scores closure risk for the 6 zones. The home page is still a placeholder; [/status](https://nh44-routeguard.vercel.app/status) shows the latest scores.
+Phase 0 is done: the app, database and deploys are connected, and an hourly job scores closure risk for the 6 zones. The home page is still a placeholder; the `/status` page shows the latest scores.
 
 ## Tech stack
 
 | Part | Tool |
 | --- | --- |
 | Web app | Next.js 16 (App Router, TypeScript, Tailwind) |
-| Hosting | Vercel (Mumbai region). Every PR gets its own preview link |
+| Hosting | Azure Container Apps on Azure for Students (Round 3, see [the plan](docs/round3/BUILD_PROMPT.md), section 4.1) |
 | Database | Supabase Postgres + PostGIS (Mumbai, `ap-south-1`) |
 | Weather | Open-Meteo forecast API (free, no key) |
 | Risk model | Python rules in `jobs/`, run hourly on GitHub Actions |
@@ -62,12 +62,12 @@ You need Node.js 20 or newer.
 
 | Name | Where it goes | What it is |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local`, Vercel | Supabase API URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `.env.local`, Vercel | Publishable key (safe in the browser, RLS protects the data) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local`; deploy workflow at build time | Supabase API URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `.env.local`; deploy workflow at build time | Publishable key (safe in the browser, RLS protects the data) |
 | `SUPABASE_URL` | GitHub Actions secrets only | Same API URL, for the Python job |
 | `SUPABASE_SECRET_KEY` | GitHub Actions secrets only | Secret key. It skips all security rules |
 
-Never commit `.env.local`. Never put the secret key in `.env.local`, Vercel, app code or any `NEXT_PUBLIC_` variable.
+Never commit `.env.local`. Never put the secret key in `.env.local`, the hosting settings, app code or any `NEXT_PUBLIC_` variable.
 
 ## Database
 
@@ -142,7 +142,7 @@ jobs/.venv/bin/python jobs/run_risk.py --dry-run
 `--dry-run` fetches and scores, prints a table, and writes nothing. Run the tests with `jobs/.venv/bin/python -m pytest jobs/tests`.
 
 - **Logs:** GitHub → **Actions** → **Risk job** → pick a run. A failed run is red and GitHub emails the repo owner.
-- **Latest scores:** [nh44-routeguard.vercel.app/status](https://nh44-routeguard.vercel.app/status)
+- **Latest scores:** the `/status` page (locally: http://localhost:3000/status)
 - **Run it now:** Actions → Risk job → **Run workflow**, or `gh workflow run risk-job.yml`.
 - **Weather points:** [`jobs/points.json`](jobs/points.json), found with OpenStreetMap by [`jobs/tools/locate_points.py`](jobs/tools/locate_points.py).
 
@@ -204,10 +204,10 @@ A real row (zone 5, 48 h ahead, computed from Open-Meteo data on 10 Nov 2026):
 | `supabase/` | Supabase config and migrations |
 | `data/` | Team CSVs |
 | `docs/` | [Risk model](docs/risk-model.md) and [decision log](docs/decisions.md) |
-| `.github/workflows/` | Hourly risk job and CI (pytest on every PR) |
+| `.github/workflows/` | Hourly risk job and CI (lint, typecheck, build, pytest and secret checks on every PR) |
 
 ## Working together
 
 1. Work on a branch in your fork and open a PR to `main` on this repo.
-2. Check the Vercel preview link that appears on your PR.
-3. Aryaveer reviews and merges. Merging to `main` updates the live site.
+2. Wait for CI to go green on your PR, and try your change locally with `npm run dev`.
+3. Another member reviews it, then Aryaveer merges with "Create a merge commit" (never squash). Once the Azure deploy is set up, merging to `main` updates the live site.
