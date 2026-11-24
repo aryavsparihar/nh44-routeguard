@@ -37,6 +37,9 @@ function supabaseHost(url: string | undefined): string | null {
 }
 
 const CLERK_BOT_PROTECTION = "https://*.protect.clerk.com";
+// Clerk's bot protection probes the same hosts on other ports (seen in the
+// browser: 8443, 18443, 2082, 992), so connections allow any port there.
+const CLERK_BOT_PROTECTION_ANY_PORT = "https://*.protect.clerk.com:*";
 const CLOUDFLARE_CHALLENGE = "https://challenges.cloudflare.com"; // Clerk's sign-up captcha
 const MAP_TILES = "https://tiles.openfreemap.org"; // MapLibre base map (WP-C)
 
@@ -65,7 +68,7 @@ export function contentSecurityPolicy(env: Env): string {
       supabase && `https://${supabase}`,
       supabase && `wss://${supabase}`, // Realtime (live agent board)
       MAP_TILES,
-      CLERK_BOT_PROTECTION,
+      CLERK_BOT_PROTECTION_ANY_PORT,
     ],
     "frame-src": ["'self'", CLOUDFLARE_CHALLENGE, CLERK_BOT_PROTECTION],
     "worker-src": ["'self'", "blob:"], // MapLibre runs in a blob: worker

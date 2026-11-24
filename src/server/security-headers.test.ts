@@ -48,6 +48,10 @@ describe("contentSecurityPolicy", () => {
     expect(connect).toContain("wss://abcdefgh.supabase.co");
   });
 
+  it("lets Clerk's bot protection probe its hosts on any port", () => {
+    expect(directive(contentSecurityPolicy(PROD), "connect-src")).toContain("https://*.protect.clerk.com:*");
+  });
+
   it("leaves Clerk and Supabase out when there are no keys", () => {
     const csp = contentSecurityPolicy({ NODE_ENV: "production" });
     expect(csp).not.toContain("clerk.accounts.dev");
