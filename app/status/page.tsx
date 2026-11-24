@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getDb } from "@/src/server/db";
+import { latestZoneRisk, type ZoneRisk } from "@/src/server/risk/risk.repository";
 import { STALE_AFTER_MINUTES, dataAgeMinutes, isStale } from "@/src/shared/freshness";
 
 // Internal check page for the team (not one of the app screens).
@@ -9,8 +10,7 @@ import { STALE_AFTER_MINUTES, dataAgeMinutes, isStale } from "@/src/shared/fresh
 
 export const metadata: Metadata = { title: "Status · NH-44 RouteGuard" };
 
-function fmt(iso: string) {
-  const d = new Date(iso);
+function fmt(d: Date) {
   const ist = d.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" });
   return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC (${ist} IST)`;
 }
@@ -18,18 +18,13 @@ function fmt(iso: string) {
 async function LatestRun() {
   await connection(); // read the database on every visit
 
-  const supabase = await createClient();
-  if (!supabase) return <p>Supabase not connected (env vars missing).</p>;
-
-  const { data, error } = await supabase
-    .from("latest_risk")
-    .select("run_at, zone_id, zone_name, overall, risk_low, risk_high, level, top_hazard, confidence, reason, model_version")
-    .is("h3_index", null)
-    .eq("horizon_hours", 0)
-    .order("zone_id");
-
-  if (error) return <p>Could not read latest_risk: {error.message}</p>;
-  if (!data?.length) return <p>No risk job run yet.</p>;
+  let data: ZoneRisk[];
+  try {
+    data = await latestZoneRisk(await getDb(), 0);
+  } catch {
+    return <p>Could not read latest_risk (database not connected or not reachable).</p>;
+  }
+  if (!data.length) return <p>No risk job run yet.</p>;
 
   const runAt = data[0].run_at;
   if (!runAt) return <p>Latest run has no timestamp.</p>;

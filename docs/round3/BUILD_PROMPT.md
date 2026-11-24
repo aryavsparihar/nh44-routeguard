@@ -616,7 +616,7 @@ Only claim what is actually built and configured. Each member should be able to 
    - The app is stateless: sessions are Clerk tokens, and rate limits and cache live in Redis/Postgres, not in memory that matters.
    - Container Apps settings, committed in the deploy workflow: `min-replicas 0` (we warm the app up by hand before the demo, see section 4.1), `max-replicas 3`, HTTP scale rule at 80 concurrent requests. The Container Apps ingress load-balances across replicas.
    - Run a short load test (a minute or two, to save credit) and screenshot the replica count rising in the portal's Metrics page.
-   - Database connections: we use PostgREST over HTTP. Any direct Postgres connection must go through the Supabase pooler.
+   - Database connections: the server uses Drizzle over the Supabase transaction pooler (port 6543), at most 5 connections per replica (`docs/decisions.md`, ORM).
 4. **Compute once, read many** (from the PPT): risk is scored once an hour for everyone, not per request. Say this first; it's the strongest point.
 5. **Not built: read replicas.** Mention them only as a next step.
 

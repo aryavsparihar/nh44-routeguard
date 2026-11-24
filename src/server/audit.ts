@@ -1,7 +1,6 @@
 import "server-only";
-import type { Json } from "@/lib/database.types";
+import { sql } from "drizzle-orm";
 import type { Db } from "@/src/server/db";
-import { dbError } from "@/src/server/http/db-errors";
 
 // Writes one row to audit_log through the database function write_audit().
 // Use it for every privileged action that doesn't already audit itself
@@ -18,6 +17,8 @@ import { dbError } from "@/src/server/http/db-errors";
 //   });
 //
 // Never put personal data (names, emails, phone numbers) in meta.
+export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
 export type AuditEntry = {
   action: string; // "thing.verb", max 60 characters
   targetType?: string;
@@ -28,14 +29,13 @@ export type AuditEntry = {
 };
 
 export async function writeAudit(db: Db, entry: AuditEntry): Promise<number> {
-  const { data, error, status } = await db.rpc("write_audit", {
-    p_action: entry.action,
-    p_target_type: entry.targetType,
-    p_target_id: entry.targetId,
-    p_reason: entry.reason,
-    p_request_id: entry.requestId,
-    p_meta: entry.meta,
-  });
-  if (error) throw dbError(error, status);
-  return data;
+  const meta = entry.meta === undefined ? null : JSON.stringify(entry.meta);
+  const rows = await db.rls((tx) =>
+    tx.execute<{ id: string | number }>(
+      sql`select public.write_audit(${entry.action}::text, ${entry.targetType ?? null}::text,
+        ${entry.targetId ?? null}::text, ${entry.reason ?? null}::text, ${entry.requestId ?? null}::text,
+        ${meta}::jsonb) as id`,
+    ),
+  );
+  return Number(rows[0].id);
 }

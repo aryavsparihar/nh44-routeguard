@@ -1,33 +1,51 @@
+import { DrizzleQueryError } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { dbError } from "./db-errors";
+import { DbError, pgCode, unavailableDbError } from "./db-errors";
 import { ServiceUnavailableError } from "./errors";
 import { toProblemResponse } from "./problem";
 
 const REQUEST_ID = "3f1c3c1e-2b9a-4b7e-9a51-6f0d2f6b7a10";
+const pgError = (code: string, message = "boom") => Object.assign(new Error(message), { code });
 
-describe("dbError", () => {
+describe("pgCode", () => {
+  it("reads the code from the error or from Drizzle's wrapped cause", () => {
+    expect(pgCode(pgError("23505"))).toBe("23505");
+    expect(pgCode(new DrizzleQueryError("insert ...", ["x"], pgError("42501")))).toBe("42501");
+    expect(pgCode(new Error("no code"))).toBeUndefined();
+    expect(pgCode(null)).toBeUndefined();
+  });
+});
+
+describe("unavailableDbError", () => {
   it.each([
-    ["a timeout (no answer)", { message: "TimeoutError: The operation was aborted due to timeout", code: "" }, 0],
-    ["a network failure", { message: "TypeError: fetch failed", code: "" }, 0],
-    ["a gateway error", { message: "<html>Bad Gateway</html>" }, 502],
-    ["database unavailable", { message: "Service Unavailable" }, 503],
-    ["a gateway timeout", { message: "Gateway Timeout" }, 504],
-  ])("503 for %s", (_label, error, status) => {
-    expect(dbError(error, status)).toBeInstanceOf(ServiceUnavailableError);
+    ["the server refusing connections", "ECONNREFUSED"],
+    ["a connect timeout", "CONNECT_TIMEOUT"],
+    ["a dropped connection", "CONNECTION_CLOSED"],
+    ["our 5 s statement timeout", "57014"],
+    ["too many connections", "53300"],
+    ["the database shutting down", "57P01"],
+    ["a connection-class SQLSTATE", "08006"],
+    ["a wrong DATABASE_URL password", "28P01"],
+  ])("503 for %s", (_label, code) => {
+    expect(unavailableDbError(new DrizzleQueryError("select 1", [], pgError(code)))).toBeInstanceOf(
+      ServiceUnavailableError,
+    );
   });
 
-  it("a constraint error becomes a plain error (generic 500), without row details", async () => {
-    const error = dbError({ message: "duplicate key value violates unique constraint", code: "23505" }, 409);
-    expect(error).not.toBeInstanceOf(ServiceUnavailableError);
-    expect(error.message).toContain("23505");
+  it.each([["a unique violation", "23505"], ["an RLS refusal", "42501"], ["a check constraint", "23514"]])(
+    "null for %s (the repository or withApi handles it)",
+    (_label, code) => expect(unavailableDbError(pgError(code))).toBeNull(),
+  );
+});
+
+describe("DbError", () => {
+  it("keeps the code but not the SQL or its parameters, and is a generic 500", async () => {
+    const error = new DbError("23505");
+    expect(error.code).toBe("23505");
+    expect(error.message).toBe("Database error 23505");
 
     const res = toProblemResponse(error, REQUEST_ID, "/api/v1/x");
     expect(res.status).toBe(500);
-    expect(await res.text()).not.toContain("duplicate key");
-  });
-
-  it("an RLS refusal is also a 500: the route should have checked access first", () => {
-    const error = dbError({ message: "new row violates row-level security policy", code: "42501" }, 403);
-    expect(error).not.toBeInstanceOf(ServiceUnavailableError);
+    expect(await res.text()).not.toContain("23505");
   });
 });

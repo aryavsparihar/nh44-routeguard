@@ -15,8 +15,9 @@ set -euo pipefail
 cd "${1:-.}"
 
 # Key prefixes (Clerk secret keys, Supabase secret keys, the old service_role
-# JWT name) and the names of variables that only the server may read.
-PATTERN='sk_live_|sk_test_|sb_secret_|service_role|CLERK_SECRET_KEY|SUPABASE_SECRET_KEY|JOBS_SECRET'
+# JWT name, Postgres connection strings) and the names of variables that only
+# the server may read.
+PATTERN='sk_live_|sk_test_|sb_secret_|service_role|postgres(ql)?://|CLERK_SECRET_KEY|SUPABASE_SECRET_KEY|DATABASE_URL|JOBS_SECRET'
 
 if [ ! -d .next/static ] || [ ! -d .next/server/app ]; then
   echo "No build output. Run npm run build first."

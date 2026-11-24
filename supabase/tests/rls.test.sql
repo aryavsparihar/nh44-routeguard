@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(92);
+select plan(96);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -375,6 +375,20 @@ select is(has_function_privilege('authenticated', 'private.dispatch_risk_job()',
   'signed-in users cannot start the risk job');
 select is((select schedule from cron.job where jobname = 'risk-job-dispatch'), '7,37 * * * *',
   'pg_cron starts the risk job at :07 and :37');
+
+-- The web app's database login (ORM): no privileges of its own, may only become anon or authenticated.
+select is((select rolsuper or rolbypassrls or rolinherit or rolcreaterole from pg_roles where rolname = 'routeguard_app'),
+  false, 'routeguard_app: not superuser, no RLS bypass, no inherit, no createrole');
+select is((select array_agg(r.rolname::text order by r.rolname)
+           from pg_auth_members am join pg_roles r on r.oid = am.roleid join pg_roles m on m.oid = am.member
+           where m.rolname = 'routeguard_app'),
+  array['anon', 'authenticated'], 'routeguard_app: member of anon and authenticated only');
+select is((select bool_or(am.inherit_option) or not bool_and(am.set_option)
+           from pg_auth_members am join pg_roles m on m.oid = am.member where m.rolname = 'routeguard_app'),
+  false, 'routeguard_app: may switch to those roles but does not inherit their rights');
+select is(has_table_privilege('routeguard_app', 'public.users', 'select')
+          or has_table_privilege('routeguard_app', 'public.zones', 'select'),
+  false, 'routeguard_app: reads nothing without switching role first');
 
 select * from finish();
 

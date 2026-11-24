@@ -7,9 +7,9 @@
 // at least one run has been missed.
 export const STALE_AFTER_MINUTES = 90;
 
-// Whole minutes since runAt (an ISO timestamp). A time in the future (clock
-// drift between servers) counts as 0.
-export function dataAgeMinutes(runAt: string, now: Date = new Date()): number {
+// Whole minutes since runAt (a Date or an ISO timestamp). A time in the
+// future (clock drift between servers) counts as 0.
+export function dataAgeMinutes(runAt: Date | string, now: Date = new Date()): number {
   const ms = now.getTime() - new Date(runAt).getTime();
   return Math.max(0, Math.floor(ms / 60_000));
 }

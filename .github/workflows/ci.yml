@@ -38,6 +38,9 @@ jobs:
       - name: No dangerouslySetInnerHTML
         run: bash scripts/ci/check-no-inner-html.sh
 
+      - name: No raw SQL outside src/server/db
+        run: bash scripts/ci/check-no-sql-raw.sh
+
       - name: Lint
         run: npm run lint
 
