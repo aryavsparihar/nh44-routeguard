@@ -46,3 +46,18 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · The server Supabase client uses only the publishable key; no secret-key "admin" client yet · Nothing in A2 needs to bypass RLS, and the secret key has so far lived only in GitHub Actions. We decide when the queue worker needs it (section 17).
 - **2026-11-24** · Supabase calls time out after 5 s; no answer or a 502/503/504 gives a 503, other database errors a generic 500 · Clients can tell "try again" apart from a bug. Logs keep only the error code and message, because Postgres details can quote row values.
 - **2026-11-24** · Sign-in by email code only, no phone SMS · SMS is a paid Clerk feature on our free Hobby plan (the dashboard flags it as paid), and we don't spend money. This changes the Round 1 promise of phone OTP: it is still a one-time code with no password, sent by email instead of SMS. The app copy says "email" everywhere and never claims "phone". We can add SMS later if the team pays for it.
+
+## Round 3: database and RLS (A3)
+
+- **2026-11-24** · `users.id` and every user foreign key changed from uuid to text (`user_...`) · Clerk ids are text, and the old link to Supabase Auth (`auth.users`) is gone because we sign in with Clerk. `users`, `reports` and `shipments` were empty, so nothing was lost.
+- **2026-11-24** · `users.phone` and `users.verified` dropped · Phone numbers stay in Clerk only. `verification_level` replaces the yes/no flag.
+- **2026-11-24** · `verification_level` defaults to `email` instead of the plan's `none` · Every account signs in with an email code, so an account that exists has already proved an email address.
+- **2026-11-24** · `incidents.date` keeps its name and means the event start date · `seed.js` and the risk job read it. A column comment and `date_basis` say what it is; `event_end_date` is new.
+- **2026-11-24** · Users can only write their own `display_name`, `language`, `location_consent` and `consent_version`, enforced by column grants · Postgres itself refuses an update to `role`, `verification_level` or `agent_id` with a user token. This replaces the trigger the plan mentioned: less code and nothing to forget.
+- **2026-11-24** · The public map reads reports through a `public_reports` view without `user_id`, `photo_path` or hidden rows · The `reports` table stays closed to signed-out visitors, so who reported what never leaves the database. The view runs with its owner's rights on purpose; it is read-only.
+- **2026-11-24** · Incidents are public only once a second person has verified them (`verified_by` set) · Section 14: the Phase 0 numbers don't hold up. The 6 current rows are hidden until Madhusudan's verified CSV replaces them.
+- **2026-11-24** · "No quote, no number" check on incidents is `NOT VALID` · It applies to every new or changed row. The 6 Phase 0 rows have numbers and no quote, and they are being replaced anyway.
+- **2026-11-24** · Flag reasons: `not_there`, `wrong_place`, `duplicate`, `offensive`, `other` · Our own starting list. WP-B can change it.
+- **2026-11-24** · Policy helpers live in a `private` schema · The Data API only exposes `public`, so nobody can call them over `/rest/v1/rpc`.
+- **2026-11-24** · `audit_log` rows come only from `write_audit()`, which takes the actor from the token; a trigger refuses every update, delete and truncate · Nobody can write an entry in someone else's name or remove one, not even the database owner.
+- **2026-11-24** · RLS tests run with pgTAP on the real database inside one transaction that is rolled back · We have no Docker for a local database. Nothing the tests insert stays.
