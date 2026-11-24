@@ -55,3 +55,6 @@ docs/ux/DRAWIO-GUIDE.md
 
 # Team-only study guides (sources and PDFs): never pushed
 team-guides/
+
+# backtest weather cache (jobs/risk/history.py)
+jobs/.cache/
