@@ -30,7 +30,7 @@ export const GET = withApi({ access: "public" }, async ({ log }) => {
     {
       status: "ready",
       database: "ok",
-      last_run_at: runAt,
+      last_run_at: runAt?.toISOString() ?? null,
       data_age_minutes: age,
       stale: isStale(age),
       stale_after_minutes: STALE_AFTER_MINUTES,

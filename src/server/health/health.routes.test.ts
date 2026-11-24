@@ -40,14 +40,14 @@ describe("GET /api/v1/health", () => {
 
 describe("GET /api/v1/health/ready", () => {
   it("reports fresh data", async () => {
-    repo.latestRunAt.mockResolvedValue({ runAt: "2026-11-24T17:07:00+00:00", failed: false });
+    repo.latestRunAt.mockResolvedValue({ runAt: new Date("2026-11-24T17:07:00Z"), failed: false });
     const res = await ready(get("/api/v1/health/ready"), noParams);
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect((await res.json()).data).toEqual({
       status: "ready",
       database: "ok",
-      last_run_at: "2026-11-24T17:07:00+00:00",
+      last_run_at: "2026-11-24T17:07:00.000Z",
       data_age_minutes: 53,
       stale: false,
       stale_after_minutes: 90,
@@ -55,7 +55,7 @@ describe("GET /api/v1/health/ready", () => {
   });
 
   it("is still 200 when the data is stale", async () => {
-    repo.latestRunAt.mockResolvedValue({ runAt: "2026-11-24T16:00:00+00:00", failed: false });
+    repo.latestRunAt.mockResolvedValue({ runAt: new Date("2026-11-24T16:00:00Z"), failed: false });
     const res = await ready(get("/api/v1/health/ready"), noParams);
     expect(res.status).toBe(200);
     expect((await res.json()).data).toMatchObject({ data_age_minutes: 120, stale: true });
