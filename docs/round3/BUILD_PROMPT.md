@@ -168,7 +168,7 @@ The 7 MVP features, the roles, the risk model and the data design stay as in the
 
 | PPT said | Now | Why | Size |
 |---|---|---|---|
-| Hosting on Vercel (Mumbai) | Google Cloud Run on the free tier. Vercel is dropped completely, including PR previews | It's where the working app already runs; moving two days before the round is risk for no marks. The free tier covers our traffic at no cost, and Cloud Run gives autoscaling we can show for the scaling bonus | How, not what |
+| Hosting on Vercel (Mumbai) | Azure Container Apps on Aryaveer's Azure for Students subscription. Vercel is dropped completely, including PR previews | We need a real cloud host. Google Cloud's billing setup failed for us; Azure for Students needs no card, so it can never bill us, and its credit covers the round. Container Apps scales replicas up and down, which we show for the scaling bonus | How, not what |
 | Supabase Auth, phone OTP | Clerk (phone OTP, email code as backup), Supabase reads Clerk tokens through third-party auth | Same feature. Clerk's role metadata and test numbers made it faster | How, not what |
 | Serwist for offline | Hand-written service worker with the same caching policy | Already works; fewer moving parts | How, not what |
 | Advice runs on the phone (`decide.ts`) | Same file, also served as `POST /api/v1/advice` | Testable, documented API; phone still works offline | Addition |
@@ -185,7 +185,7 @@ If anyone proposes anything that would change what the product does (a new user 
 
 Owner: Aryaveer with whoever built the demo app. Nobody else edits app code until this is merged.
 
-1. Ask the member: who built the Cloud Run demo, where is its code, and how is it deployed (Cloud Build trigger, `gcloud run deploy` from a laptop, another repo)? Write the answers into `docs/decisions.md`.
+1. Ask the member: who built the demo app currently on Cloud Run, where is its code, and how is it deployed? Write the answers into `docs/decisions.md`. If the member doesn't want to say, don't guess and don't write a name; continue with the steps that don't need the demo code (6, 8, CI) and leave the import open.
 2. Pick the path:
    - **A. It's in another git repo.** Add it as a remote, fetch, and on a branch `import/demo-app` run `git merge --allow-unrelated-histories`. That keeps its commits and authors. The demo app becomes the root Next.js app. Keep this repo's `jobs/`, `supabase/`, `data/`, `docs/`, `scripts/`, `ui ux round/`, `.github/`, `seed.js`, `AGENTS.md`. Port `app/status` into the demo app. Resolve `package.json` by keeping the demo app's dependencies and adding back this repo's scripts (`db:push`, `db:types`). The PR is opened by the demo app's author from their own account.
    - **B. It's only on someone's laptop, with no git history.** The author commits it from their own account in a few honest commits by area (for example "import demo app: map and 48 h screens", "import demo app: advisor", "import demo app: service worker and manifest"). No backdating.
@@ -194,31 +194,33 @@ Owner: Aryaveer with whoever built the demo app. Nobody else edits app code unti
 4. Check for schema drift. The demo may have changed the database by hand in the Supabase dashboard. Have Aryaveer run `supabase db pull` (or `db diff --linked`; both need Docker running) against the linked project and commit any drift as a new migration. Then `npm run db:types`.
 5. `npm ci && npm run build && npm run lint` must pass. Add `npm run typecheck`. Fix what breaks, in separate commits.
 6. Add `CLAUDE.md` at the root (Appendix C). It loads `AGENTS.md` and repeats the rules in section 2, so every member's Claude session gets them.
-7. Deployment from `main`: if the demo deploys from a laptop, set up a GitHub Actions workflow that deploys `main` to Cloud Run. Use Workload Identity Federation (no JSON key in GitHub). Runtime secrets come from Google Secret Manager. Aryaveer does the Google Cloud console steps by hand; you write the workflow and the README steps.
-
+7. Deployment from `main`: write a GitHub Actions workflow that deploys `main` to Azure Container Apps (section 4.1). It signs in to Azure with OpenID Connect, so no password or key is stored in GitHub. Aryaveer does the Azure portal steps by hand; you write the workflow and the steps in `docs/runbook.md`. Don't create Azure resources until the app is ready to deploy (section 4.1).
 8. Retire Vercel (section 4.1).
 
 Done when: the app runs from a fresh clone with the README steps, the live URL is built from `main`, `docs/decisions.md` says where the code came from, and nothing in the repo still points at Vercel.
 
-### 4.1 Hosting: Google Cloud free tier, no Vercel
+### 4.1 Hosting: Azure Container Apps on Azure for Students, no Vercel
 
-We host only on Google Cloud Run and we pay nothing. Every hosting choice below follows from that.
+We host on Azure Container Apps, on Aryaveer's **Azure for Students** subscription (US$100 credit, valid to 24 Nov 2027, no card on the account). With no card, Azure can't bill us: when the credit runs out, the resources stop. The credit is all we have, so we spend it carefully, and we show judges the cost page as proof that the setup is cheap.
 
 **Retire Vercel (P0, part of Step 0):**
-- In code: delete `vercel.json`. Replace the `nh44-routeguard.vercel.app` links in `README.md` with the Cloud Run URL. Change the Hosting row in the README stack table, and the "Vercel" lines in `.env.example` and the README env table, to Cloud Run and Secret Manager. Leave the old `docs/decisions.md` entries as they are (it's a log); the dated entry saying Vercel is dropped was added on 24 Nov.
-- In dashboards (Aryaveer, by hand; you write the steps in `docs/runbook.md`): in the Vercel project settings, disconnect the Git repository so PRs stop getting Vercel checks and preview links, then delete the project. In GitHub → Settings → Integrations → Applications, remove Vercel's access to this repo if nothing else uses it.
-- PR previews go away. Reviewers test a PR by running it locally (`npm run dev`). Don't build a preview-per-PR system on Cloud Run this week.
+- In code: delete `vercel.json`. Remove the `nh44-routeguard.vercel.app` links in `README.md` (they come back as the Azure URL once we deploy). Change the Hosting row in the README stack table, and the "Vercel" lines in `.env.example` and the README env table, to Azure Container Apps. Leave the old `docs/decisions.md` entries as they are (it's a log).
+- In dashboards (Aryaveer, by hand; you write the steps in `docs/runbook.md`): in the Vercel project settings, disconnect the Git repository so PRs stop getting Vercel checks and preview links, then delete the project.
+- PR previews go away. Reviewers test a PR by running it locally (`npm run dev`) and CI runs on every PR.
 
-**Stay at zero cost (P0; Aryaveer owns the Google Cloud account and does the console steps, you write them in `docs/runbook.md`):**
-- Cloud Run needs a billing account linked even on the free tier. The one setting that actually prevents a charge is the account type: in Billing → Overview, check whether it says **Free trial**. On the Free Trial, Google doesn't charge the card unless someone clicks "Activate full account" (or "Upgrade"). Never click it. If the account is already a paid one, write that in `docs/runbook.md` and rely on the caps below.
-- Set a budget alert on the billing account at a small amount (for example ₹100) with email alerts at 50%, 90% and 100%. A budget only warns; it doesn't stop spending.
-- Cloud Run: request-based billing (CPU only while handling a request; never turn on "CPU always allocated"), 1 vCPU, 512 MiB, `--min-instances=0` always, `--max-instances=3`. Never set `--min-instances=1`: an idle instance is billed. On demo day we avoid the cold start by opening the app and calling `/api/v1/health/ready` a few minutes before we present.
-- Build the container in GitHub Actions and push it to Artifact Registry, then `gcloud run deploy --image`. Don't use `gcloud run deploy --source`: it builds with Cloud Build and quietly keeps every image in a `cloud-run-source-deploy` repository. Add an Artifact Registry cleanup policy that keeps only the last 2 images, and delete old images already there (check `cloud-run-source-deploy` too, since the demo may have been deployed that way).
-- Secret Manager: keep the secret count small and destroy old versions after rotating a key.
-- Cloud Scheduler: use one job for the queue worker (section 17). The free allowance is a few jobs per billing account.
-- No paid Google services: no Memorystore (use the Upstash free tier or the Postgres fallback), no Cloud SQL (Supabase stays the database), no load balancer or Cloud CDN in front of Cloud Run (the `*.run.app` URL is enough).
-- Logs: Cloud Logging has a free monthly allowance. Our "never log bodies" rule (section 15) also keeps us well inside it.
-- Don't write free-tier numbers into our docs from memory. If the README or `docs/scaling.md` quotes a limit, link the Google Cloud free tier page and write the date you checked it.
+**Spend the credit carefully (P0; Aryaveer does the portal steps, you write them in `docs/runbook.md`):**
+- **Nothing runs on Azure until the app is ready.** We build and test locally and in GitHub Actions. Aryaveer creates the Azure resources on the day we first deploy (aim: 25 Nov evening), not before.
+- **One resource group** (`rg-routeguard`) holds everything, so the cost page shows exactly what we spent and one delete removes it all after the round.
+- **Region:** Central India if the student subscription allows it (close to Supabase in Mumbai). Azure for Students only allows some regions; if Central India isn't one, use the nearest allowed one and write it in `docs/decisions.md`.
+- **Container Apps, consumption plan:** 0.5 vCPU, 1 GiB, `min-replicas 0`, `max-replicas 3`, an HTTP scale rule at 80 concurrent requests. With min 0, nothing is charged while nobody uses the app. Never set min replicas to 1 "to be safe"; on demo day we warm the app up by opening it and calling `/api/v1/health/ready` a few minutes before we present.
+- **No Azure Container Registry** (it charges every day it exists). The deploy workflow builds the image in GitHub Actions and pushes it to GitHub Container Registry (`ghcr.io`). The repo is private, so the image is private too; Container Apps pulls it with a read-only GitHub token (`read:packages`) stored as a Container Apps secret. Keep only the last 2 images.
+- **Logs:** the Container Apps environment sends stdout to a Log Analytics workspace. Set a daily cap on the workspace (for example 0.1 GB/day). Our "never log bodies" rule (section 15) keeps us far below it.
+- **Secrets:** runtime secrets (Clerk secret key, Supabase keys, `JOBS_SECRET`) are Container Apps secrets, referenced as env vars. No Key Vault this week. Never in the image, the workflow file or the repo.
+- **Deploy identity:** a user-assigned managed identity with a federated credential for this GitHub repo's `main` branch, given the Contributor role on `rg-routeguard` only. That avoids creating an app registration, which a university Azure account often isn't allowed to do.
+- **Cost checks:** set a budget on the subscription (for example US$10) with email alerts at 50%, 90% and 100%. Before the round, screenshot Cost Management → Cost analysis for `rg-routeguard` and put it in `docs/scaling.md` with the date. That's the "we used the credit wisely" evidence.
+- **No paid extras:** no Azure Cache for Redis (use the Upstash free tier or the Postgres fallback), no Azure SQL or Postgres (Supabase stays the database), no Front Door, App Gateway or CDN (the `*.azurecontainerapps.io` URL is enough), no VMs.
+- **After the round:** stop the container app or delete `rg-routeguard`, so the rest of the credit stays for later.
+- Don't write free-grant or price numbers into our docs from memory. If the README or `docs/scaling.md` quotes one, link the Azure pricing page and write the date you checked it.
 
 ---
 
@@ -438,7 +440,7 @@ We have no partnership with the police. The app must never look like it speaks f
    - We keep only the latest point. It is cleared 7 days after delivery.
    - `DELETE /api/v1/me` removes the account and anonymises reports.
 6. **Abuse limits.**
-   - Rate limits: 10 reports/hour, 30 confirmations/hour, 5 role or verification attempts/hour per user, 60 advice requests/minute per IP. On Cloud Run, take the client IP from the first `X-Forwarded-For` entry and nowhere else.
+   - Rate limits: 10 reports/hour, 30 confirmations/hour, 5 role or verification attempts/hour per user, 60 advice requests/minute per IP. On Azure Container Apps, take the client IP from the first `X-Forwarded-For` entry (set by the Container Apps ingress) and nowhere else.
    - Admins can turn report posting off with `FEATURE_REPORTS_WRITE=false` if it gets spammed. The app then shows "reporting paused".
 7. **No automatic road decisions.** Reports and scores never mark the road "open". Copy says "may close" or "reported blocked", never "safe".
 8. **Privacy notice.** `/privacy` in three languages (following India's DPDP Act 2023): what we collect, why, how long, how to delete, and a contact email. Show a consent step before location sharing and before the Aadhaar check. Store `consent_version` with every consent.
@@ -563,7 +565,7 @@ second_source_url, added_by, verified_by, verified_on, confidence, notes, is_dem
   - times the call;
   - catches every error and maps known errors (`ValidationError`, `AuthError`, `ForbiddenError`, `NotFoundError`, `ConflictError`, `RateLimitError`) to problem+json;
   - logs unknown errors with the stack on the server only and returns a generic 500.
-- **Logging with `pino`,** JSON to stdout (Cloud Run sends it to Cloud Logging):
+- **Logging with `pino`,** JSON to stdout (Container Apps sends it to Log Analytics):
   - Fields: `time, level, request_id, method, route, status, duration_ms, user` (a SHA-256 hash, first 12 characters), `role`.
   - Never log bodies, tokens, cookies, phone numbers, photos, QR text or query strings on `/verify`. Test that the redaction works.
 - **Sentry** (P1) for server and client errors, with `sendDefaultPii: false` and request bodies dropped. Add an uptime check on `/api/v1/health/ready`.
@@ -608,17 +610,17 @@ Only claim what is actually built and configured. Each member should be able to 
 2. **Queue for writes** (Madhusudan):
    - Use Supabase Queues (`pgmq`). `POST /reports` saves the report, strips EXIF right away, enqueues a `report.created` job and returns 201.
    - The worker (`/api/v1/internal/jobs/run`, protected by `JOBS_SECRET`) does the slow work: thumbnail, dedupe and merge, updating confirmation counts, and push fan-out (P1).
-   - A scheduler calls the worker every minute (Cloud Scheduler on GCP; GitHub Actions every 5 min as a fallback).
+   - A scheduler calls the worker every minute (Supabase `pg_cron` + `pg_net`, which is free and already ours, with the secret in Supabase Vault; GitHub Actions every 5 min as a fallback, though GitHub often delays scheduled runs).
    - Messages that fail 5 times go to a dead-letter table shown on the admin page.
 3. **Horizontal scaling** (Aryaveer):
    - The app is stateless: sessions are Clerk tokens, and rate limits and cache live in Redis/Postgres, not in memory that matters.
-   - Cloud Run settings, committed in the deploy workflow: `--min-instances=0` (an idle instance costs money, see section 4.1; we warm the app up by hand before the demo instead), `--max-instances=3`, `--concurrency=80`. Cloud Run's front end load-balances across instances.
-   - Run a short load test and screenshot the instance count rising.
+   - Container Apps settings, committed in the deploy workflow: `min-replicas 0` (we warm the app up by hand before the demo, see section 4.1), `max-replicas 3`, HTTP scale rule at 80 concurrent requests. The Container Apps ingress load-balances across replicas.
+   - Run a short load test (a minute or two, to save credit) and screenshot the replica count rising in the portal's Metrics page.
    - Database connections: we use PostgREST over HTTP. Any direct Postgres connection must go through the Supabase pooler.
 4. **Compute once, read many** (from the PPT): risk is scored once an hour for everyone, not per request. Say this first; it's the strongest point.
 5. **Not built: read replicas.** Mention them only as a next step.
 
-Write `docs/scaling.md` with a diagram (client → Cloud Run instances → Redis → Supabase, plus the queue → worker → push path), the settings, and the measured numbers.
+Write `docs/scaling.md` with a diagram (client → Container Apps replicas → Redis → Supabase, plus the queue → worker → push path), the settings, and the measured numbers.
 
 ---
 
@@ -722,7 +724,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 - **P0 A4: roles.** Onboarding endpoint, admin role endpoint, audit log function, `proxy.ts` route protection.
 - **P0 A5: security.** CSP, extra headers, gitleaks, npm audit, bundle secret grep, `docs/security.md`.
 - **P0 A6: risk job.** `reason_code` + `reason_params` in `run_risk.py`, with pytest cases.
-- **P0 A7: health and readiness.** `/health`, `/health/ready`, stale flag; post-deploy smoke test; Cloud Run scaling settings. P1: Sentry and an uptime check (section 15).
+- **P0 A7: health and readiness.** `/health`, `/health/ready`, stale flag; post-deploy smoke test; Container Apps scaling settings. P1: Sentry and an uptime check (section 15).
 - **P1 A8: backtest.** `jobs/backtest.py` runs the rules on archived Open-Meteo weather for each verified incident (T−48/−24/−12 h) and reports hit rate, lead time and false alarms over the window, with honest caveats. Output goes to `docs/backtest.md` and `GET /api/v1/model`.
 - Review every PR within a few hours. You are the bottleneck; keep PRs flowing.
 
@@ -812,7 +814,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 - Why no rerouting? There is no heavy-truck bypass in the Ramban gorge.
 - How do we stop fake reports? Verification levels, two confirmations, expiry, flags, rate limits, audit.
 - What if the hourly job fails? `check_run.py` fails the run, the app shows a stale banner, `/ready` says stale.
-- Where are secrets? Env vars and Secret Manager; never in git; CI checks the bundle.
+- Where are secrets? Env vars backed by Container Apps secrets; never in git; CI checks the bundle.
 - What does the Aadhaar check prove, and what doesn't it?
 - What changed since Round 1, and why is it within 15%?
 
@@ -832,7 +834,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 - [ ] **Working backend:** every screen uses `/api/v1`, no mock data; main flow (advice → save lot → board; report → confirm) works on a phone. *(S1)*
 - [ ] **Structure:** routes / controllers / services / repositories / schemas folders, explained in the README. *(S2)*
 - [ ] **Data:** zod + DB constraints, edge cases tested, verified incidents, demo seed with "Try it" accounts. *(S3)*
-- [ ] **Reliability:** secrets only in env/Secret Manager, `.env.example` complete, problem+json errors, structured logs with request ids, health/ready, stale banner. *(S4)*
+- [ ] **Reliability:** secrets only in env/Container Apps secrets, `.env.example` complete, problem+json errors, structured logs with request ids, health/ready, stale banner. *(S4)*
 - [ ] **Testing:** Vitest + pytest + API integration + Playwright + newman all green in CI; p95 and Lighthouse numbers in README. *(S5)*
 - [ ] **Innovation:** explainable 48 h forecast with uncertainty, offline-first with idempotent sync, three languages with RTL, verified reports with trust rules, queue-driven alerts. *(S6)*
 - [ ] **Demo:** script rehearsed twice, airplane-mode tested on a real phone, fallback ready. *(S7)*
@@ -897,7 +899,7 @@ Corrections for the existing rows are in section 1.5.
 - Validate every input with zod (.strict()). Never put user input into Supabase .or()/.filter()/.textSearch() strings.
 - No dangerouslySetInnerHTML. No invented numbers in UI, docs or data.
 - RouteGuard is advisory and not an official police service. Keep the disclaimer.
-- Hosting is Google Cloud Run on the free tier. No Vercel, and no paid Google Cloud service (section 4.1).
+- Hosting is Azure Container Apps on Azure for Students. No Vercel. Spend the credit carefully: no new Azure resource without asking (section 4.1).
 - Small Conventional Commits from the member at the keyboard. Never squash-merge, never fake authorship.
 - Ask before migrations on the real database, Clerk app changes, deploys, deletes or anything with personal data.
 ```

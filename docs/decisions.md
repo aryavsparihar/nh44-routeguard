@@ -29,4 +29,6 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 
 ## Round 3: hosting
 
-- **2026-11-24** · Host only on Google Cloud Run, on the free tier; Vercel is dropped completely · The working demo app already runs on Cloud Run, and moving it two days before the round is risk for no marks. The free tier covers our traffic at no cost. Rejected: keeping Vercel for PR previews (two hosts to explain and keep in sync). The `vercel.json` and `bom1` entries above are history; Step 0 in `docs/round3/BUILD_PROMPT.md` removes the leftovers.
+- **2026-11-24** · Drop Vercel completely · We want the app on a real cloud host, with one place to explain and pay for. Rejected: keeping Vercel for PR previews (two hosts to keep in sync). The `vercel.json` and `bom1` entries above are history; Step 0 in `docs/round3/BUILD_PROMPT.md` removes the leftovers.
+- **2026-11-24** · Host on Azure Container Apps, on Aryaveer's Azure for Students subscription · Google Cloud was the first choice (the demo app runs on Cloud Run), but its billing setup failed for us. Azure for Students needs no card, so it can't bill us; the US$100 credit runs to Nov 2027. Container Apps scales to zero when idle and up to 3 replicas under load. Rejected: AWS (needs a card, same problem as Google), Render (sleeps, slow first load during a demo).
+- **2026-11-24** · No Azure resources until we're ready to deploy; images in GitHub Container Registry, not Azure Container Registry · The credit is all we have. ACR charges every day it exists; GHCR is free for our size.
