@@ -87,6 +87,43 @@ The new role is in the user's session token only after it refreshes (up to about
 
 The Clerk values go to Azure as described in "Deploy to Azure (first time)" below: the publishable key as a GitHub variable (it is built into the image), the secret key as a Container Apps secret. Never into the image or the repo. A Clerk **production** instance needs a domain we own; that is a separate step.
 
+## App database login (ORM)
+
+The web app talks to Postgres directly with Drizzle (`src/server/db`), logged in as `routeguard_app`. That login can't read anything by itself: every query switches to `anon` or `authenticated` first, so RLS applies (migration `20261125120000_app_db_role.sql`, `docs/decisions.md` "ORM"). The Python job and `seed.mjs` still use the secret key over HTTP.
+
+Once per database, after the migration is applied:
+
+1. Make a password on your Mac. It goes to your password manager, never into chat or git:
+
+   ```bash
+   openssl rand -hex 32 | pbcopy
+   ```
+
+2. Supabase → **SQL Editor**, paste the password between the quotes and run:
+
+   ```sql
+   alter role routeguard_app with password '<paste>';
+   ```
+
+3. Supabase → **Connect** → **Transaction pooler** (port 6543). Copy the URL, change the user part from `postgres.mzublcdqgntejkvvoozh` to `routeguard_app.mzublcdqgntejkvvoozh`, and put the password in. Add it to `.env.local` as `DATABASE_URL=...`.
+4. Check it:
+
+   ```bash
+   npm run db:orm-check
+   ```
+
+   Every line should start with `ok`. It only reads, inside transactions it rolls back, and never prints the URL.
+
+5. If the Azure app already exists, give it the URL as a secret (the two `database-url` commands in "Deploy to Azure" section 4), then:
+
+   ```bash
+   az containerapp update --name $APP --resource-group $RG --set-env-vars DATABASE_URL=secretref:database-url
+   ```
+
+To change the password later, repeat steps 1–3 and the `database-url` secret command, then restart the app's revision.
+
+After every migration run `npm run db:types` and `npm run db:schema`; `npm run typecheck` fails if the two disagree.
+
 ## Risk job timing
 
 The risk job (`.github/workflows/risk-job.yml`) runs on GitHub Actions. GitHub's own hourly schedule skipped most hours (it ran every 6 to 12 hours in November 2026), so Supabase starts it instead:
@@ -221,10 +258,20 @@ read -rs CLERK_SECRET
 az containerapp secret set --name $APP --resource-group $RG --secrets clerk-secret-key="$CLERK_SECRET"; unset CLERK_SECRET
 ```
 
+The database URL (with the `routeguard_app` password, "App database login" above), also as a secret:
+
+```bash
+read -rs DATABASE_URL_VALUE
+```
+
+```bash
+az containerapp secret set --name $APP --resource-group $RG --secrets database-url="$DATABASE_URL_VALUE"; unset DATABASE_URL_VALUE
+```
+
 Environment variables. The `NEXT_PUBLIC_` values are public (they are in the browser bundle anyway); copy them from your `.env.local` in your editor:
 
 ```bash
-az containerapp update --name $APP --resource-group $RG --set-env-vars CLERK_SECRET_KEY=secretref:clerk-secret-key NEXT_PUBLIC_SUPABASE_URL=<url> NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key> NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<pk_...> NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=1 NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED=1 LOG_LEVEL=info
+az containerapp update --name $APP --resource-group $RG --set-env-vars CLERK_SECRET_KEY=secretref:clerk-secret-key DATABASE_URL=secretref:database-url NEXT_PUBLIC_SUPABASE_URL=<url> NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key> NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<pk_...> NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=1 NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED=1 LOG_LEVEL=info
 ```
 
 ### 5. Let GitHub deploy without a password
