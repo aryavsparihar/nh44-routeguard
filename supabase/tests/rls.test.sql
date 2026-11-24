@@ -1,4 +1,4 @@
--- RLS tests (pgTAP). Run with:  npx supabase test db --remote
+-- RLS tests (pgTAP). Run with:  npm run db:test   (no Docker needed; see scripts/db/rls-test.sh)
 --
 -- Everything happens inside one transaction that ends in ROLLBACK, so the
 -- test users, reports and shipments below never stay in the database.

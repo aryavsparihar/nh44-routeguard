@@ -11,7 +11,7 @@ Policies read two values from the Clerk token:
 - `private.jwt_sub()`: the Clerk user id (`user_...`), or null when signed out.
 - `private.jwt_role()`: `metadata.role` from Clerk public metadata, which users can't edit.
 
-Migrations: `supabase/migrations/20261124160006_rls_helpers.sql` and `20261124160007_rls_policies.sql`. Tests: `supabase/tests/rls.test.sql` (run `npx supabase test db --remote`; everything is rolled back).
+Migrations: `supabase/migrations/20261124160006_rls_helpers.sql` and `20261124160007_rls_policies.sql`. Tests: `supabase/tests/rls.test.sql` (run `npm run db:test`; everything is rolled back). `supabase test db --remote` does the same but needs Docker.
 
 | Table | Who reads | Who writes | Tested |
 | --- | --- | --- | --- |
