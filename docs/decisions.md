@@ -118,3 +118,13 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · CI builds and smoke-tests the Docker image on every PR · Docker isn't installed on the machine we build on, so this is where the Dockerfile is proven before deploy day.
 - **2026-11-24** · `HOSTNAME=0.0.0.0` in the image · With `127.0.0.1`, the standalone server failed to reach itself on `localhost` (seen locally: "Failed to proxy … socket hang up").
 - **2026-11-24** · Sentry and an uptime check are not in A7 · Both are P1 and need new accounts. `/ready` is ready for an uptime check when we add one.
+
+## Round 3: backtest (A8)
+
+- **2026-11-24** · Lead times are tested on Open-Meteo's archived forecasts (Previous Runs API), not on the weather that actually happened · A backtest on actual weather assumes a perfect forecast and makes every lead look the same. The archived runs are what we would really have known 48 and 24 hours earlier. They start in February 2024 (checked 24 Nov 2026), so older events get only a "weather on the day" check on ERA5, labelled as such.
+- **2026-11-24** · 12 h lead uses the newest archived run for the hours ahead · The API stores runs per whole day (made 0, 1 or 2 days before each hour); there is no 12-hours-earlier run. This is optimistic and says so in the caveats.
+- **2026-11-24** · Events are scored at 12:00 IST on their date · Sources give a date, not a time.
+- **2026-11-24** · A hit is the zone reaching medium or high; "right hazard" is the incident's hazard reaching 0.30 · The same cut-off the app uses for advice, so the backtest tests what users would have seen.
+- **2026-11-24** · False alarms count medium-or-high days with no verified incident in that zone within a day, with the forecast from a day earlier · Our incident list is incomplete, so this is an upper bound; the page says so.
+- **2026-11-24** · Only verified incidents go into `lib/risk/backtest.json` and `docs/backtest.md`; until B1 lands they say "not run" · Section 14: unverified rows are never used. `--preview-unverified` exists to check the pipeline, only prints, and refuses to write files; a test checks the committed file is never a preview.
+- **2026-11-24** · `GET /api/v1/model` serves the card from `lib/risk/config.json` and the backtest file as they are · Nothing typed in by hand, so the API can't drift from the job.
