@@ -20,7 +20,7 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 | Secret keys in git | `.env*` is gitignored (only `.env.example`); gitleaks scans every commit of a PR | `.gitignore`, CI job "Secret scan (gitleaks)" | CI |
 | Secret keys in the browser | Secret keys are only read in modules that start with `import "server-only"`; after the build, CI searches the browser bundle and prerendered pages for secret key prefixes and names | `src/server/*`, `scripts/ci/check-bundle-secrets.sh` | CI ("No secret keys in the browser bundle or prerendered pages") |
 | A setting nobody knows about | Every env var the app reads must be in `.env.example` | `scripts/ci/check-env-example.sh` | CI |
-| Vulnerable dependencies | `npm audit`: high or critical anywhere fails CI; for packages that ship in the app, moderate already fails | `.github/workflows/ci.yml` | CI |
+| Vulnerable dependencies | `npm audit`: high or critical anywhere fails CI; for packages that ship in the app, moderate already fails. Dependabot alerts are on for the repo (since 2026-11-24) | `.github/workflows/ci.yml`, repo settings | CI |
 | Huge or malformed request bodies | JSON bodies over 32 KB get 413 (counted while reading, not trusted from `Content-Length`); wrong type 415; bad JSON 400; unknown or invalid fields 422 | `src/server/http/body.ts` | `body.test.ts` |
 | Error messages leaking internals | Unknown errors become a generic 500 problem+json with only the request id; logs redact tokens, cookies and phone numbers and never log query strings | `src/server/http/problem.ts`, `logger.ts` | `problem.test.ts`, `with-api.test.ts`, `logger.test.ts` |
 | Someone giving themselves police or admin | Users can only pick grower, trader, agent or driver; column grants stop a user token writing `users.role`; only `admin_set_role()` changes roles (admin only, not on yourself, reason required) | `supabase/migrations/20261124200000_admin_set_role.sql`, `src/server/users/` | `rls.test.sql`, `users.routes.test.ts` |
@@ -33,8 +33,6 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 - **XSS test on report notes.** A test that saves `<script>` in a note and checks it shows as text comes with the reports API (B2).
 - **Error tracking.** Sentry comes with A7.
 - **Inline scripts.** The CSP allows inline scripts because nonces don't work with Partial Prerendering. See `docs/decisions.md` (A5).
-- **Dependabot alerts.** To be turned on in the repo settings.
-
 ## Security headers
 
 `next.config.ts` sends these on every response (pages, API and static files). They are built in `src/server/security-headers.ts`.
