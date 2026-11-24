@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(89);
+select plan(92);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -348,6 +348,24 @@ select throws_ok(
   $$ insert into public.official_updates (kind, title, source_url, source_name, issued_at, valid_until, created_by)
      values ('closure', 'Bad dates', 'https://example.com/x', 'x', now(), now() - interval '1 hour', 'user_testpolice') $$,
   '23514', null::text, 'official updates refuse valid_until before issued_at');
+
+-- Incidents from incidents.csv (B1): one row per CSV id, known date and coordinate bases.
+set local role postgres;
+insert into public.incidents (external_id, date, zone_id, hazard_type, source_url, added_by, date_basis, coord_basis)
+  values ('inc-1999-01-01-z4-landslide', '1999-01-01', 4, 'landslide', 'https://example.com/b1', 'tester-a',
+          'inferred_relative', 'osm_place');
+select throws_ok(
+  $$ insert into public.incidents (external_id, date, zone_id, hazard_type, source_url, added_by)
+     values ('inc-1999-01-01-z4-landslide', '1999-01-02', 4, 'landslide', 'https://example.com/b1', 'tester-a') $$,
+  '23505', null::text, 'incidents refuse a second row with the same CSV id');
+select throws_ok(
+  $$ insert into public.incidents (external_id, date, zone_id, hazard_type, source_url, added_by)
+     values ('inc-1999-01-01-z4-landslide-2', '1999-01-03', 4, 'landslide', 'https://example.com/b1', 'tester-a') $$,
+  '23514', null::text, 'incidents refuse a badly formed CSV id');
+select throws_ok(
+  $$ insert into public.incidents (date, zone_id, hazard_type, source_url, added_by, coord_basis)
+     values ('1999-01-04', 4, 'landslide', 'https://example.com/b1', 'tester-a', 'guessed') $$,
+  '23514', null::text, 'incidents refuse an unknown coord_basis');
 
 -- Risk job scheduler (A6): only the owner and pg_cron can start the job.
 set local role postgres;

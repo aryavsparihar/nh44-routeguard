@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:push": "supabase db push --remote",
     "db:test": "bash scripts/db/rls-test.sh",
-    "db:types": "supabase gen types typescript --remote --schema public > lib/database.types.ts"
+    "db:types": "supabase gen types typescript --remote --schema public > lib/database.types.ts",
+    "db:seed-incidents": "node seed.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.25",
