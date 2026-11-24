@@ -1,10 +1,19 @@
 name: Risk job
 
+# Supabase starts this job at :07 and :37 every hour (pg_cron calls GitHub's
+# "run workflow" API, migration 20261124210000_risk_job_scheduler.sql), because
+# GitHub's own schedule was skipping most hours. The :37 call is a retry: it
+# skips if the :07 run worked. GitHub's schedule stays as a fallback.
+# docs/runbook.md, "Risk job timing".
 on:
   schedule:
-    # Minute 7 of every hour (UTC). Top-of-hour runs are often delayed by GitHub.
     - cron: "7 * * * *"
   workflow_dispatch:
+    inputs:
+      skip_if_fresh_min:
+        description: "Skip if the last run is newer than this many minutes (0 = always run)"
+        required: false
+        default: "0"
 
 # Never run two at once; let a slow run finish instead of cancelling it.
 concurrency:
@@ -34,8 +43,14 @@ jobs:
         run: pip install -r jobs/requirements.txt
 
       # Exits non-zero (red run + GitHub email) if Open-Meteo fails or Supabase rejects a write.
+      # Automatic runs skip if the last run is under 40 min old; the "Run workflow"
+      # button (default 0) always runs. The input goes through an env var, never
+      # straight into the shell line.
       - name: Fetch weather and score risk
-        run: python jobs/run_risk.py
+        env:
+          SKIP_IF_FRESH_MIN: ${{ github.event_name == 'schedule' && '40' || inputs.skip_if_fresh_min || '0' }}
+        run: python jobs/run_risk.py --skip-if-fresh-min "$SKIP_IF_FRESH_MIN"
 
+      # 45 > 40, so a skipped run (last run under 40 min old) still passes.
       - name: Check risk_scores got a full new run
-        run: python jobs/check_run.py --max-age-min 30
+        run: python jobs/check_run.py --max-age-min 45
