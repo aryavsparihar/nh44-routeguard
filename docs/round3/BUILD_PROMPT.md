@@ -209,10 +209,11 @@ We host only on Google Cloud Run and we pay nothing. Every hosting choice below 
 - In dashboards (Aryaveer, by hand; you write the steps in `docs/runbook.md`): in the Vercel project settings, disconnect the Git repository so PRs stop getting Vercel checks and preview links, then delete the project. In GitHub → Settings → Integrations → Applications, remove Vercel's access to this repo if nothing else uses it.
 - PR previews go away. Reviewers test a PR by running it locally (`npm run dev`). Don't build a preview-per-PR system on Cloud Run this week.
 
-**Stay at zero cost (P0; a human does the console steps, you write them in `docs/runbook.md`):**
-- Cloud Run needs a billing account linked even on the free tier. Before anything else, set a budget alert on that billing account at a small amount (for example ₹100) with email alerts at 50%, 90% and 100%. A budget only warns; it doesn't stop spending, so the settings below are what keep us free.
-- Cloud Run: request-based billing (CPU only while handling a request; never turn on "CPU always allocated"), 1 vCPU, 512 MiB, `--min-instances=0` normally. `--min-instances=1` only during rehearsal and the round, because an idle instance is billed, and set it back to 0 the same day. Keep `--max-instances` capped (section 17).
-- Build the container in GitHub Actions and push it to Artifact Registry, then `gcloud run deploy --image`. Add an Artifact Registry cleanup policy that keeps only the last 5 images, so stored images stay inside the free storage.
+**Stay at zero cost (P0; Aryaveer owns the Google Cloud account and does the console steps, you write them in `docs/runbook.md`):**
+- Cloud Run needs a billing account linked even on the free tier. The one setting that actually prevents a charge is the account type: in Billing → Overview, check whether it says **Free trial**. On the Free Trial, Google doesn't charge the card unless someone clicks "Activate full account" (or "Upgrade"). Never click it. If the account is already a paid one, write that in `docs/runbook.md` and rely on the caps below.
+- Set a budget alert on the billing account at a small amount (for example ₹100) with email alerts at 50%, 90% and 100%. A budget only warns; it doesn't stop spending.
+- Cloud Run: request-based billing (CPU only while handling a request; never turn on "CPU always allocated"), 1 vCPU, 512 MiB, `--min-instances=0` always, `--max-instances=3`. Never set `--min-instances=1`: an idle instance is billed. On demo day we avoid the cold start by opening the app and calling `/api/v1/health/ready` a few minutes before we present.
+- Build the container in GitHub Actions and push it to Artifact Registry, then `gcloud run deploy --image`. Don't use `gcloud run deploy --source`: it builds with Cloud Build and quietly keeps every image in a `cloud-run-source-deploy` repository. Add an Artifact Registry cleanup policy that keeps only the last 2 images, and delete old images already there (check `cloud-run-source-deploy` too, since the demo may have been deployed that way).
 - Secret Manager: keep the secret count small and destroy old versions after rotating a key.
 - Cloud Scheduler: use one job for the queue worker (section 17). The free allowance is a few jobs per billing account.
 - No paid Google services: no Memorystore (use the Upstash free tier or the Postgres fallback), no Cloud SQL (Supabase stays the database), no load balancer or Cloud CDN in front of Cloud Run (the `*.run.app` URL is enough).
@@ -611,7 +612,7 @@ Only claim what is actually built and configured. Each member should be able to 
    - Messages that fail 5 times go to a dead-letter table shown on the admin page.
 3. **Horizontal scaling** (Aryaveer):
    - The app is stateless: sessions are Clerk tokens, and rate limits and cache live in Redis/Postgres, not in memory that matters.
-   - Cloud Run settings, committed in the deploy workflow: `--min-instances=0` normally and `--min-instances=1` only on demo day (no cold start; an idle instance costs money, see section 4.1), `--max-instances=10`, `--concurrency=80`. Cloud Run's front end load-balances across instances.
+   - Cloud Run settings, committed in the deploy workflow: `--min-instances=0` (an idle instance costs money, see section 4.1; we warm the app up by hand before the demo instead), `--max-instances=3`, `--concurrency=80`. Cloud Run's front end load-balances across instances.
    - Run a short load test and screenshot the instance count rising.
    - Database connections: we use PostgREST over HTTP. Any direct Postgres connection must go through the Supabase pooler.
 4. **Compute once, read many** (from the PPT): risk is scored once an hour for everyone, not per request. Say this first; it's the strongest point.
@@ -788,8 +789,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 | **Wed 25 Nov, 20:00** | P0 cut-off. Anything unfinished is cut and listed as a limitation; don't half-merge. P1 only if all P0 is green. |
 | **Wed 25 Nov, 23:00** | Feature freeze. Seed demo data. Data backup. README numbers filled in. |
 | **Thu 26 Nov, morning** | Two full rehearsals on a real Android phone (once in airplane mode). Q&A drill: each member answers the six live-evaluation questions about their own code. Only bug-fix PRs after this. |
-| **Round** | All five present. `--min-instances=1` set. Phone hotspot and the screen recording ready. |
-| **After the round** | Set `--min-instances=0` again, so we stay on the free tier. |
+| **Round** | All five present. App warmed up (open it and call `/api/v1/health/ready`) a few minutes before we present. Phone hotspot and the screen recording ready. |
 
 ---
 
