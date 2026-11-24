@@ -34,6 +34,7 @@ Put these in `.env.local` yourself (never in chat, never committed):
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk → API keys → publishable key.
 - `CLERK_SECRET_KEY`: Clerk → API keys → secret key. It's shown only once; keep it in your password manager.
 - `NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=1`
+- `NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED=1` (Clerk otherwise sends SDK usage data from development)
 
 `.env.example` lists every name with a comment.
 
