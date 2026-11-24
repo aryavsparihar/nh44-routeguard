@@ -26,3 +26,13 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-10** · `latest_risk` view with `security_invoker = true` · The view follows the caller's RLS instead of bypassing it.
 - **2026-11-10** · `--dry-run` reads nothing from the database · Teammates can run it with no key at all. Confidence then falls back to exposure.
 - **2026-11-10** · After each hourly run, `check_run.py` checks for 24 fresh zone rows · A run that "succeeds" but writes nothing still turns red.
+
+## Round 3: API foundation (A1)
+
+- **2026-11-24** · Every API route is wrapped in `withApi()` (`src/server/http/`) · One place for request ids, logging, the role check, the Origin check and problem+json errors, so each route stays short and no route can forget them.
+- **2026-11-24** · Problem `type` is `about:blank` · RFC 9457's value for "nothing beyond the status code". We have no public domain to host problem pages on, and clients switch on `status`.
+- **2026-11-24** · A bad query string is 400, a JSON body that breaks the rules is 422 · The API contract says 400 for "malformed JSON or query" and 422 for "valid JSON that breaks the rules". Both list the failing fields.
+- **2026-11-24** · Writes need an `Origin` that matches our host, and a missing `Origin` is also 403 · Browsers always send it, so this blocks cross-site requests (CSRF). Postman and curl add it by hand. A server-to-server route can turn the check off and prove itself another way.
+- **2026-11-24** · `getCaller()` returns "signed out" until A2 wires in Clerk · The plan says not to pick a Clerk app before the demo app's code is in the repo. Protected routes answer an honest 401 until then, and tests mock the caller.
+- **2026-11-24** · Logs carry a 12-character SHA-256 hash of the user id and the path without the query string · We can follow one user's requests without storing who they are, and query strings can hold personal data.
+- **2026-11-24** · vitest 5.1.0 rather than 5.1.1, and `@types/node` 20 → 24 · 5.1.1 was six days old (we use releases at least two weeks old). vitest 5 needs Node 22+ types, and we run Node 24 locally and in CI.
