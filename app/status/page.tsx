@@ -2,17 +2,12 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { STALE_AFTER_MINUTES, dataAgeMinutes, isStale } from "@/src/shared/freshness";
 
 // Internal check page for the team (not one of the app screens).
 // Shows the newest risk job run: the 6 zones at horizon 0.
 
 export const metadata: Metadata = { title: "Status · NH-44 RouteGuard" };
-
-// Minutes since a timestamp. Kept outside the component: the page is rendered per
-// visit (after connection()), so "now" is the visit time.
-function minutesSince(iso: string) {
-  return Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-}
 
 function fmt(iso: string) {
   const d = new Date(iso);
@@ -38,13 +33,14 @@ async function LatestRun() {
 
   const runAt = data[0].run_at;
   if (!runAt) return <p>Latest run has no timestamp.</p>;
-  const ageMin = minutesSince(runAt);
+  // Rendered per visit (after connection()), so "now" is the visit time.
+  const ageMin = dataAgeMinutes(runAt);
 
   return (
     <>
       <p>
         Last run: {fmt(runAt)} · {ageMin} min ago · {data[0].model_version}
-        {ageMin > 90 ? " · ⚠ older than 90 min, check GitHub Actions" : ""}
+        {isStale(ageMin) ? ` · ⚠ older than ${STALE_AFTER_MINUTES} min, check GitHub Actions` : ""}
       </p>
       <table>
         <thead>

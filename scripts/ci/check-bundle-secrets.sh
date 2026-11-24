@@ -2,12 +2,17 @@
 # Fails if a server-only key, or the name of a server-only variable, ended up
 # in something we send to browsers. Run after `npm run build`.
 #
+#   bash scripts/ci/check-bundle-secrets.sh          # this checkout's .next
+#   bash scripts/ci/check-bundle-secrets.sh <dir>    # a folder holding .next,
+#                                                    # e.g. files copied out of the Docker image
+#
 # Browsers get:
 #   .next/static                  JavaScript, CSS and other assets
 #   .next/server/app/**/*.html    prerendered pages
 #   .next/server/app/**/*.rsc     prerendered React Server Component payloads
 #   .next/server/app/**/*.body    prerendered route bodies
 set -euo pipefail
+cd "${1:-.}"
 
 # Key prefixes (Clerk secret keys, Supabase secret keys, the old service_role
 # JWT name) and the names of variables that only the server may read.

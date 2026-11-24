@@ -51,6 +51,7 @@ export { notSupported as GET, notSupported as PUT, notSupported as PATCH, notSup
 | The caller in a non-public route | `requireCaller(caller)` gives a `Caller` instead of `Caller \| null` |
 | Talk to the database | `const db = await getDb()` (`src/server/db.ts`): the caller's token, so RLS applies; 503 if Supabase isn't set up |
 | Record a privileged action | `await writeAudit(db, { action, targetType, targetId, reason, requestId })` (`src/server/audit.ts`) |
+| Is the data stale? | `dataAgeMinutes(runAt)` and `isStale(age)` from `src/shared/freshness.ts` (over 90 min, or no run). `GET /api/v1/health/ready` reports the same |
 
 Shared zod pieces live in `src/server/schemas/common.ts`: `cleanText(max)`, `truckNumber`, `corridorLat`, `corridorLng`, `pageQuery`. Always end objects with `.strict()`.
 

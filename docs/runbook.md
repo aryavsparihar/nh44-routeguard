@@ -83,9 +83,9 @@ Done for the development project on 24 Nov 2026: `admin+clerk_test@example.com` 
 
 The new role is in the user's session token only after it refreshes (up to about a minute). The app calls `getToken({ skipCache: true })` after onboarding; for anyone else, "refresh to see your new role". Responses from both role endpoints include `token_refresh_needed: true`.
 
-### When deploying (later)
+### When deploying
 
-The same three Clerk values go into Azure Container Apps secrets (BUILD_PROMPT section 4.1), never into the image or the repo. Production needs a Clerk **production** instance and a domain we own; that is a separate step on deploy day.
+The Clerk values go to Azure as described in "Deploy to Azure (first time)" below: the publishable key as a GitHub variable (it is built into the image), the secret key as a Container Apps secret. Never into the image or the repo. A Clerk **production** instance needs a domain we own; that is a separate step.
 
 ## Risk job timing
 
@@ -126,3 +126,187 @@ To renew: generate a new token the same way and edit the secret's value in Vault
 ### Before a demo
 
 Press **Actions → Risk job → Run workflow** about 10 minutes before. If the weather service times out, run it once more.
+
+## Health checks
+
+- `GET /api/v1/health`: the server is up. No database call. 200 `{ "data": { "status": "ok" } }`.
+- `GET /api/v1/health/ready`: the database answers, and how old the risk scores are: `last_run_at`, `data_age_minutes`, `stale` (over 90 minutes, or no run yet). 503 problem+json when the database can't be reached. Stale data is still a 200: the app works and shows the stale banner.
+- `node scripts/smoke.mjs <url>` checks a running app from outside (health, ready, security headers, 401/404/405 problem+json). Add `REQUIRE_READY=1` to require the database. The deploy workflow runs it after every deploy; CI runs it against the Docker image on every PR.
+
+## Deploy to Azure (first time)
+
+The deploy workflow (`.github/workflows/deploy.yml`) does nothing until the repo variable `DEPLOY_ENABLED` is `true`. These steps create the Azure resources once. They spend credit, so do them on deploy day, not before (BUILD_PROMPT section 4.1). Keys are typed with `read -rs` so they never show on screen or in your shell history; never paste them into chat.
+
+### 1. Tools and sign-in (your Mac)
+
+```bash
+brew install azure-cli
+```
+
+```bash
+az login
+```
+
+```bash
+az extension add --name containerapp --upgrade
+```
+
+```bash
+az provider register --namespace Microsoft.App --wait
+```
+
+```bash
+az provider register --namespace Microsoft.OperationalInsights --wait
+```
+
+### 2. Names used below
+
+Paste this once into the terminal you use for the rest of the steps:
+
+```bash
+RG=rg-routeguard; LOC=centralindia; ENV=cae-routeguard; APP=routeguard; LAW=log-routeguard; ID=id-routeguard-deploy
+```
+
+If Azure for Students refuses `centralindia`, the error lists the allowed regions. Pick the nearest one, change `LOC`, and write it in `docs/decisions.md`.
+
+### 3. Resource group, logs and environment
+
+```bash
+az group create --name $RG --location $LOC
+```
+
+Log Analytics with a 0.1 GB/day cap, so logs can't eat the credit:
+
+```bash
+az monitor log-analytics workspace create --resource-group $RG --workspace-name $LAW --location $LOC --quota 0.1
+```
+
+```bash
+LAW_ID=$(az monitor log-analytics workspace show -g $RG -n $LAW --query customerId -o tsv); LAW_KEY=$(az monitor log-analytics workspace get-shared-keys -g $RG -n $LAW --query primarySharedKey -o tsv)
+```
+
+```bash
+az containerapp env create --name $ENV --resource-group $RG --location $LOC --logs-workspace-id "$LAW_ID" --logs-workspace-key "$LAW_KEY"; unset LAW_KEY
+```
+
+### 4. The container app
+
+Created with Microsoft's sample image first; the first deploy replaces it.
+
+```bash
+az containerapp create --name $APP --resource-group $RG --environment $ENV --image mcr.microsoft.com/k8se/quickstart:latest --ingress external --target-port 80 --cpu 0.5 --memory 1.0Gi --min-replicas 0 --max-replicas 3
+```
+
+(The sample image listens on port 80. The first deploy switches the app to our image and port 3000.)
+
+Pulling our private image from GitHub Container Registry needs a **classic** GitHub token with only `read:packages`: GitHub → Settings → Developer settings → Personal access tokens → **Tokens (classic)** → Generate new token (classic), tick only `read:packages`, expiry just after the round. Then:
+
+```bash
+read -rs GHCR_TOKEN
+```
+
+(paste the token, press Enter; nothing is shown)
+
+```bash
+az containerapp registry set --name $APP --resource-group $RG --server ghcr.io --username aryavsparihar --password "$GHCR_TOKEN"; unset GHCR_TOKEN
+```
+
+The Clerk secret key, as a Container Apps secret:
+
+```bash
+read -rs CLERK_SECRET
+```
+
+```bash
+az containerapp secret set --name $APP --resource-group $RG --secrets clerk-secret-key="$CLERK_SECRET"; unset CLERK_SECRET
+```
+
+Environment variables. The `NEXT_PUBLIC_` values are public (they are in the browser bundle anyway); copy them from your `.env.local` in your editor:
+
+```bash
+az containerapp update --name $APP --resource-group $RG --set-env-vars CLERK_SECRET_KEY=secretref:clerk-secret-key NEXT_PUBLIC_SUPABASE_URL=<url> NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key> NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<pk_...> NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=1 NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED=1 LOG_LEVEL=info
+```
+
+### 5. Let GitHub deploy without a password
+
+A managed identity that GitHub Actions on `main` can sign in as, allowed to change only this resource group:
+
+```bash
+az identity create --resource-group $RG --name $ID --location $LOC
+```
+
+```bash
+az identity federated-credential create --resource-group $RG --identity-name $ID --name github-main --issuer https://token.actions.githubusercontent.com --subject repo:aryavsparihar/nh44-routeguard:ref:refs/heads/main --audiences api://AzureADTokenExchange
+```
+
+```bash
+az role assignment create --assignee-object-id $(az identity show -g $RG -n $ID --query principalId -o tsv) --assignee-principal-type ServicePrincipal --role Contributor --scope $(az group show -n $RG --query id -o tsv)
+```
+
+### 6. GitHub secrets and variables
+
+```bash
+gh secret set AZURE_CLIENT_ID --body "$(az identity show -g $RG -n $ID --query clientId -o tsv)"
+```
+
+```bash
+gh secret set AZURE_TENANT_ID --body "$(az account show --query tenantId -o tsv)"
+```
+
+```bash
+gh secret set AZURE_SUBSCRIPTION_ID --body "$(az account show --query id -o tsv)"
+```
+
+```bash
+gh variable set AZURE_RESOURCE_GROUP --body $RG; gh variable set AZURE_CONTAINERAPP_NAME --body $APP
+```
+
+The three public values that are built into the image (replace the placeholders as in step 4):
+
+```bash
+gh variable set NEXT_PUBLIC_SUPABASE_URL --body "<url>"; gh variable set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY --body "<publishable key>"; gh variable set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --body "<pk_...>"
+```
+
+Then switch deploys on:
+
+```bash
+gh variable set DEPLOY_ENABLED --body true
+```
+
+### 7. First deploy
+
+GitHub → Actions → **Deploy** → Run workflow (branch `main`). It builds the image, updates the app with the scaling settings (0 to 3 replicas, one more per 80 requests in flight), waits for it to answer and runs the smoke test with the database required. From then on, every merge to `main` deploys.
+
+Get the URL:
+
+```bash
+az containerapp show -n $APP -g $RG --query properties.configuration.ingress.fqdn -o tsv
+```
+
+Optional: in the Azure portal, open the container app → Containers → Health probes and add a **liveness** probe: HTTP GET `/api/v1/health` on port 3000. Don't use `/api/v1/health/ready` for any probe (`docs/decisions.md`, A7).
+
+### 8. Budget alert
+
+Azure portal → **Cost Management** → **Budgets** → **Add**: scope your subscription, amount US$10, monthly, alerts at 50%, 90% and 100% to your email.
+
+### Before the demo
+
+With 0 replicas the first visit starts the app, which takes a few seconds. A few minutes before presenting, open the app and run:
+
+```bash
+REQUIRE_READY=1 node scripts/smoke.mjs https://<app url>
+```
+
+If it warns that the data is stale, press **Run workflow** on **Risk job** too.
+
+### If a deploy breaks the app
+
+Roll back to the previous image: GitHub → Actions → Deploy → open the last green run → **Re-run all jobs**. Or in the portal: container app → Revisions → activate the previous revision.
+
+### After the round
+
+Delete everything in one go so the rest of the credit stays (asks to confirm):
+
+```bash
+az group delete --name rg-routeguard
+```

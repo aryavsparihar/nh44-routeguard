@@ -1,0 +1,130 @@
+name: Deploy
+
+# Builds the Docker image, pushes it to GitHub Container Registry and points
+# the Azure Container App at it, then runs the smoke test on the live URL.
+# docs/runbook.md, "Deploy to Azure (first time)", lists the one-time setup.
+#
+# Off until the repo variable DEPLOY_ENABLED is "true": before the Azure
+# resources exist, every merge to main would otherwise fail here.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never run two deploys at once, and never stop one halfway.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write # push the image, delete old ones
+      id-token: write # sign in to Azure with OpenID Connect (no stored password)
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_CONTAINERAPP_NAME: ${{ vars.AZURE_CONTAINERAPP_NAME }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only public values go into the image (repo variables, not secrets).
+      # Secret keys are Container Apps secrets, set once by hand.
+      - name: Build and push the image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}
+          provenance: false # one manifest per image, so "keep the last 2" means 2 images
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+            CSP_REPORT_ONLY=${{ vars.CSP_REPORT_ONLY }}
+            DEPLOYMENT_VERSION=${{ github.sha }}
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # New image plus the scaling settings from BUILD_PROMPT sections 4.1
+      # and 17: scale to zero when idle (nothing is charged), up to 3
+      # replicas, one more replica per 80 requests in flight. Env vars and
+      # secrets are left as they are.
+      - name: Update the container app
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          # Our server listens on 3000 (the app is created with a sample image on 80).
+          az containerapp ingress update \
+            --name "$AZURE_CONTAINERAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --target-port 3000 --output none
+          az containerapp update \
+            --name "$AZURE_CONTAINERAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --image "$IMAGE" \
+            --cpu 0.5 --memory 1.0Gi \
+            --min-replicas 0 --max-replicas 3 \
+            --scale-rule-name http-80 \
+            --scale-rule-type http \
+            --scale-rule-http-concurrency 80 \
+            --output none
+
+      - name: Find the app's URL
+        id: url
+        run: |
+          fqdn=$(az containerapp show \
+            --name "$AZURE_CONTAINERAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn --output tsv)
+          echo "base=https://$fqdn" >> "$GITHUB_OUTPUT"
+
+      # With min-replicas 0 the first request starts a replica, which takes a
+      # little while.
+      - name: Wait until it answers
+        env:
+          BASE: ${{ steps.url.outputs.base }}
+        run: |
+          for i in $(seq 1 24); do
+            curl -sf --max-time 10 "$BASE/api/v1/health" > /dev/null && exit 0
+            sleep 5
+          done
+          echo "No answer from $BASE/api/v1/health after 2 minutes."
+          exit 1
+
+      - name: Smoke test (database required)
+        env:
+          BASE: ${{ steps.url.outputs.base }}
+          REQUIRE_READY: "1"
+        run: node scripts/smoke.mjs "$BASE"
+
+      # GHCR keeps every image forever otherwise (section 4.1: keep the last 2).
+      - name: Delete old images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 2

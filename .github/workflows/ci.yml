@@ -54,6 +54,52 @@ jobs:
       - name: No secret keys in the browser bundle or prerendered pages
         run: bash scripts/ci/check-bundle-secrets.sh
 
+  # Builds the same image the deploy workflow ships (without keys), starts
+  # it, and runs the post-deploy smoke test against it. Proves the
+  # Dockerfile on every PR before it ever reaches Azure.
+  docker:
+    name: Docker image (build and smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Build the image (no keys)
+        run: docker build -t routeguard:ci .
+
+      - name: Start it
+        run: docker run -d --name app -p 3000:3000 routeguard:ci
+
+      - name: Wait until it answers
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/api/v1/health > /dev/null && exit 0
+            sleep 1
+          done
+          docker logs app
+          exit 1
+
+      # No database in CI, so /ready may answer 503; that is allowed here.
+      - name: Smoke test
+        run: node scripts/smoke.mjs http://localhost:3000
+
+      - name: No .env files or secret keys in the image
+        run: |
+          docker cp app:/app ./image-app
+          if find image-app -name '.env*' | grep .; then
+            echo "An .env file got into the image. Check .dockerignore."
+            exit 1
+          fi
+          bash scripts/ci/check-bundle-secrets.sh image-app
+
+      - name: Server log (on failure)
+        if: failure()
+        run: docker logs app || true
+
   gitleaks:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
