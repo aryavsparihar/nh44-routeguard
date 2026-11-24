@@ -104,3 +104,17 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · Automatic runs skip when the last run is under 40 minutes old · Makes the :37 call a free retry when :07 failed, and stops a late GitHub schedule run from writing a second run in the same hour. The Run workflow button always runs.
 - **2026-11-24** · When Open-Meteo fails, the job still writes nothing rather than scoring with older stored weather · A fresh `run_at` on old weather would hide the staleness from the banner. The :37 retry covers most failures instead.
 - **2026-11-24** · Open-Meteo gets 5 tries with waits of 10, 30, 60 and 120 seconds (was 4 tries over about 17 seconds) · All 4 failures in the week before were TLS handshake timeouts that the short waits didn't outlast. The worst case still fits in the workflow's 10-minute limit (a test checks it).
+
+## Round 3: health and deploy (A7)
+
+- **2026-11-24** · `/api/v1/health/ready` answers 200 with `stale: true` when the risk data is old, and 503 only when the database can't be reached · Old scores don't stop the app working; the screens show the stale banner. A 503 would tell the smoke test and an uptime check the app is down when it isn't.
+- **2026-11-24** · `/ready` is not a Container Apps probe; the default TCP probes stay, plus an optional HTTP liveness probe on `/health` · If a probe used `/ready`, a short Supabase outage would take every replica out of service, and the pages that work without the database (and the offline app shell) would go down with it.
+- **2026-11-24** · The 90-minute stale rule lives in one place, `src/shared/freshness.ts` · The API, `/status` and the coming banner must agree on what "stale" means.
+- **2026-11-24** · Docker image from Next's `output: "standalone"`, on `node:24-alpine`, running as the non-root `node` user · The smallest image Next supports for self-hosting; no `node_modules` install at start-up.
+- **2026-11-24** · Only public values are build arguments; secret keys are Container Apps secrets · `NEXT_PUBLIC_*` values and the CSP are fixed at build time (Next inlines them, and `headers()` runs at build), so they must be in the image. Secrets never are; CI checks the image has no `.env` file and no secret key patterns in browser files.
+- **2026-11-24** · Images go to GitHub Container Registry, keeping the last 2 · Section 4.1: Azure Container Registry charges every day it exists. GHCR is free for this.
+- **2026-11-24** · The deploy workflow runs on every push to `main`, but only when the repo variable `DEPLOY_ENABLED` is `true` · Until the Azure resources exist, every merge would otherwise fail.
+- **2026-11-24** · `deploymentId` is the commit SHA · Next's version-skew protection: a browser still running the old version reloads instead of breaking during a deploy.
+- **2026-11-24** · CI builds and smoke-tests the Docker image on every PR · None of us has Docker running locally, so this is where the Dockerfile is proven before deploy day.
+- **2026-11-24** · `HOSTNAME=0.0.0.0` in the image · With `127.0.0.1`, the standalone server failed to reach itself on `localhost` (seen locally: "Failed to proxy … socket hang up").
+- **2026-11-24** · Sentry and an uptime check are not in A7 · Both are P1 and need new accounts. `/ready` is ready for an uptime check when we add one.
