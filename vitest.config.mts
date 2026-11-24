@@ -16,6 +16,6 @@ export default defineConfig({
   test: {
     environment: "node",
     env: { LOG_LEVEL: "silent" }, // keep test output readable
-    include: ["src/**/*.test.ts", "app/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "app/**/*.test.ts", "lib/**/*.test.ts"],
   },
 });
