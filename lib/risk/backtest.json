@@ -1,0 +1,30 @@
+{
+  "status": "not_run",
+  "reason": "incidents.csv has no event_start_date column yet (the verified list comes with B1)",
+  "preview_unverified": false,
+  "generated_at": "2026-11-24T18:33:33+00:00",
+  "model_version": "rules-v0.1",
+  "method": {
+    "event_time": "12:00 IST on the event date",
+    "hit": "zone level medium or high (overall >= 0.30)",
+    "right_hazard": "the incident's hazard scores >= 0.30",
+    "leads_h": [
+      48,
+      24,
+      12
+    ],
+    "forecasts": "Open-Meteo Previous Runs API (forecast made 2, 1 or 0 days before each hour), from 2024-02-01",
+    "on_the_day": "Open-Meteo Archive API (ERA5): the weather that actually happened",
+    "false_alarm": "medium or high with no verified incident in that zone within 1 day, forecast from 1 day earlier"
+  },
+  "caveats": [
+    "The incident list is incomplete, so some 'false alarms' are probably real closures or slowdowns nobody wrote down. Read the false-alarm count as an upper bound.",
+    "Sources give a date, not a time, so every event is scored at 12:00 IST on its date.",
+    "Each forecast hour uses the run made about 1 or 2 days before that hour, which is a little worse than what the job would have had live.",
+    "The 12 h lead uses the newest archived run for the hours ahead, which is closer than 12 h for some hours, so it is optimistic.",
+    "Archived forecasts have no snow depth for earlier runs; snow depth is held at its value when the forecast was made.",
+    "Archived forecasts start on 1 February 2024; older events only get the weather-on-the-day check.",
+    "Every threshold is our own starting value, not a sourced figure.",
+    "There are few verified incidents, so one event changes the hit rate a lot."
+  ]
+}
