@@ -32,6 +32,8 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
 RUN mkdir -p public && npm run build
 
 FROM node:24-alpine AS run
+# Links the image in GitHub Container Registry to this repository.
+LABEL org.opencontainers.image.source="https://github.com/aryavsparihar/nh44-routeguard"
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
