@@ -941,6 +941,15 @@ export type Database = {
       }
     }
     Functions: {
+      admin_set_role: {
+        Args: {
+          p_reason: string
+          p_request_id?: string
+          p_role: Database["public"]["Enums"]["user_role"]
+          p_target: string
+        }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       write_audit: {
         Args: {
           p_action: string

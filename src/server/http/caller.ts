@@ -11,7 +11,7 @@ export type Role = Database["public"]["Enums"]["user_role"];
 export type Caller = { userId: string; role: Role | null };
 
 // Same list as the user_role enum in the database.
-const ROLES = ["grower", "trader", "agent", "driver", "police", "admin"] as const satisfies readonly Role[];
+export const ROLES = ["grower", "trader", "agent", "driver", "police", "admin"] as const satisfies readonly Role[];
 const roleSchema = z.enum(ROLES);
 
 // The role lives in Clerk publicMetadata.role, which users can't change from
