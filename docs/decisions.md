@@ -129,6 +129,18 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · Only verified incidents go into `lib/risk/backtest.json` and `docs/backtest.md`; until B1 lands they say "not run" · Section 14: unverified rows are never used. `--preview-unverified` exists to check the pipeline, only prints, and refuses to write files; a test checks the committed file is never a preview.
 - **2026-11-24** · `GET /api/v1/model` serves the card from `lib/risk/config.json` and the backtest file as they are · Nothing typed in by hand, so the API can't drift from the job.
 
+## Round 3: incidents (B1)
+
+- **2026-11-25** · The CSV's `event_start_date` loads into the existing `incidents.date`, and the CSV `id` goes into a new `external_id` · Keeps the risk job, RLS policy and tests that already use `date`. `external_id` lets `seed.mjs` upsert, so rerunning it updates rows instead of adding copies.
+- **2026-11-25** · One row per date, zone and hazard; a closure that hit two zones is two rows · The risk model and the backtest work per zone. Shared rows say "same closure as" in `notes`.
+- **2026-11-25** · A number is filled only when the 25-word `evidence_quote` contains it; other figures from the same article go into `notes` · Section 14 rule 5 ("no quote, no number"). "Over 300" is filled as 300 and noted as a lower bound. Corridor-wide counts are noted, not filled.
+- **2026-11-25** · `date_basis` gains `inferred_relative` ("late last evening", "yesterday") · The three section 14 values had no honest label for those; `article_date` would give the wrong day.
+- **2026-11-25** · Places missing from OpenStreetMap use the nearest named OSM place with `coord_basis = osm_place_nearby`; Jawahar Tunnel uses `osm_feature_old_road` and may be up to 4 km from today's line · Our saved line (`data/nh44_line.json`, from OSRM) follows the Navyug tunnel road opened in 2021; closures before that were on the old road through Jawahar Tunnel.
+- **2026-11-25** · The zone is checked against km along the saved line, with 0.5 km of slack at boundaries · Section 14 rule 6. Boundaries are the km of each zone's first place in `jobs/points.json`.
+- **2026-11-25** · `scripts/check_incident_sources.py` downloads every source (or its Wayback copy) and confirms the quote is on the page; it runs by hand, not in CI · Needs the network. Every row passed before checking. We only look up existing Wayback copies; we don't create new ones.
+- **2026-11-25** · `verified_by` is filled only from the verifier's own ticks (`scripts/incidents_checklist.py --apply`) · Rule 8: the verifier opens each source. The tool refuses a verifier who is also `added_by`.
+- **2026-11-25** · The risk job counts only verified, non-demo incidents for confidence · Its key skips RLS, so the "verified only" policy didn't filter for it.
+
 ## Round 3: ORM (Drizzle)
 
 - **2026-11-25** · The web server's queries go through Drizzle ORM (`drizzle-orm` 0.45.4 with `postgres` 3.4.9, exact versions), not supabase-js over HTTP · The mentor asked for an ORM. Drizzle keeps queries typed and parameterised, is small, and has no engine binary. supabase-js stays only in the browser for Realtime; the Python job and `seed.mjs` keep using the secret key over HTTP because they are batch jobs, not request handlers.

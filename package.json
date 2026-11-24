@@ -14,7 +14,8 @@
     "db:types": "supabase gen types typescript --remote --schema public > lib/database.types.ts",
     "db:schema": "node scripts/db/gen-drizzle-schema.mjs",
     "db:orm-check": "node --env-file-if-exists=.env.local scripts/db/orm-check.mjs",
-    "db:set-app-password": "bash scripts/db/set-app-password.sh"
+    "db:set-app-password": "bash scripts/db/set-app-password.sh",
+    "db:seed-incidents": "node seed.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.25",

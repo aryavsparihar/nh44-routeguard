@@ -82,7 +82,13 @@ def print_table(rows: list[dict[str, Any]]) -> None:
 
 
 def read_history(db: Supabase) -> set[tuple[int, str]]:
-    rows = db.select("incidents", {"select": "zone_id,hazard_type"})
+    # Verified, non-demo rows only (BUILD_PROMPT section 14). The job's key skips
+    # RLS, so the "verified only" policy doesn't filter for us here.
+    rows = db.select("incidents", {
+        "select": "zone_id,hazard_type",
+        "verified_by": "not.is.null",
+        "is_demo": "is.false",
+    })
     return {(r["zone_id"], r["hazard_type"]) for r in rows if r["zone_id"]}
 
 

@@ -278,3 +278,20 @@ def test_skip_0_never_reads_the_last_run(monkeypatch):
 def test_skip_rejects_negative_minutes():
     with pytest.raises(SystemExit):
         run_risk.main(["--dry-run", "--skip-if-fresh-min", "-5"])
+
+
+# --- read_history ----------------------------------------------------------------
+def test_read_history_asks_for_verified_non_demo_rows_only():
+    from run_risk import read_history
+
+    class FakeDb:
+        params = None
+
+        def select(self, table, params):
+            assert table == "incidents"
+            FakeDb.params = params
+            return [{"zone_id": 4, "hazard_type": "landslide"}, {"zone_id": None, "hazard_type": "other"}]
+
+    assert read_history(FakeDb()) == {(4, "landslide")}
+    assert FakeDb.params["verified_by"] == "not.is.null"
+    assert FakeDb.params["is_demo"] == "is.false"

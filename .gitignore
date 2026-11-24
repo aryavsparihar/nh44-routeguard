@@ -58,3 +58,6 @@ team-guides/
 
 # backtest weather cache (jobs/risk/history.py)
 jobs/.cache/
+
+# Personal checklists (scripts/incidents_checklist.py)
+*.local.md
