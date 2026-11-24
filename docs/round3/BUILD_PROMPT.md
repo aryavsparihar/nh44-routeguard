@@ -169,7 +169,7 @@ The 7 MVP features, the roles, the risk model and the data design stay as in the
 | PPT said | Now | Why | Size |
 |---|---|---|---|
 | Hosting on Vercel (Mumbai) | Azure Container Apps on Aryaveer's Azure for Students subscription. Vercel is dropped completely, including PR previews | We need a real cloud host. Google Cloud's billing setup failed for us; Azure for Students needs no card, so it can never bill us, and its credit covers the round. Container Apps scales replicas up and down, which we show for the scaling bonus | How, not what |
-| Supabase Auth, phone OTP | Clerk (phone OTP, email code as backup), Supabase reads Clerk tokens through third-party auth | Same feature. Clerk's role metadata and test numbers made it faster | How, not what |
+| Supabase Auth, phone OTP | Clerk with a one-time code sent by **email** (no password), Supabase reads Clerk tokens through third-party auth | Same feature, different channel. Clerk's role metadata and test users made it faster. SMS is a paid Clerk feature on our free plan, so the code goes by email (decided 24 Nov 2026) | How, not what |
 | Serwist for offline | Hand-written service worker with the same caching policy | Already works; fewer moving parts | How, not what |
 | Advice runs on the phone (`decide.ts`) | Same file, also served as `POST /api/v1/advice` | Testable, documented API; phone still works offline | Addition |
 | Drivers verified through their agent | Same, plus optional Aadhaar Secure QR check behind a feature flag (P1) | Stronger proof for the verified badge | Addition, optional |
@@ -328,7 +328,7 @@ All changes are new, additive migrations in `supabase/migrations/`. Never edit a
 
 `users`:
 - `id text pk`, `role user_role`, `display_name`, `language` (`en|hi|ur`).
-- `agent_id text` (for drivers), `verification_level` (`none|phone|agent_vouched|aadhaar_qr|official`), `location_consent bool`.
+- `agent_id text` (for drivers), `verification_level` (`none|email|agent_vouched|aadhaar_qr|official`), `location_consent bool`.
 - `created_at`, `deleted_at`. Phone numbers stay in Clerk only; don't copy them into our database.
 
 New tables:
@@ -370,10 +370,10 @@ Follow `docs/round3/clerk-setup.md` for anything about installing or linking Cle
 
 **Dashboard steps (a human does these; you write them in `docs/runbook.md`):**
 - Fix the application name to "RouteGuard".
-- Turn on phone number sign-in with SMS code. Add India (+91) to the SMS allowlist; by default only the US and Canada are allowed. Keep email code as a backup. If SMS isn't available on our Clerk plan, use email code and change the app copy to match. Never claim "phone" where it isn't true.
+- Turn on email sign-in with an email verification code (no password). Phone SMS is a paid feature on our Clerk plan (checked 24 Nov 2026), so it stays off. The app copy says "email" everywhere. Never claim "phone" where it isn't true.
 - Sessions → customise session token → add `"metadata": "{{user.public_metadata}}"`.
 - Turn on Clerk's Supabase integration (adds the `role: authenticated` claim). In Supabase → Authentication → Third-party auth, add Clerk.
-- Test users: phone `+1 XXX 555 01xx` numbers (code `424242`) or `name+clerk_test@example.com` emails (code `424242`). Create one per role (section 19). Ask before creating users in an existing app.
+- Test users: `name+clerk_test@example.com` emails (code `424242`). Create one per role (section 19). Ask before creating users in an existing app.
 
 **In code:**
 - `proxy.ts` uses `clerkMiddleware` with `createRouteMatcher`. Protect `/board`, `/report/new`, `/admin/**`, and every non-public `/api/v1/**`.
@@ -383,7 +383,7 @@ Follow `docs/round3/clerk-setup.md` for anything about installing or linking Cle
 - `POST /api/v1/me/onboarding` lets a user pick grower, trader, agent or driver once. Changing it later needs an admin.
 - **police and admin are never self-service.** Only an admin can grant them, through `PATCH /api/v1/admin/users/{id}/role` with a written reason, and it is audited. For the hackathon, the police account is a clearly labelled demo account.
 - After a role change, the user's token can be stale for up to about a minute. The UI says "refresh to see your new role".
-- Sign-in screens must work in all three languages. Clerk ships Hindi (`hiIN`) but not Urdu. Build a small custom OTP sign-in with Clerk's hooks so every string comes from our messages files; keep Clerk's prebuilt `<UserButton>`. If the custom flow isn't done in time, use `hiIN` for Hindi, a partial Urdu localisation object for the main strings, and log the gap.
+- Sign-in screens must work in all three languages. Clerk ships Hindi (`hiIN`) but not Urdu. Build a small custom email-code sign-in with Clerk's hooks so every string comes from our messages files; keep Clerk's prebuilt `<UserButton>`. If the custom flow isn't done in time, use `hiIN` for Hindi, a partial Urdu localisation object for the main strings, and log the gap.
 
 ---
 
@@ -395,7 +395,7 @@ Write this as `docs/verification.md` and show a one-line version in the app wher
 
 | Level | How you get it | What it unlocks |
 |---|---|---|
-| `phone` | Clerk OTP (or email code) | Sign in, save lots, flag reports |
+| `email` | Clerk email code | Sign in, save lots, flag reports |
 | `agent_vouched` | Your transport agent vouches for you after you accept their invite (PPT) | Driver reports go live as "verified driver" |
 | `aadhaar_qr` | P1: Secure QR signature checks out on our server and the name matches your profile | Same badge, stronger. It is never required |
 | `official` | Admin grants police or admin with a written reason | Post official updates |
@@ -660,7 +660,7 @@ Write `docs/scaling.md` with a diagram (client → Container Apps replicas → R
   - 2 official updates with real public source links (taken from the verified incidents);
   - `road_status` rows.
   All demo rows have `is_demo = true`.
-- **README "Try it" table:** role, test login (`+clerk_test` email or `555` number), code `424242`, and what to try. No real phone numbers.
+- **README "Try it" table:** role, test login (`+clerk_test` email), code `424242`, and what to try. No real phone numbers.
 - **`scripts/seed-demo.ts --reset`** removes only `is_demo` rows.
 - Before the round, Aryaveer takes a data backup (`supabase db dump --data-only` to a local file that is **not** committed).
 
@@ -754,7 +754,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 ### WP-D: Riya (UI/UX, languages, offline, frontend tests)
 
 - **P0 D1: languages.** `next-intl` cookie setup, full EN/HI/UR messages for every screen and every API error, RTL, fonts, `<bdi>`/Intl formatting (L4), key-parity CI check, `messages/REVIEW.md`. Get a fluent Hindi and a fluent Urdu reader to review safety text (ask the team who; Aryaveer is from Ramban).
-- **P0 D2: sign-in.** Localised OTP sign-in (section 8), copy matching what we really use (L5), onboarding role picker, footer disclaimer, `/privacy` page.
+- **P0 D2: sign-in.** Localised email-code sign-in (section 8), copy matching what we really use (L5), onboarding role picker, footer disclaimer, `/privacy` page.
 - **P0 D3: offline.** Service worker policy update (L15), IndexedDB outbox with idempotency keys, private-data wipe on sign-out, stale/offline banners, update prompt, `docs/offline.md`.
 - **P0 D4: screens.** Agent board (status, last seen, ETA, delay, advice snapshot), report screen (photo, GPS, consent, queued state), admin pages (roles, official updates, reports, road status, audit log, dead letters), all at 360 px.
 - **P0 D4b: live board.** The agent board updates without a refresh through Supabase Realtime (`postgres_changes` on `shipments`). The client passes the Clerk token with `supabase.realtime.setAuth()` so RLS limits each agent to their own trucks. The PPT promised a "live board", and the rubric names real-time features under Innovation. Aryaveer checks the RLS side. P1: the same for new reports on the map.
