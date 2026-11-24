@@ -12,10 +12,9 @@ Use the Clerk application **`app_3MY5xJ8fczFe0sOEafACBTW6tNY`**. Don't create a 
 
 1. **Name:** Settings → rename the application to "RouteGuard".
 2. **Sign-in methods:** User & authentication:
-   - Turn on **phone number** with **SMS verification code**.
-   - SMS → allowed countries: add **India (+91)**. By default only the US and Canada are allowed.
-   - Keep **email verification code** on as a backup.
-   - If SMS isn't available on our plan, use email code only, and tell the team so the app copy says "email", not "phone".
+   - Turn on **email address** with **email verification code** (no password).
+   - Leave **phone number / SMS** off. On our free Hobby plan SMS is a paid feature (checked 24 Nov 2026), and we don't spend money on it. The app must say "email", never "phone" (BUILD_PROMPT section 8).
+   - The dashboard's "paid features" note should then no longer list SMS.
 3. **Role in the session token:** Sessions → Customize session token → add:
    ```json
    { "metadata": "{{user.public_metadata}}" }
@@ -40,7 +39,7 @@ Put these in `.env.local` yourself (never in chat, never committed):
 
 ### 4. Test users (ask the team first)
 
-Clerk test numbers `+1 XXX 555 01xx` and emails `name+clerk_test@example.com` take the code `424242`. Create one per role (BUILD_PROMPT section 19). Set a role on a test user in Clerk → Users → the user → Metadata → **Public**: `{ "role": "agent" }`. This is only for test users; real users get roles through the onboarding and admin endpoints (A4).
+Clerk test emails `name+clerk_test@example.com` take the code `424242` and send no real email. Create one per role (BUILD_PROMPT section 19). Set a role on a test user in Clerk → Users → the user → Metadata → **Public**: `{ "role": "agent" }`. This is only for test users; real users get roles through the onboarding and admin endpoints (A4).
 
 ### 5. Check it works
 
