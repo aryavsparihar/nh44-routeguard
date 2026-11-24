@@ -42,6 +42,12 @@ Put these in `.env.local` yourself (never in chat, never committed):
 
 Clerk test emails `name+clerk_test@example.com` take the code `424242` and send no real email. Create one per role (BUILD_PROMPT section 19). Set a role on a test user in Clerk → Users → the user → Metadata → **Public**: `{ "role": "agent" }`. This is only for test users; real users get roles through the onboarding and admin endpoints (A4).
 
+Created so far (development instance):
+
+| Email | Role | Created |
+|---|---|---|
+| `admin+clerk_test@example.com` | admin | 24 Nov 2026, to test A2 |
+
 ### 5. Check it works
 
 1. `npm run dev`.
