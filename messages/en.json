@@ -47,6 +47,7 @@
     "collectReports": "Road reports you send: the hazard, the place on the road, an optional note and an optional photo. We remove the photo's hidden data (EXIF), including where it was taken, before we store it.",
     "collectShipments": "Shipments you add: truck number, load, destination and status.",
     "collectLocation": "Drivers only, and only if you turn it on: your latest location, rounded to about 1 km, shared only with your own transport agent.",
+    "collectAlerts": "Only if you turn alerts on: your browser's push address (made by Google, Mozilla, Apple or Microsoft, not by us), the zones you follow and your language. It is deleted when you turn alerts off, sign out in that browser or delete your account. Alerts go through that company's push service.",
     "collectLogs": "Server logs: the time, a request id and a short scrambled code instead of your user id. No message contents, photos or phone numbers.",
     "whyTitle": "Why",
     "why": "To show the risk on the road, to let drivers report and confirm hazards, and to let agents follow their own trucks. We don't sell data and we don't show ads.",
@@ -750,7 +751,27 @@
       "invalid": "Some fields are not valid.",
       "server": "Could not save. Try again."
     },
-    "signOutWaiting": "{count, plural, one {# report is waiting to send. Signing out deletes it from this phone.} other {# reports are waiting to send. Signing out deletes them from this phone.}}"
+    "signOutWaiting": "{count, plural, one {# report is waiting to send. Signing out deletes it from this phone.} other {# reports are waiting to send. Signing out deletes them from this phone.}}",
+    "alerts": {
+      "heading": "Alerts",
+      "what": "Get an alert on this phone when a road report in your zones is confirmed, or when police or TCU post an update. Nothing else, and never ads.",
+      "zones": "Zones to follow",
+      "zone": "Zone {zone}: {name}",
+      "turnOn": "Turn alerts on",
+      "turnOff": "Turn alerts off",
+      "save": "Save zones",
+      "isOn": "Alerts are on in this browser.",
+      "isOff": "Alerts are off in this browser.",
+      "onDone": "Alerts are on. You will get one when something is confirmed in your zones.",
+      "offDone": "Alerts are off in this browser.",
+      "saved": "Saved. You now follow these zones.",
+      "pickZone": "Pick at least one zone.",
+      "blocked": "Notifications are blocked for this site. Allow them in your browser's site settings, then try again.",
+      "unsupported": "This browser can't show alerts. On iPhone, add RouteGuard to the home screen first.",
+      "notReady": "Alerts need the app's offline files. Reload the page and try again.",
+      "notSetUp": "Alerts are not set up on this server yet.",
+      "error": "Could not change alerts. Check your connection and try again."
+    }
   },
   "offline": {
     "update": "New version ready.",
@@ -766,5 +787,16 @@
     "signInToSend": "Sign in to send",
     "sent": "{count, plural, one {# waiting report sent.} other {# waiting reports sent.}}",
     "dropped": "{count, plural, one {# waiting report wasn't sent: it was too old, or RouteGuard couldn't accept it.} other {# waiting reports weren't sent: they were too old, or RouteGuard couldn't accept them.}}"
+  },
+  "push": {
+    "report": {
+      "title": "Confirmed: {hazard} in zone {zone}",
+      "titleRoad": "Confirmed: {hazard} on NH-44",
+      "body": "People on the road confirmed it. Open RouteGuard for the map. RouteGuard is advisory, not an official police service."
+    },
+    "update": {
+      "title": "{kind}: {title}",
+      "body": "{where}. From {source}. Check the source before you act."
+    }
   }
 }
