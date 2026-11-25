@@ -206,5 +206,66 @@
     "allLow": "all zones low",
     "zoneLine": "zone {zone} {level} {score} ({hazard})",
     "separator": "; "
+  },
+  "advice": {
+    "heading": "Dispatch advisor",
+    "intro": "Tell us about one truckload. We check the risk on its route and say whether to send it now, hold, book rail or divert.",
+    "variety": "Apple variety",
+    "days": "Days since picking",
+    "tonnes": "Load (tonnes)",
+    "destination": "Going to",
+    "truck": "Truck",
+    "truckType": {
+      "light": "Light truck (6 wheels)",
+      "heavy": "Heavy truck (10 wheels or more)"
+    },
+    "submit": "Get advice",
+    "working": "Checking the road…",
+    "again": "Change the lot",
+    "errDays": "Enter whole days from 0 to 120.",
+    "errTonnes": "Enter tonnes from 0.1 to 40.",
+    "errServer": "We couldn't get advice right now, and this phone has no saved scores yet. Try again when you have signal.",
+    "decision": {
+      "SEND": "Send now",
+      "HOLD": "Hold and check again",
+      "RAIL": "Book rail",
+      "DIVERT": "Divert"
+    },
+    "reason": {
+      "send_low": "{zones, plural, one {The zone on your route stays low for the next 24 h.} other {All # zones on your route stay low for the next 24 h.}} Leave in the next 12 h.",
+      "hold_medium": "Zone {zone} is medium {when}. Wait {hours} h and check again before loading.",
+      "divert_mughal": "Zone {zone} is medium {when}. A light truck can take Mughal Road (Shopian to Bufliaz) instead; an admin has marked it open.",
+      "rail_high": "The road stays high in zone {zones} in 24 h and in 48 h, and this fruit has used {pct}% of its shelf life. Book a Budgam–Delhi parcel train slot.",
+      "divert_store_valley": "Zone {zone} is high {when}. Keep the lot in a cold store in the valley until it clears.",
+      "divert_store": "Zone {zone} is high {when}. The fruit can wait: send it to a cold store in the valley or sell at Parimpora."
+    },
+    "notes": {
+      "mughal_unknown": "Mughal Road's status is unknown. Check with J&K Traffic Police (TCU) before taking it.",
+      "mughal_closed": "Mughal Road is marked closed.",
+      "rail_unknown": "The parcel train's status is unknown. Check with Northern Railway before booking.",
+      "rail_closed": "The parcel train is marked as not running.",
+      "no_scores": "There are no risk scores yet, so we can't say the road is safe. Check again soon."
+    },
+    "delay": {
+      "none": "No delay expected",
+      "hold": "{hours} h or more",
+      "mughal": "Longer road (Mughal Road)",
+      "rail": "By parcel train from Budgam",
+      "store": "Waits in a cold store"
+    },
+    "delayLabel": "Expected delay",
+    "worstLabel": "Zone that decides this",
+    "worstValue": "Zone {zone}, {when}: {level} ({score})",
+    "priorityLabel": "Priority",
+    "band": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "priorityInputs": "{pct}% of shelf life used × load worth ₹{value} lakh",
+    "assumptions": "Shelf life ({days} days) and price (₹{price}/kg) are our starting assumptions, not sourced figures (version {version}).",
+    "computedServer": "Worked out by the RouteGuard server from scores of {time}.",
+    "computedPhone": "No signal: worked out on this phone from saved scores of {time}.",
+    "disclaimer": "Advice only, not a road status. Follow J&K Traffic Police instructions."
   }
 }

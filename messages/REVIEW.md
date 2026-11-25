@@ -16,6 +16,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `header.*`, `nav.*`, `home.*`, `notFound.*`, `meta.*` | not yet reviewed | not yet reviewed | |
 | `risk.*`, `strip.*`, `summary.*` (risk levels) | not yet reviewed | not yet reviewed | Levels must read as advice, not as a road status |
 | `reason.*` (why a zone is risky) | not yet reviewed | not yet reviewed | Hazard words and units (mm, cm, m, °C); `places.*` stay English for now |
+| `advice.*` (safety: SEND/HOLD/RAIL/DIVERT) | not yet reviewed | not yet reviewed | Must not sound like an order or a road status; "check with TCU / Northern Railway" must stay clear |
 | `updates.*`, `reports.*` | not yet reviewed | not yet reviewed | "Closure", "one-way" must match what J&K Traffic Police say |
 
 ## Choices for the reviewers

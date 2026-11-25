@@ -27,10 +27,11 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 | Editing or deleting the audit log | Rows only come from `write_audit()`, which takes the actor from the token; a trigger refuses update, delete and truncate, even by the owner | `20261124160007_rls_policies.sql` | `rls.test.sql` |
 | Bad query strings returning everything | Every query string goes through a zod `.strict()` schema (`readQuery`): `?zone=abc`, an unknown horizon or an extra parameter is a 400 problem+json, never an unfiltered 200 (L7). Cursors must match their exact format | `src/server/risk/risk.schemas.ts`, `src/server/schemas/zone-query.ts`, `src/server/incidents/incidents.schemas.ts` | `risk.routes.test.ts`, `lists.routes.test.ts` |
 | Personal data in public lists | Public lists select named columns only: reports come from the `public_reports` view (no user id), official updates leave out `created_by`, incidents show verified rows only | `src/server/reports/`, `src/server/official-updates/`, `src/server/incidents/` | `lists.routes.test.ts`; `rls.test.sql` for the view |
+| Nonsense advice input | `POST /api/v1/advice` takes a zod `.strict()` body: known varieties and destinations, tonnes 0.1–40, whole days 0–120, light or heavy; anything else is 422. Nothing is stored | `src/server/advice/advice.schemas.ts` | `advice.routes.test.ts` |
 
 ### Gaps we know about
 
-- **Rate limits.** Section 10's limits (role attempts, reports) wait for the shared rate limiter (section 17). Routes that need one carry `TODO(rate-limit)`.
+- **Rate limits.** Section 10's limits (role attempts, reports, 60 advice requests a minute per IP) wait for the shared rate limiter (section 17). Routes that need one carry `TODO(rate-limit)`.
 - **Photo uploads.** File type checks by magic bytes and size limits come with the reports API (B2).
 - **XSS test on report notes.** A test that saves `<script>` in a note and checks it shows as text comes with the reports API (B2).
 - **Error tracking.** Sentry comes with A7.

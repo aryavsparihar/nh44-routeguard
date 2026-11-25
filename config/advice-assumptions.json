@@ -1,0 +1,22 @@
+{
+  "_note": "Inputs to the dispatch advice (src/shared/decide.ts) and the priority band (src/shared/priority.ts). EVERY number here is our own starting value, not a sourced figure; the app labels them as assumptions. They come from the Round 2 prototype, where they were marked 'placeholder'. To replace one, add the source in its 'note' and bump 'version'. Sources checked on 2026-11-25 without a usable figure: Azadpur APMC daily prices (no November 2026 Delicious quote found), National Horticulture Board apple notes and Indian shelf-life studies (storage conditions differ from a loaded truck).",
+  "version": "2026-11-25.1",
+  "varieties": {
+    "delicious": { "name": "Delicious", "shelf_days": 21, "price_rs_per_kg": 60, "note": "Our starting value, not sourced." },
+    "kullu_delicious": { "name": "Kullu Delicious", "shelf_days": 18, "price_rs_per_kg": 55, "note": "Our starting value, not sourced." },
+    "maharaji": { "name": "Maharaji", "shelf_days": 28, "price_rs_per_kg": 45, "note": "Our starting value, not sourced." },
+    "ambri": { "name": "Ambri", "shelf_days": 35, "price_rs_per_kg": 80, "note": "Our starting value, not sourced." }
+  },
+  "destinations": {
+    "azadpur": { "name": "Azadpur (Delhi)", "zones": [1, 2, 3, 4, 5, 6], "valley": false, "road_hours": 22, "note": "Road hours: our starting value, not sourced." },
+    "narwal": { "name": "Narwal (Jammu)", "zones": [1, 2, 3, 4, 5, 6], "valley": false, "road_hours": 9, "note": "Road hours: our starting value, not sourced." },
+    "parimpora": { "name": "Parimpora (Srinagar)", "zones": [6], "valley": true, "road_hours": 2, "note": "Road hours: our starting value, not sourced." }
+  },
+  "hold_hours": 6,
+  "rail_when_shelf_used_from": 0.5,
+  "priority_bands": {
+    "_note": "Priority = share of shelf life used x load value in lakh rupees. Bands are our starting values, not sourced.",
+    "high_from": 2,
+    "medium_from": 0.5
+  }
+}
