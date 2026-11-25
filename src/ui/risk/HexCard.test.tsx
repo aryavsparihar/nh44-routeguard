@@ -14,6 +14,8 @@ const RAMBAN: PickedHex = {
   score: 0.42,
   topHazard: "rockfall",
   slope: 16.6,
+  reason: { text: "Rain 27 mm in 48 h near Ramban", english: false },
+  confidence: "medium",
 };
 
 function render(cell: PickedHex, locale: "en" | "ur" = "en") {
@@ -34,12 +36,19 @@ describe("HexCard", () => {
     expect(html).toContain("Score 0.42");
     expect(html).toContain("Rockfall");
     expect(html).toContain("16.6°");
+    expect(html).toContain("<bdi>Rain 27 mm in 48 h near Ramban</bdi>");
+    expect(html).toContain("Medium confidence");
+    expect(html).not.toContain("English only");
+  });
+
+  it("tags a reason that fell back to the job's English", () => {
+    expect(render({ ...RAMBAN, reason: { text: "x", english: true } })).toContain("English only");
   });
 
   it("says so when there is no hazard or no slope", () => {
-    const html = render({ ...RAMBAN, level: "low", score: 0, topHazard: null, slope: null });
+    const html = render({ ...RAMBAN, level: "low", score: 0, topHazard: null, slope: null, confidence: null });
     expect(html).toContain("<dd>None</dd>");
-    expect(html).toContain("<dd>Not known</dd>");
+    expect(html.match(/<dd>Not known<\/dd>/g)).toHaveLength(2); // confidence and slope
     expect(html).toContain("Score 0.00");
   });
 

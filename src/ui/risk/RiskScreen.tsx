@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { formatReason, type ReasonTranslate } from "@/src/shared/reason";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
 import type { OfficialUpdate, PublicReport, RiskHex } from "@/src/shared/api-types";
 import {
@@ -40,6 +41,7 @@ const chip =
 // from the public API.
 export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; bounds: [LngLat, LngLat] }) {
   const t = useTranslations("risk");
+  const tr = useTranslations("reason");
   const locale = useLocale();
   const risk = useRisk();
   const [reports, , refreshReports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
@@ -90,8 +92,18 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
       score,
       topHazard: h.top_hazard,
       slope: h.slope_deg,
+      confidence: h.confidence,
+      reason: formatReason(
+        {
+          reason: h.reason,
+          reason_code: h.reason_code,
+          reason_params: h.reason_params,
+          top_hazard: (h.top_hazard as Hazard | null) ?? null,
+        },
+        ((key, values) => tr(key as never, values as never)) as ReasonTranslate,
+      ),
     };
-  }, [pickedId, hexRows, risk, hazard]);
+  }, [pickedId, hexRows, risk, hazard, tr]);
   const shownReports = useMemo(() => {
     const list = reports.state === "ready" ? reports.value.data : [];
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;

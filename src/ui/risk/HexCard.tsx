@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import type { ReasonText } from "@/src/shared/reason";
 import { HAZARDS, type Hazard, type Level } from "@/src/shared/risk";
 import { LevelBadge } from "./LevelBadge";
 
@@ -14,7 +15,12 @@ export type PickedHex = {
   score: number;
   topHazard: string | null;
   slope: number | null;
+  reason: ReasonText; // already in the reader's language (formatReason)
+  confidence: string | null;
 };
+
+const CONFIDENCE = ["low", "medium", "high"] as const;
+const isConfidence = (c: string | null): c is (typeof CONFIDENCE)[number] => CONFIDENCE.includes(c as never);
 
 const isHazard = (h: string | null): h is Hazard => HAZARDS.includes(h as Hazard);
 
@@ -64,6 +70,19 @@ export function HexCard({ cell, when, onClose }: { cell: PickedHex; when: string
             <LevelBadge level={cell.level} />
             {t("scoreLabel", { score: cell.score.toFixed(2) })}
           </dd>
+        </div>
+        <div className={row}>
+          <dt className="text-secondary">{t("cell.why")}</dt>
+          <dd>
+            <bdi>{cell.reason.text}</bdi>
+            {cell.reason.english && (
+              <span className="ms-2 rounded-sm bg-surface px-1 text-xs text-secondary">{t("englishTag")}</span>
+            )}
+          </dd>
+        </div>
+        <div className={row}>
+          <dt className="text-secondary">{t("cell.confidence")}</dt>
+          <dd>{isConfidence(cell.confidence) ? t(`confidence.${cell.confidence}`) : t("cell.unknown")}</dd>
         </div>
         <div className={row}>
           <dt className="text-secondary">{t("cell.mainHazard")}</dt>
