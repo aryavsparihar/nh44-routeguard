@@ -433,3 +433,23 @@ Delete everything in one go so the rest of the credit stays (asks to confirm):
 ```bash
 az group delete --name rg-routeguard
 ```
+
+## Aadhaar QR
+
+The optional check on `/me` (docs/verification.md). Off unless `FEATURE_AADHAAR_QR=true`.
+
+### Pin UIDAI's real certificate (before turning it on for real people)
+
+1. On uidai.gov.in, find the public certificate UIDAI signs Secure QR codes with (the developer / offline verification pages). We could not fetch it automatically on 25 Nov 2026, so a person downloads it and checks they are on uidai.gov.in.
+2. `node scripts/aadhaar/pin-cert.mjs <downloaded file> uidai-<year>`. It prints the subject, issuer, dates and fingerprint; compare them with UIDAI's page.
+3. Check with your own e-Aadhaar on your own machine only: sign in on `localhost`, scan, expect "Checked" without the demo badge. Never put a real card in a screenshot, test file or commit.
+4. Commit `config/uidai/certs.json` in a pull request.
+
+### Settings
+
+| Name | Local demo | Production |
+| --- | --- | --- |
+| `FEATURE_AADHAAR_QR` | `true` | `true` once UIDAI's certificate is pinned |
+| `AADHAAR_ALLOW_TEST_CERT` | `true` (accepts `docs/demo/aadhaar-demo-qr.png`) | `true` only for the demo day, then blank |
+
+`npm run db:seed-demo` clears the demo accounts' Aadhaar checks and resets their levels, so the demo driver can scan the demo QR again.

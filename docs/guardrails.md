@@ -62,7 +62,7 @@ The client IP is the first `X-Forwarded-For` entry, set by the Container Apps in
 
 ## 8. Privacy notice and consent
 
-**What:** `/privacy` in three languages (following India's DPDP Act 2023): what we collect, why, how long, how to delete. A consent step comes before location sharing (and before the Aadhaar check, if it ships). Each consent stores `consent_version`.
+**What:** `/privacy` in three languages (following India's DPDP Act 2023): what we collect, why, how long, how to delete. A consent step comes before location sharing and before the Aadhaar QR check (the check keeps only the verdict and the last 4 digits; see [verification.md](verification.md#the-aadhaar-qr-check)). Each consent stores `consent_version`.
 
 **Why:** people should know what they give us before they give it.
 

@@ -11,10 +11,25 @@ The level is `users.verification_level` (enum in `supabase/migrations/2026112416
 | `none` | Signed up, nothing checked yet | Read the map and advice |
 | `email` | Clerk email code | Sign in, save lots, flag reports |
 | `agent_vouched` | Your transport agent vouches for you after you accept their invite (`POST /api/v1/agents/drivers/{id}/vouch`) | Your reports go live as "verified driver" |
-| `aadhaar_qr` | P1, behind `FEATURE_AADHAAR_QR`: the Secure QR signature checks out on our server and the name matches your profile | Same badge, stronger. Never required |
+| `aadhaar_qr` | Optional, behind `FEATURE_AADHAAR_QR`: drivers and agents scan the Secure QR on their Aadhaar card or e-Aadhaar on `/me`; UIDAI's signature checks out on our server against a pinned certificate and the name matches the profile exactly | Same as `agent_vouched`. Never required |
 | `official` | An admin grants police or admin with a written reason | Post official updates |
 
 If a driver moves to a different agent, an `agent_vouched` level drops back to `none`: the new agent has to vouch again (`supabase/migrations/20261125180000_shipments_fleet.sql`).
+
+## The Aadhaar QR check
+
+`POST /api/v1/verify/aadhaar-qr` (`src/server/aadhaar/`), 5 tries an hour.
+
+1. The phone reads the QR with the camera (the browser's `BarcodeDetector`, or `jsQR` where that is missing) or from a picture chosen on the phone. Frames and pictures stay on the phone; only the QR's digits are sent.
+2. The server turns the digits into bytes, unzips them (refusing anything over 64 KB, so a zip bomb can't use up memory), and checks the RSA-SHA256 signature in the last 256 bytes against the certificates pinned in `config/uidai/certs.json`. Each entry's SHA-256 fingerprint is checked before the key is used.
+3. It reads the reference field (the last 4 digits of the Aadhaar number) and the name, and compares the name with the profile name: the same after removing case, spaces and punctuation → `verified`; close (another word order or one typo) → `manual_review`; otherwise `rejected`.
+4. `private.record_aadhaar_check()` stores the verdict, the last 4 digits (none for a rejection), the consent version and the certificate version, writes the audit log and, only for `verified`, raises the level to `aadhaar_qr`. Official accounts keep their level.
+
+Never stored or logged: the QR, the name, date of birth, gender, address, photo, email or mobile hash. Nobody is asked to type an Aadhaar number and no card picture is uploaded.
+
+**Demo key.** No real Aadhaar card is used on stage or in screenshots. `scripts/aadhaar/make-demo-qr.mjs` made a key pair, pinned its public half as a `test: true` entry, made `docs/demo/aadhaar-demo-qr.png` for "Demo driver (not vouched)", and threw the private key away. Test entries count only with `AADHAAR_ALLOW_TEST_CERT=true`, and the result then says "Demo check (test key)". Pinning UIDAI's real certificate: [runbook](runbook.md#aadhaar-qr).
+
+`manual_review` is stored but no admin screen lists it yet; the person sees why and can fix their profile name and scan again.
 
 ## Reports
 

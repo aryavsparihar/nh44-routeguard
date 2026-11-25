@@ -11,3 +11,5 @@
 **A limitation and the fix:** the spoilage and value assumptions behind the priority band are our starting values (`config/advice-assumptions.json`, with notes). Fix: replace them with figures from growers and mandi records.
 
 Demo seed: `node scripts/seed-demo.mts` (accounts sign in with code 424242), `--reset` to remove the demo rows.
+
+**Aadhaar QR in the demo:** the QR on the laptop (`docs/demo/aadhaar-demo-qr.png`) is signed with our own demo key, never a real card. It works only while `AADHAAR_ALLOW_TEST_CERT=true`, and the phone says "Demo check (test key)". The seed resets the demo driver so it can be scanned again. How the check works: `docs/verification.md`, "The Aadhaar QR check".
