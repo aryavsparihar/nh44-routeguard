@@ -74,8 +74,8 @@ export function HexCard({ cell, when, onClose }: { cell: PickedHex; when: string
         <div className={row}>
           <dt className="text-secondary">{t("cell.why")}</dt>
           <dd>
-            <bdi>{cell.reason.text}</bdi>
-            {cell.reason.english && (
+            {cell.reason.text ? <bdi>{cell.reason.text}</bdi> : t("cell.unknown")}
+            {cell.reason.text && cell.reason.english && (
               <span className="ms-2 rounded-sm bg-surface px-1 text-xs text-secondary">{t("englishTag")}</span>
             )}
           </dd>
@@ -90,7 +90,9 @@ export function HexCard({ cell, when, onClose }: { cell: PickedHex; when: string
         </div>
         <div className={row}>
           <dt className="text-secondary">{t("cell.slope")}</dt>
-          <dd>{cell.slope === null ? t("cell.unknown") : t("cell.slopeValue", { slope: cell.slope.toFixed(1) })}</dd>
+          <dd>
+            {typeof cell.slope === "number" ? t("cell.slopeValue", { slope: cell.slope.toFixed(1) }) : t("cell.unknown")}
+          </dd>
         </div>
       </dl>
     </section>

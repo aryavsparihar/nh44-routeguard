@@ -90,14 +90,16 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
       zoneName: h.zone_id === null ? "" : (risk.names[h.zone_id] ?? ""),
       level: hazard ? levelFor(score) : h.level,
       score,
-      topHazard: h.top_hazard,
-      slope: h.slope_deg,
-      confidence: h.confidence,
+      topHazard: h.top_hazard ?? null,
+      // ?? null: a copy saved before these fields existed (the HTTP cache or
+      // the service worker) has them undefined; show "Not known", not a crash.
+      slope: typeof h.slope_deg === "number" ? h.slope_deg : null,
+      confidence: h.confidence ?? null,
       reason: formatReason(
         {
-          reason: h.reason,
-          reason_code: h.reason_code,
-          reason_params: h.reason_params,
+          reason: h.reason ?? "",
+          reason_code: h.reason_code ?? null,
+          reason_params: h.reason_params ?? null,
           top_hazard: (h.top_hazard as Hazard | null) ?? null,
         },
         ((key, values) => tr(key as never, values as never)) as ReasonTranslate,

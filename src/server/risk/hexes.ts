@@ -47,6 +47,16 @@ export function withBoundaries(rows: HexRow[]): HexFeature[] {
 
 const round = (n: number) => Math.round(n * 1e5) / 1e5;
 
+// The ETag carries the run time, the horizon and the shape of a cell
+// (HexFeature). Add 1 to HEX_FORMAT whenever a field is added, removed or
+// changes meaning: otherwise a phone holding an older copy asks "changed?",
+// gets 304 for the same run and keeps a copy without the new fields.
+// 2: slope_deg and reason fields added (26 Nov 2026).
+export const HEX_FORMAT = 2;
+export function hexEtag(runAt: Date, horizon: number): string {
+  return `"hex${HEX_FORMAT}-${runAt.getTime()}-${horizon}"`;
+}
+
 // One copy per run and horizon per server instance: hexes change hourly.
 const cache = new Map<string, HexFeature[]>();
 export function cachedHexes(runAt: string, horizon: number, make: () => Promise<HexFeature[]>) {
