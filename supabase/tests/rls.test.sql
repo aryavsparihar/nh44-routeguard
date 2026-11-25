@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(119);
+select plan(139);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -462,6 +462,124 @@ select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.prona
   0::bigint, 'rate_limit_hit is not in the public schema (no REST access)');
 select is((select schedule from cron.job where jobname = 'rate-limits-cleanup'), '23 * * * *',
   'pg_cron clears old rate limit windows every hour');
+
+-- ===========================================================================
+-- Road reports (B2, 20261125160000_reports_write.sql): submit, duplicates,
+-- confirmations and flags, through the private functions the API calls.
+-- ===========================================================================
+set local role postgres;
+insert into public.users (id, role, display_name, verification_level) values
+  ('user_testvouched1', 'driver', 'Vouched driver 1', 'agent_vouched'),
+  ('user_testvouched2', 'driver', 'Vouched driver 2', 'agent_vouched');
+create temp table report_rules (j jsonb);
+grant select on report_rules to public;
+insert into report_rules values ('{"expiry_hours": {"landslide": 6, "rockfall": 6, "flash_flood": 6, "snow_ice": 12, "accident": 3, "other": 3},
+  "duplicate": {"within_m": 500, "within_minutes": 60}, "confirm": {"needed": 2, "within_m": 2000, "within_hours": 3},
+  "hide_after_flags": 3}');
+
+-- An email-level driver: unconfirmed; the same client id again is a repeat.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c1',
+  'landslide', 33.2000, 75.1500, 3::smallint, 'pgTAP report', null, (select j from report_rules))),
+  'unconfirmed created', 'reports: an email-level driver''s report starts unconfirmed');
+select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c1',
+  'landslide', 33.2000, 75.1500, 3::smallint, 'pgTAP report', null, (select j from report_rules))),
+  'unconfirmed repeat', 'reports: the same client id again returns the first report');
+select lives_ok($$ select * from private.submit_report('00000000-0000-4000-8000-0000000000c3',
+  'other', 33.3000, 75.2500, 4::smallint, null, null, (select j from report_rules)) $$,
+  'reports: a second, separate report for the flag tests');
+
+-- A vouched driver: the same hazard 200 m away merges; elsewhere is confirmed at once.
+set local request.jwt.claims = '{"sub": "user_testvouched1", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c2',
+  'landslide', 33.2018, 75.1500, 3::smallint, null, null, (select j from report_rules))),
+  'unconfirmed merged', 'reports: the same hazard within 500 m and 60 min becomes a confirmation');
+select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c4',
+  'rockfall', 33.5000, 75.2000, 5::smallint, null, null, (select j from report_rules))),
+  'confirmed created', 'reports: a vouched driver''s report is confirmed at once');
+select throws_ok($$ select * from private.submit_report('00000000-0000-4000-8000-0000000000c5',
+  'rockfall', 33.6000, 75.2000, 5::smallint, null, 'user_testdriver/00000000-0000-4000-8000-0000000000c5.webp',
+  (select j from report_rules)) $$,
+  '42501', null::text, 'reports: cannot attach a photo from someone else''s folder');
+
+set local request.jwt.claims = '{"sub": "user_testgrower", "role": "authenticated", "metadata": {"role": "grower"}}';
+select throws_ok($$ select * from private.submit_report('00000000-0000-4000-8000-0000000000c6',
+  'rockfall', 33.6000, 75.2000, 5::smallint, null, null, (select j from report_rules)) $$,
+  '42501', null::text, 'reports: a grower cannot post a road report');
+
+set local role postgres;
+create temp table report_ids as
+  select client_id, id from public.reports where client_id in
+    ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000c3', '00000000-0000-4000-8000-0000000000c4');
+grant select on report_ids to public;
+set local role authenticated;
+
+-- Confirmations: the second verified driver nearby makes it confirmed.
+set local request.jwt.claims = '{"sub": "user_testvouched2", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select status || ' ' || confirmations || ' ' || outcome from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1'), 33.2100, 75.1500,
+  (select j from report_rules))),
+  'confirmed 2 confirmed', 'reports: two verified drivers within 2 km confirm it');
+select is((select outcome from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1'), null, null,
+  (select j from report_rules))),
+  'repeat', 'reports: a second confirmation by the same person counts once');
+
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1'), null, null,
+  (select j from report_rules)) $$,
+  '42501', null::text, 'reports: cannot confirm your own report');
+
+set local request.jwt.claims = '{"sub": "user_testdriver2", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4'), null, null,
+  (select j from report_rules)) $$,
+  '42501', null::text, 'reports: an unverified driver cannot confirm');
+
+-- Flags: three different people hide an unconfirmed report.
+set local request.jwt.claims = '{"sub": "user_testgrower", "role": "authenticated", "metadata": {"role": "grower"}}';
+select is((select status || ' ' || outcome from private.flag_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), 'not_there',
+  (select j from report_rules))),
+  'unconfirmed flagged', 'reports: one flag leaves it on the map');
+select is((select status || ' ' || outcome from private.flag_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), 'not_there',
+  (select j from report_rules))),
+  'unconfirmed repeat', 'reports: the same person flagging again counts once');
+set local request.jwt.claims = '{"sub": "user_testagent", "role": "authenticated", "metadata": {"role": "agent"}}';
+select is((select status from private.flag_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), 'wrong_place',
+  (select j from report_rules))),
+  'unconfirmed', 'reports: two flags leave it on the map');
+set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+select is((select status from private.flag_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), 'not_there',
+  (select j from report_rules))),
+  'hidden', 'reports: the third flag hides an unconfirmed report');
+select throws_ok($$ select * from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), null, null,
+  (select j from report_rules)) $$,
+  'P0002', null::text, 'reports: a hidden report cannot be confirmed');
+
+set local role anon;
+set local request.jwt.claims = '{"role": "anon"}';
+select throws_ok($$ select * from private.submit_report('00000000-0000-4000-8000-0000000000c7',
+  'rockfall', 33.6000, 75.2000, 5::smallint, null, null, (select j from report_rules)) $$,
+  '42501', null::text, 'anon: cannot call submit_report');
+
+set local role postgres;
+select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.proname in ('submit_report', 'confirm_report', 'flag_report')),
+  0::bigint, 'report functions are not in the public schema (no REST access)');
+select is((select distance_m between 150 and 250 from public.report_confirmations
+           where user_id = 'user_testvouched1'
+             and report_id = (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1')),
+  true, 'a merged duplicate keeps only the distance (about 200 m), not the position');
+select is((select count(*) from information_schema.columns
+           where table_schema = 'public' and table_name = 'public_reports' and column_name in ('has_photo', 'photo_path', 'user_id')),
+  1::bigint, 'public_reports says whether there is a photo, but has no path or user id');
 
 select * from finish();
 

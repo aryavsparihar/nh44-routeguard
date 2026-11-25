@@ -162,12 +162,14 @@ export const publicReports = pgView("public_reports", {
   created_at: timestamp({ withTimezone: true, mode: "date" }),
   expires_at: timestamp({ withTimezone: true, mode: "date" }),
   is_demo: boolean(),
+  has_photo: boolean(),
 }).existing();
 
 export const reportConfirmations = pgTable("report_confirmations", {
   report_id: uuid().notNull(),
   user_id: text().notNull(),
   created_at: timestamp({ withTimezone: true, mode: "date" }).default(sql`now()`).notNull(),
+  distance_m: integer(),
 }, (t) => [primaryKey({ columns: [t.report_id, t.user_id] })]).enableRLS();
 
 export const reportFlags = pgTable("report_flags", {

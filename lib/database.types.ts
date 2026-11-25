@@ -309,16 +309,19 @@ export type Database = {
       report_confirmations: {
         Row: {
           created_at: string
+          distance_m: number | null
           report_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          distance_m?: number | null
           report_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          distance_m?: number | null
           report_id?: string
           user_id?: string
         }
@@ -897,6 +900,7 @@ export type Database = {
           confirmations: number | null
           created_at: string | null
           expires_at: string | null
+          has_photo: boolean | null
           hazard_type: Database["public"]["Enums"]["hazard_type"] | null
           id: string | null
           is_demo: boolean | null
@@ -910,6 +914,7 @@ export type Database = {
           confirmations?: number | null
           created_at?: string | null
           expires_at?: string | null
+          has_photo?: never
           hazard_type?: Database["public"]["Enums"]["hazard_type"] | null
           id?: string | null
           is_demo?: boolean | null
@@ -923,6 +928,7 @@ export type Database = {
           confirmations?: number | null
           created_at?: string | null
           expires_at?: string | null
+          has_photo?: never
           hazard_type?: Database["public"]["Enums"]["hazard_type"] | null
           id?: string | null
           is_demo?: boolean | null
