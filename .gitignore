@@ -69,3 +69,4 @@ jobs/.cache/
 /coverage/
 /test-results/
 /playwright-report/
+/.claude/launch.json
