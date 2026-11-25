@@ -44,18 +44,25 @@ loadEnvFile(path.join(root, "jobs/.env"));
 
 // ---- What we create --------------------------------------------------------
 
-type Role = "admin" | "police" | "agent" | "driver" | "grower";
+// TCU (the admin role) is the only staff account; the police role was merged
+// into it on 26 Nov 2026. Every other account must be approved by TCU: the
+// "waiting" driver shows the approval flow on stage.
+type Role = "admin" | "agent" | "driver" | "grower";
 type Level = "email" | "agent_vouched" | "official";
-type DemoUser = { key: string; email: string; name: string; role: Role; level: Level };
+type DemoUser = { key: string; email: string; name: string; role: Role; level: Level; approval: "approved" | "pending" };
 
 const USERS: DemoUser[] = [
-  { key: "admin", email: "routeguard.admin+clerk_test@example.com", name: "Demo admin", role: "admin", level: "official" },
-  { key: "police", email: "routeguard.police+clerk_test@example.com", name: "Demo police account", role: "police", level: "official" },
-  { key: "agent", email: "routeguard.agent+clerk_test@example.com", name: "Demo agent", role: "agent", level: "email" },
-  { key: "driverVouched", email: "routeguard.driver1+clerk_test@example.com", name: "Demo driver (vouched)", role: "driver", level: "agent_vouched" },
-  { key: "driverNew", email: "routeguard.driver2+clerk_test@example.com", name: "Demo driver (not vouched)", role: "driver", level: "email" },
-  { key: "grower", email: "routeguard.grower+clerk_test@example.com", name: "Demo grower", role: "grower", level: "email" },
+  { key: "admin", email: "routeguard.admin+clerk_test@example.com", name: "TCU (demo account)", role: "admin", level: "official", approval: "approved" },
+  { key: "agent", email: "routeguard.agent+clerk_test@example.com", name: "Demo agent", role: "agent", level: "email", approval: "approved" },
+  { key: "driverVouched", email: "routeguard.driver1+clerk_test@example.com", name: "Demo driver (vouched)", role: "driver", level: "agent_vouched", approval: "approved" },
+  { key: "driverNew", email: "routeguard.driver2+clerk_test@example.com", name: "Demo driver (not vouched)", role: "driver", level: "email", approval: "approved" },
+  { key: "grower", email: "routeguard.grower+clerk_test@example.com", name: "Demo grower", role: "grower", level: "email", approval: "approved" },
+  { key: "waiting", email: "routeguard.newdriver+clerk_test@example.com", name: "Demo driver (waiting for TCU)", role: "driver", level: "email", approval: "pending" },
 ];
+
+// The old demo police account (before the merge). Its data is cleaned up
+// with the rest; the account itself has no role any more.
+const OLD_POLICE_EMAIL = "routeguard.police+clerk_test@example.com";
 
 type Lot = { variety: string; days_since_picking: number; tonnes: number; destination: string; truck_type: "light" | "heavy" };
 type DemoShipment = {
@@ -82,8 +89,8 @@ const HOUR = 3600_000;
 const now = Date.now();
 
 type DemoReport = {
-  by: "police" | "driverVouched" | "agent";
-  source: "police" | "driver";
+  by: "admin" | "driverVouched" | "agent";
+  source: "admin" | "driver";
   hazard: "landslide" | "rockfall" | "snow_ice";
   zone: number;
   at: [number, number];
@@ -95,7 +102,7 @@ type DemoReport = {
 };
 
 const REPORTS: DemoReport[] = [
-  { by: "police", source: "police", hazard: "rockfall", zone: 4, at: [33.3028, 75.1798], status: "confirmed", confirmations: 0, ageHours: 1, lifeHours: 6, note: "Demo report: stones on the road near Digdol, one lane open." },
+  { by: "admin", source: "admin", hazard: "rockfall", zone: 4, at: [33.3028, 75.1798], status: "confirmed", confirmations: 0, ageHours: 1, lifeHours: 6, note: "Demo report: stones on the road near Digdol, one lane open." },
   { by: "driverVouched", source: "driver", hazard: "landslide", zone: 5, at: [33.3365, 75.1924], status: "confirmed", confirmations: 2, ageHours: 2, lifeHours: 6, note: "Demo report: debris near Ramsoo, traffic stopped." },
   { by: "agent", source: "driver", hazard: "landslide", zone: 3, at: [33.1775, 75.3003], status: "unconfirmed", confirmations: 0, ageHours: 0.5, lifeHours: 6, note: "Demo report: small slide near Peerah." },
   { by: "driverVouched", source: "driver", hazard: "snow_ice", zone: 5, at: [33.4379, 75.1955], status: "expired", confirmations: 1, ageHours: 20, lifeHours: 12, note: "Demo report: ice on the road at Banihal (old)." },
@@ -163,7 +170,7 @@ async function findUserId(email: string): Promise<string | null> {
 // ---- Reset -----------------------------------------------------------------
 
 if (reset) {
-  const ids = (await Promise.all(USERS.map((u) => findUserId(u.email)))).filter((x): x is string => !!x);
+  const ids = (await Promise.all([...USERS.map((u) => u.email), OLD_POLICE_EMAIL].map(findUserId))).filter((x): x is string => !!x);
   check("reports", await db.from("reports").delete().eq("is_demo", true));
   if (ids.length) check("demo accounts' reports", await db.from("reports").delete().in("user_id", ids));
   check("shipments", await db.from("shipments").delete().eq("is_demo", true));
@@ -184,22 +191,35 @@ for (const u of USERS) {
       emailAddress: [u.email],
       firstName: u.name,
       skipPasswordRequirement: true,
-      publicMetadata: { role: u.role },
+      // A waiting account has no role in its token until TCU approves it.
+      publicMetadata: { role: u.approval === "approved" ? u.role : null },
     });
     id = created.id;
     console.log(`created ${u.role} account`);
   } else {
-    await clerk.users.updateUserMetadata(id, { publicMetadata: { role: u.role } });
+    await clerk.users.updateUserMetadata(id, { publicMetadata: { role: u.approval === "approved" ? u.role : null } });
   }
   ids[u.key] = id;
 }
 
 for (const u of USERS) {
-  const agentId = u.role === "driver" ? ids.agent : null;
+  const agentId = u.role === "driver" && u.approval === "approved" ? ids.agent : null;
   check(
     `user ${u.key}`,
     await db.from("users").upsert(
-      { id: ids[u.key], role: u.role, display_name: u.name, agent_id: agentId, language: "en", verification_level: u.level, deleted_at: null },
+      {
+        id: ids[u.key],
+        role: u.role,
+        display_name: u.name,
+        agent_id: agentId,
+        language: "en",
+        verification_level: u.level,
+        deleted_at: null,
+        approval: u.approval,
+        reviewed_by: null,
+        reviewed_at: null,
+        review_note: null,
+      },
       { onConflict: "id" },
     ),
   );
@@ -298,7 +318,12 @@ for (const r of REPORTS) {
 
 // ---- Official updates --------------------------------------------------------
 
-check("old demo updates", await db.from("official_updates").delete().in("created_by", [ids.admin, ids.police]));
+const oldPolice = await findUserId(OLD_POLICE_EMAIL);
+check("old demo updates", await db.from("official_updates").delete().in("created_by", [ids.admin, ...(oldPolice ? [oldPolice] : [])]));
+if (oldPolice) check("old police account's reports", await db.from("reports").delete().eq("user_id", oldPolice));
+// Its token still said "police"; that already counts as no role (caller.ts and
+// private.jwt_role), but clear it so nobody is confused.
+if (oldPolice) await clerk.users.updateUserMetadata(oldPolice, { publicMetadata: { role: null } });
 for (const [i, u] of UPDATES.entries()) {
   check(
     `official update ${i + 1}`,
@@ -306,7 +331,7 @@ for (const [i, u] of UPDATES.entries()) {
       ...u,
       issued_at: new Date(now - (i + 1) * HOUR).toISOString(),
       valid_until: new Date(now + 12 * HOUR).toISOString(),
-      created_by: i === 0 ? ids.police : ids.admin,
+      created_by: ids.admin,
     }),
   );
 }
