@@ -1,89 +1,87 @@
 # NH-44 RouteGuard
 
-Protecting Kashmir's apple harvest from NH-44 highway closures through AI disruption forecasting, dynamic cold-storage routing, and real-time fleet visibility.
+Apple trucks from Kashmir have one all-weather road out, NH-44, and landslides, rockfall, flash floods and snow close it every season. RouteGuard gives growers, transport agents and drivers a 48-hour closure-risk forecast for six stretches of the highway and a dispatch advice for each lot: send, hold, rail or divert. Drivers and police can report hazards from the road.
+
+RouteGuard is a student project. It is not an official government or police service. Follow instructions from J&K Traffic Police. In an emergency call 112.
 
 Project Ananta Hackathon · Team 01
 
-**Live:** moving to Azure in Round 3. The link goes here once it's deployed. Until then, run it locally (see Setup).
+## Live link and "Try it"
 
-## What it does
+**Live:** not deployed yet. We host on Azure Container Apps (section 4.1 of [the plan](docs/round3/BUILD_PROMPT.md)); the link goes here after the first deploy. Until then, run it locally (see [Setup](#setup-from-a-fresh-clone)).
 
-NH-44 is the only all-weather road between Jammu and Srinagar, and landslides, rockfall, flash floods and snow close it every season. Apple trucks get stuck for days and the fruit spoils.
+Demo accounts (made by `node scripts/seed-demo.mts`). They are Clerk test emails: sign in with the email, then the code **424242**. No email is sent.
 
-RouteGuard predicts closure risk along the highway for the next 0, 12, 24 and 48 hours and tells each apple shipment what to do:
-
-- **Send** – the road looks clear
-- **Hold** – wait in cold storage until the risk drops
-- **Rail** – put the load on the train instead
-- **Divert** – take another route
-
-Drivers and police can also report live hazards from the road.
-
-## Status
-
-Phase 0 is done: the app, database and deploys are connected, and an hourly job scores closure risk for the 6 zones. The home page is still a placeholder; the `/status` page shows the latest scores.
-
-## Tech stack
-
-| Part | Tool |
-| --- | --- |
-| Web app | Next.js 16 (App Router, TypeScript, Tailwind) |
-| Hosting | Azure Container Apps on Azure for Students (Round 3, see [the plan](docs/round3/BUILD_PROMPT.md), section 4.1) |
-| Database | Supabase Postgres + PostGIS (Mumbai, `ap-south-1`) |
-| Weather | Open-Meteo forecast API (free, no key) |
-| Risk model | Python rules in `jobs/`, run hourly on GitHub Actions |
-
-## Getting started
-
-You need Node.js 20 or newer.
-
-1. Fork this repo on GitHub, then clone your fork:
-   ```bash
-   git clone https://github.com/<your-username>/nh44-routeguard.git
-   cd nh44-routeguard
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Copy the env template:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Then fill in the two `NEXT_PUBLIC_` values. Ask Aryaveer for them, or copy them from Supabase → Project Settings → API Keys.
-   The URL looks like `https://<project-ref>.supabase.co`, not the `supabase.com/dashboard/...` link in your browser.
-4. Start the dev server:
-   ```bash
-   npm run dev
-   ```
-   Open http://localhost:3000. You should see **Supabase connected: 6 zones**.
-
-## Environment variables
-
-| Name | Where it goes | What it is |
+| Role | Email | Try this |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local`; deploy workflow at build time | Supabase API URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `.env.local`; deploy workflow at build time | Publishable key (safe in the browser, RLS protects the data) |
-| `SUPABASE_URL` | GitHub Actions secrets only | Same API URL, for the Python job |
-| `SUPABASE_SECRET_KEY` | GitHub Actions secrets only | Secret key. It skips all security rules |
+| Admin | `routeguard.admin+clerk_test@example.com` | `/admin`: roles, official updates, reports, road status, audit log, failed jobs |
+| Police (demo) | `routeguard.police+clerk_test@example.com` | Post an official update with its source; confirm a report |
+| Agent | `routeguard.agent+clerk_test@example.com` | `/board`: six demo trucks in different states, live updates |
+| Driver, vouched | `routeguard.driver1+clerk_test@example.com` | `/report/new`: the report goes live at once (solid marker) |
+| Driver, not vouched | `routeguard.driver2+clerk_test@example.com` | `/report/new`: the report starts "unconfirmed" (dashed); try it offline |
+| Grower | `routeguard.grower+clerk_test@example.com` | `/advisor`: advice for a lot; save it |
 
-Never commit `.env.local`. Never put the secret key in `.env.local`, the hosting settings, app code or any `NEXT_PUBLIC_` variable.
+No sign-in is needed for the map, the 48 h strip and the advisor.
 
-## Database
+## Screenshots
 
-All tables live in Supabase. The SQL is in `supabase/migrations/`.
+To add: phone screenshots in English, Hindi and Urdu after the deploy.
 
-| Table | What it holds |
+## How it works
+
+```mermaid
+flowchart LR
+  phone[Phone browser<br/>service worker, offline outbox] -->|/api/v1| app[Next.js 16 on Azure Container Apps<br/>withApi: auth, zod, rate limits, problem+json]
+  app -->|Drizzle, RLS per request| db[(Supabase Postgres + PostGIS)]
+  app -->|enqueue| q[[pgmq queue]] --> worker[Worker: Web Push]
+  job[Hourly risk job, Python<br/>GitHub Actions] -->|Open-Meteo weather| db
+  clerk[Clerk: email code, roles] -.session token.-> app
+  clerk -.same token.-> db
+```
+
+**One request, traced:** `POST /api/v1/advice` → `proxy.ts` (language cookie, no auth needed) → `withApi()` in `src/server/http/with-api.ts` gives a request id, checks the Origin, rate-limits by IP (60 a minute, counted in Postgres), parses the body with a strict zod schema (`src/server/advice/advice.schemas.ts`) → the handler reads the newest risk rows and the Mughal Road / rail status → `decide()` in `src/shared/decide.ts` → JSON with a `reason_code` the phone translates. Offline, the phone runs the same `decide()` from its saved copy of the scores; a test checks both give the same answer.
+
+**Code layout:** `app/api/v1/**/route.ts` are thin routes; each area in `src/server/<area>/` has `*.schemas.ts` (zod), `*.repository.ts` (Drizzle queries), `*.service.ts` where there is logic, and tests next to them. Shared logic the phone also runs lives in `src/shared/`. Screens are in `src/ui/`, pages in `app/[locale]/`.
+
+## API
+
+- Swagger UI: `/api/docs`. OpenAPI 3.1: `/api/v1/openapi.json`, generated from the routes' zod schemas; a test fails if a route is missing from it.
+- Postman: [`postman/RouteGuard.postman_collection.json`](postman/RouteGuard.postman_collection.json), 42 requests with tests, including every error case. CI runs the keyless folders with newman.
+- Errors are `application/problem+json` with a request id. Unknown `/api/*` paths answer 404 and wrong methods 405 with `Allow`.
+
+| Endpoint | Who |
 | --- | --- |
-| `zones` | The 6 highway stretches from Jammu to Srinagar, with length, danger length and starting risk |
-| `hexes` | H3 map cells along the highway, with zone, slope and weather point |
-| `weather_readings` | Rain, snow and temperature per weather point, observed and forecast |
-| `risk_scores` | Model output per zone (or hexagon), for 0/12/24/48 hours ahead |
-| `latest_risk` (view) | The newest run's rows from `risk_scores`, with zone names |
-| `incidents` | Past closures (from `data/incidents.csv`) |
-| `users` | App users: growers, traders, agents, drivers, police, admins |
-| `reports` | Live hazard reports from drivers and police |
-| `shipments` | Apple trucks being tracked, with status and advice |
+| `GET /api/v1/health`, `/health/ready` | public |
+| `GET /api/v1/zones`, `/risk`, `/risk/summary`, `/road-status`, `/official-updates`, `/reports`, `/incidents`, `/model` | public |
+| `POST /api/v1/advice` | public, 60 a minute per IP |
+| `GET/PATCH/DELETE /api/v1/me`, `POST /me/onboarding`, `GET /me/realtime-token` | signed in |
+| `POST /api/v1/reports`, `/reports/{id}/confirm`, `/reports/{id}/flag`, `GET /reports/{id}/photo` | signed in (rules per role) |
+| `GET/POST /api/v1/shipments`, `PATCH /shipments/{id}` | agent, driver, grower (own rows) |
+| `GET /api/v1/agents/drivers`, `POST /agents/invites`, `/invites/accept`, `/drivers/{id}/vouch` | agent, driver |
+| `POST/DELETE /api/v1/push/subscriptions` | signed in |
+| `/api/v1/admin/*` (users and roles, official updates, reports, road status, audit log, dead letters) | admin (police: official updates and reports) |
+| `POST /api/v1/internal/jobs/run` | queue worker only (`JOBS_SECRET`) |
+
+## Security and guardrails
+
+- Login with Clerk email codes; roles in Clerk metadata, set only by an admin with a reason. `proxy.ts` guards pages, `withApi()` guards routes, and Row Level Security checks every row again in the database.
+- CSP and security headers on every response, strict zod input checks, rate limits, an audit log nobody can edit, EXIF stripped from photos, locations rounded to about 1 km.
+- CI: gitleaks, `npm audit`, a secret grep over the browser bundle and the Docker image, and checks for raw SQL and `dangerouslySetInnerHTML`.
+- Details: [docs/security.md](docs/security.md) (threat table with tests) and [docs/guardrails.md](docs/guardrails.md) (police and safety rules, with why).
+
+## Verification levels
+
+`email` (Clerk code) → `agent_vouched` (your agent vouches for you) → `official` (police/admin, granted by an admin). Reports from vouched drivers and police go live at once; others need two confirmations from verified users within 2 km and 3 h. Details: [docs/verification.md](docs/verification.md).
+
+## Languages
+
+English, Hindi and Urdu on every screen and every API error, chosen with a cookie (no language in the URL). Urdu is right-to-left. CI fails if the three message files don't have the same keys. Reviews of safety text are tracked in [messages/REVIEW.md](messages/REVIEW.md); as of 25 Nov 2026 the safety strings are machine-drafted and **not yet reviewed** by fluent readers.
+
+## Offline
+
+A hand-written service worker keeps the app shell, the last risk scores and the advisor working with no signal. Reports written offline wait in an outbox (IndexedDB) and are sent with an idempotency key when the signal returns, so they never post twice. Signed-in responses are never cached, and private data is wiped on sign-out. Details: [docs/offline.md](docs/offline.md).
+
+## Data and sources
 
 ### The 6 zones
 
@@ -96,26 +94,6 @@ All tables live in Supabase. The SQL is in `supabase/migrations/`.
 | 5 | Ramsoo → Banihal → Qazigund | 32 | 6.0 | high |
 | 6 | Qazigund → Srinagar | 62 | 0.0 | low |
 
-### Changing the database
-
-Don't edit tables in the Supabase dashboard. Add a migration instead, so everyone stays in sync:
-
-```bash
-npx supabase migration new <short_name>   # write your SQL in the new file
-npm run db:push                           # apply it (needs access to the project)
-npm run db:types                          # refresh lib/database.types.ts
-```
-
-## Data files
-
-Put team CSVs in `data/` with these exact column headers.
-
-| File | Columns |
-| --- | --- |
-| `corridor_hexes.csv` | `h3_index`, `zone_id` |
-| `hex_slope.csv` | `h3_index`, `slope_deg` |
-| `incidents.csv` | 27 columns, listed in `COLUMNS` in `scripts/validate_incidents.py` (BUILD_PROMPT section 14) |
-
 ### Incidents
 
 - `data/incidents.csv` has 27 past closures from 2018 to 2026, each from a news or government source with a quote of 25 words or fewer. Added by Madhusudan, checked by Aryaveer. **It is not a complete list** of closures on NH-44.
@@ -125,7 +103,9 @@ Put team CSVs in `data/` with these exact column headers.
 - A row is used only after someone other than `added_by` checks it: `python3 scripts/incidents_checklist.py` writes a checklist, then `--apply <file> --by "Name"` fills `verified_by`.
 - Load into Supabase: `npm run db:seed-incidents -- --dry-run`, then without `--dry-run`. Only verified rows are loaded; rerunning updates rows instead of adding copies.
 
-## How the risk score works
+## Risk model and backtest
+
+### How the score works
 
 - Every hour we pull rain, snow, snow depth and temperature for 15 points along NH-44 from Open-Meteo.
 - For each zone and hazard (landslide, rockfall, flash flood, snow/ice): **score = exposure × trigger**, both 0–1. Exposure is how prone the stretch is; trigger is how strong the weather is.
@@ -133,7 +113,9 @@ Put team CSVs in `data/` with these exact column headers.
 - Level: **low** below 0.30, **medium** 0.30–0.65, **high** above 0.65. Confidence goes up when a report or past incidents agree.
 - All thresholds are our own starting values in [`lib/risk/config.json`](lib/risk/config.json), to be tuned in the backtest. Full details: [docs/risk-model.md](docs/risk-model.md).
 
-## Hourly job
+**Backtest** ([docs/backtest.md](docs/backtest.md), `jobs/backtest.py`, run on 25 Nov 2026): of 16 verified incidents recent enough for archived forecasts, the 24 h forecast flagged the zone (medium or high) for 15 and the right hazard for 14; the 48 h forecast flagged the zone for 13. The cost is false alarms: 495 alarm days in 5994 zone-days at 24 h (about 2.5 per zone per 30 days). The sample is small; read the caveats in the doc.
+
+### Hourly job
 
 [`jobs/run_risk.py`](jobs/run_risk.py) fetches the weather (one Open-Meteo call), saves it to `weather_readings`, scores the 6 zones for 0/12/24/48 h and writes 24 rows to `risk_scores`. GitHub Actions runs it at minute 7 of every hour ([`.github/workflows/risk-job.yml`](.github/workflows/risk-job.yml)), then checks the new rows arrived.
 
@@ -152,68 +134,108 @@ jobs/.venv/bin/python jobs/run_risk.py --dry-run
 - **Run it now:** Actions → Risk job → **Run workflow**, or `gh workflow run risk-job.yml`.
 - **Weather points:** [`jobs/points.json`](jobs/points.json), found with OpenStreetMap by [`jobs/tools/locate_points.py`](jobs/tools/locate_points.py).
 
-## Risk score format for the app
+## Testing
 
-Read the `latest_risk` view: the newest run's rows, already joined with the zone name. Zone rows have `h3_index = null`; hexagon rows (later) have an H3 index.
+| What | How to run | Count (25 Nov 2026) |
+| --- | --- | --- |
+| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 554 tests in 56 files, all passing; 41.7% of lines covered (most UI files have no unit tests) |
+| Risk job (pytest) | `python3 -m pytest jobs/tests` | 151 passing |
+| RLS tests against a local Supabase | `npm run db:test` (needs Docker) | see `supabase/tests/rls.test.sql` |
+| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone; 9 run in CI without keys |
+| Postman / newman | `npx newman run postman/RouteGuard.postman_collection.json -e postman/ci.postman_environment.json` | 42 requests |
+| Smoke test after each deploy | `node scripts/smoke.mjs <url>` | health, ready, risk + 304, home, 401, 404, 405, headers |
 
-```ts
-const { data } = await supabase
-  .from("latest_risk")
-  .select("*")
-  .is("h3_index", null)
-  .eq("horizon_hours", 0);
+CI runs all of these except the RLS tests and the keyed Playwright and Postman folders, on every pull request.
+
+## Performance and scaling
+
+Measured on 25 Nov 2026, `next start` on an Apple M4 laptop reading the real database, `node scripts/load/risk.mjs`, 10 connections:
+
+| `GET /api/v1/risk` | p50 | p99 | req/s |
+| --- | --- | --- | --- |
+| Cold first request | 1069 ms | | |
+| Warm (memory cache) | 3 ms | 6 ms | 2980 |
+| With ETag (304) | 2 ms | 4 ms | 3449 |
+
+Risk is computed once an hour for everyone; reads are cached (ETag, `Cache-Control`, 60 s memory cache); writes go through a Postgres queue; the app is stateless and scales 0 to 3 replicas. Lighthouse scores and the Azure replica test are not measured yet. Details: [docs/scaling.md](docs/scaling.md).
+
+## Changes since Round 1
+
+| Round 1 said | Now | Why |
+| --- | --- | --- |
+| Hosting on Vercel | Azure Container Apps (Azure for Students) | Google Cloud billing setup failed; Azure for Students needs no card and its credit covers the round |
+| Supabase Auth, phone OTP | Clerk, one-time code by email | SMS is a paid Clerk feature on our free plan |
+| Serwist service worker | Hand-written service worker | Full control over what is never cached (signed-in data) |
+| Verified drivers | Same, plus a written verification model, report confirmations and an audit log | Makes reports trustworthy; an addition, not a new feature |
+
+The full table with the 10–15% budget is in [the plan](docs/round3/BUILD_PROMPT.md), section 3, and every decision is in [docs/decisions.md](docs/decisions.md).
+
+## Team
+
+| Member | Owns |
+| --- | --- |
+| Aryaveer | Backend lead, data, security, reviews (Step 0, WP-A) |
+| Madhusudan | Field data, reports, police updates, alerts (WP-B) |
+| Navaya | Map, risk read path, priority score (WP-C) |
+| Riya | UI/UX, languages, offline, frontend tests (WP-D) |
+| Mayank | Advice engine, API docs, tests, demo (WP-E) |
+
+Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://github.com/aryavsparihar/nh44-routeguard/pulls?q=is%3Apr). Each member's notes: `docs/qna/<name>.md`.
+
+## Limitations
+
+- The incident history is small (27 verified rows) and incomplete, so the backtest is weak evidence.
+- Thresholds and advice assumptions are starting values, kept in `lib/risk/config.json` and `config/` with notes.
+- GPS can be spoofed; a report's location is what the phone says.
+- Clerk runs as a development instance.
+- No read replicas; one database.
+- Translations are checked by team members, not professional translators, and the safety strings are not reviewed yet.
+- Aadhaar Secure QR (P1) is not built.
+
+## Setup from a fresh clone
+
+You need Node.js 24 and, for the risk job, Python 3.12.
+
+1. Clone and install:
+   ```bash
+   git clone https://github.com/aryavsparihar/nh44-routeguard.git
+   cd nh44-routeguard
+   npm install
+   ```
+2. `cp .env.example .env.local` and fill in the values (comments in the file say where each comes from; [docs/runbook.md](docs/runbook.md) has the dashboard steps). With no keys at all the app still starts: public pages show "not set up" states and everyone is signed out.
+3. `npm run dev` and open http://localhost:3000.
+4. Optional: `node scripts/seed-demo.mts` (needs the secret keys) for the demo accounts and data.
+
+### Changing the database
+
+Don't edit tables in the Supabase dashboard. Add a migration instead, so everyone stays in sync:
+
+```bash
+npx supabase migration new <short_name>   # write your SQL in the new file
+npm run db:push                           # apply it (needs access to the project)
+npm run db:types                          # refresh lib/database.types.ts
 ```
 
-A real row (zone 5, 48 h ahead, computed from Open-Meteo data on 10 Nov 2026):
+## Environment variables
 
-```json
-{
-  "run_at": "2026-11-10T18:27:19+00:00",
-  "zone_id": 5,
-  "zone_name": "Ramsoo → Banihal → Qazigund",
-  "h3_index": null,
-  "horizon_hours": 48,
-  "landslide": 0.063,
-  "rockfall": 0.149,
-  "flash_flood": 0.09,
-  "snow_ice": 0.0,
-  "overall": 0.149,
-  "risk_low": 0.0,
-  "risk_high": 0.349,
-  "level": "low",
-  "top_hazard": "rockfall",
-  "confidence": "low",
-  "reason": "Rockfall: 18 mm rain in 48 h near Navyug tunnel (Banihal side); zone 5 is exposed to rockfall",
-  "model_version": "rules-v0.1"
-}
-```
+Every name the app reads is in [`.env.example`](.env.example) with a comment; CI fails if code reads one that isn't listed.
 
-| Field | Meaning |
-| --- | --- |
-| `horizon_hours` | 0, 12, 24 or 48 hours ahead |
-| `overall` | 0–1, highest of the 4 hazard scores |
-| `risk_low`, `risk_high` | Range around `overall` (±0.05 / 0.10 / 0.15 / 0.20 by horizon) |
-| `level` | `low` / `medium` / `high`. Use this in the advice table |
-| `top_hazard` | `landslide`, `rockfall`, `flash_flood`, `snow_ice`, or `null` if nothing triggers |
-| `confidence` | `low` / `medium` / `high` |
-| `reason` | One sentence, max 140 characters, safe to show users |
+| Name | Secret? | What it is |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | no (browser) | Supabase API URL and publishable key; RLS protects the data |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | no (browser) | Clerk publishable key |
+| `CLERK_SECRET_KEY` | **yes** | Clerk server key |
+| `DATABASE_URL` | **yes** | Supabase transaction pooler (port 6543), `routeguard_app` login |
+| `JOBS_SECRET` | **yes** | Password for the queue worker endpoint |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | private key **yes** | Web Push |
+| `FEATURE_REPORTS_WRITE`, `FEATURE_PUSH` | no | Set to `false` to pause reports or alerts |
+| `LOG_LEVEL`, `CSP_REPORT_ONLY`, `DEPLOYMENT_VERSION`, `NEXT_PUBLIC_CLERK_KEYLESS_DISABLED`, `NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED` | no | Server settings |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | **yes** | Python job only, GitHub Actions secrets. The secret key skips RLS; never in the app |
 
-## Repo layout
-
-| Folder | What lives there |
-| --- | --- |
-| `app/` | Next.js pages (`/status` is our internal check page) |
-| `lib/supabase/` | Supabase clients (browser + server, publishable key only) |
-| `lib/database.types.ts` | Generated database types. Don't edit by hand |
-| `lib/risk/config.json` | Risk model settings shared by the job and the app |
-| `jobs/` | Python hourly risk job: `run_risk.py`, `points.json`, `risk/` (rules), `tests/`, `load_hexes.py` |
-| `supabase/` | Supabase config and migrations |
-| `data/` | Team CSVs |
-| `docs/` | [Risk model](docs/risk-model.md) and [decision log](docs/decisions.md) |
-| `.github/workflows/` | Hourly risk job and CI (lint, typecheck, build, pytest and secret checks on every PR) |
+Secrets live in `.env.local` on our machines and in Container Apps secrets in production. Never commit them.
 
 ## Working together
 
-1. Work on a branch in your fork and open a PR to `main` on this repo.
-2. Wait for CI to go green on your PR, and try your change locally with `npm run dev`.
-3. Another member reviews it, then Aryaveer merges with "Create a merge commit" (never squash). Once the Azure deploy is set up, merging to `main` updates the live site.
+1. Work on a branch and open a PR to `main`.
+2. Wait for CI to go green, and try your change locally with `npm run dev`.
+3. Another member reviews it, then it is merged with "Create a merge commit" (never squash).
