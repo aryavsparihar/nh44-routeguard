@@ -65,3 +65,20 @@ export function corridorBounds(segments: CorridorSegment[]): [LngLat, LngLat] {
     [Math.max(...lngs), Math.max(...lats)],
   ];
 }
+
+// The road point nearest to a spot, as the zone it falls in, how far along
+// the road it is and how far the spot is from the road (all km). Uses the
+// line's own points (about 800, a few hundred metres apart), which is close
+// enough to pick a zone.
+export function nearestOnRoad(lat: number, lng: number): { zone: number; kmAlong: number; offRoadKm: number } {
+  const points = line.points as [number, number][];
+  const starts = line.zone_starts_km as Record<string, number>;
+  let along = 0;
+  let best = { zone: 1, kmAlong: 0, offRoadKm: Infinity };
+  points.forEach((point, i) => {
+    if (i > 0) along += km(points[i - 1], point);
+    const off = km([lat, lng], point);
+    if (off < best.offRoadKm) best = { zone: zoneAt(along, starts), kmAlong: along, offRoadKm: off };
+  });
+  return best;
+}

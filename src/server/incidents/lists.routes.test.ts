@@ -22,7 +22,7 @@ vi.mock("@/src/server/reports/reports.repository", () => reportsRepo);
 const { GET: zones } = await import("@/app/api/v1/zones/route");
 const { GET: incidents } = await import("@/app/api/v1/incidents/route");
 const { GET: updates } = await import("@/app/api/v1/official-updates/route");
-const { GET: reports, POST: reportsPost } = await import("@/app/api/v1/reports/route");
+const { GET: reports, PUT: reportsPut } = await import("@/app/api/v1/reports/route");
 
 const noParams = { params: Promise.resolve({}) };
 const get = (path: string) =>
@@ -89,9 +89,9 @@ describe("GET /api/v1/reports", () => {
     expect((await reports(get("/api/v1/reports?status=hidden"), noParams)).status).toBe(400);
   });
 
-  it("does not take POST yet", async () => {
-    const res = await reportsPost(get("/api/v1/reports"), noParams);
+  it("refuses PUT and names the methods it takes (POST is tested in reports.routes.test.ts)", async () => {
+    const res = await reportsPut(get("/api/v1/reports"), noParams);
     expect(res.status).toBe(405);
-    expect(res.headers.get("Allow")).toBe("GET, HEAD");
+    expect(res.headers.get("Allow")).toBe("GET, POST, HEAD");
   });
 });

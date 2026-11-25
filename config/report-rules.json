@@ -1,0 +1,17 @@
+{
+  "version": "2026-11-25.1",
+  "_note": "Trust rules for road reports, from BUILD_PROMPT section 9 (team decisions for Round 3, not measured values). 'other' is not in section 9: we gave it the shortest listed expiry (3 h, like accident) so an unclear report leaves the map soonest.",
+  "expiry_hours": {
+    "landslide": 6,
+    "rockfall": 6,
+    "flash_flood": 6,
+    "snow_ice": 12,
+    "accident": 3,
+    "other": 3
+  },
+  "duplicate": { "within_m": 500, "within_minutes": 60 },
+  "confirm": { "needed": 2, "within_m": 2000, "within_hours": 3 },
+  "hide_after_flags": 3,
+  "note_max_chars": 280,
+  "photo": { "max_bytes": 5242880, "max_side_px": 1600 }
+}

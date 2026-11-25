@@ -173,6 +173,33 @@
       "snow_ice": "Snow/ice",
       "accident": "Accident",
       "other": "Other hazard"
+    },
+    "actions": {
+      "confirm": "I see it too",
+      "flag": "Flag",
+      "photo": "See photo",
+      "why": "What is wrong with it?",
+      "sendFlag": "Send flag",
+      "reason": {
+        "not_there": "It isn't there any more",
+        "wrong_place": "Wrong place",
+        "duplicate": "Same as another report",
+        "offensive": "Rude or personal",
+        "other": "Something else"
+      },
+      "signIn": "Sign in to confirm or flag reports.",
+      "signInLink": "Sign in",
+      "forbidden": "You can't do this: it's your own report, or confirming needs a verified driver, agent or police account.",
+      "gone": "This report is no longer on the map.",
+      "inactive": "This report has expired or been cleared.",
+      "tooMany": "You have done this a lot this hour. Wait a while, then try again.",
+      "paused": "Confirming and flagging are paused for now.",
+      "failed": "Could not send. Check your connection and try again.",
+      "confirmed": "Thank you. Your confirmation is counted.",
+      "confirmedBefore": "You confirmed this report before.",
+      "confirmedNoPlace": "Saved. Without your location it doesn't count towards confirming it.",
+      "flagged": "Thank you. An admin will look at it; three flags hide an unconfirmed report.",
+      "flaggedBefore": "You flagged this report before."
     }
   },
   "updates": {
@@ -277,13 +304,15 @@
       "updates": "Official updates",
       "roadStatus": "Road and rail status",
       "audit": "Audit log",
-      "users": "Roles"
+      "users": "Roles",
+      "reports": "Road reports"
     },
     "hints": {
       "updates": "Post, edit or remove police and TCU updates",
       "roadStatus": "Mughal Road and the parcel train",
       "audit": "Who changed what, when and why",
-      "users": "Give someone a role, including police or admin"
+      "users": "Give someone a role, including police or admin",
+      "reports": "Hide, clear or restore reports, and see the flags"
     },
     "back": "Back to admin",
     "saving": "Saving…",
@@ -366,7 +395,10 @@
         "updateCreated": "Update posted",
         "updateEdited": "Update edited",
         "updateDeleted": "Update deleted",
-        "roadStatus": "Road status set"
+        "roadStatus": "Road status set",
+        "reportHidden": "Report hidden",
+        "reportResolved": "Report cleared",
+        "reportRestored": "Report restored"
       },
       "by": "By {role} {id}",
       "target": "On {target}",
@@ -393,6 +425,84 @@
       "noRole": "no role",
       "notFound": "No user with this id.",
       "self": "You can't change your own role. Ask another admin."
+    },
+    "reports": {
+      "heading": "Road reports",
+      "intro": "Every report, hidden ones too, newest first. Hide anything with people, number plates or personal details. Each change needs a reason and goes in the audit log.",
+      "filter": "Show",
+      "all": "All reports",
+      "status": {
+        "unconfirmed": "Unconfirmed",
+        "confirmed": "Confirmed",
+        "expired": "Expired",
+        "resolved": "Cleared",
+        "hidden": "Hidden"
+      },
+      "none": "No reports here.",
+      "flags": "{count, plural, =0 {No flags} one {# flag} other {# flags}}",
+      "hiddenBecause": "Hidden because: {reason}",
+      "photo": "See photo",
+      "action": {
+        "hide": "Hide",
+        "resolve": "Mark cleared",
+        "restore": "Restore"
+      },
+      "reason": "Reason",
+      "reasonHint": "Saved in the audit log with your name.",
+      "done": {
+        "hide": "Report hidden.",
+        "resolve": "Report marked cleared.",
+        "restore": "Report restored as unconfirmed."
+      }
+    }
+  },
+  "report": {
+    "heading": "Report a road hazard",
+    "intro": "Tell other drivers what is on NH-44 right where you are. A report from a verified driver or the police goes on the map straight away; others wait for two verified people nearby to confirm it.",
+    "loading": "Loading…",
+    "paused": "Reporting is paused for now. The map and advice still work.",
+    "noRole": "Finish setting up your account (pick your role) before you post a report.",
+    "wrongRole": "Road reports come from drivers, transport agents and police. Your account has a different role.",
+    "what": "What is on the road?",
+    "where": "Where are you?",
+    "whereHint": "We use your phone's location to put the report on the map. You must be on or near NH-44.",
+    "locate": "Use my location",
+    "locating": "Finding you…",
+    "locateAgain": "Find me again",
+    "accuracy": "accurate to about {metres} m",
+    "locateError": {
+      "denied": "Location is blocked for this site. Allow it in your browser settings, then try again.",
+      "unavailable": "Your phone could not find its location. Move to open sky and try again."
+    },
+    "photo": "Photo (optional)",
+    "photoHint": "Photograph the road, not people or number plates. JPEG, PNG or WebP, up to {mb} MB. We remove the location and camera details from the file.",
+    "note": "Note (optional)",
+    "noteHint": "What and where, in a few words. Don't write phone numbers or truck numbers: we hide them.",
+    "consent": "I am on the road now and this is what I see. My location is used only to place this report.",
+    "send": "Send report",
+    "sending": "Sending…",
+    "needs": "Pick what is on the road, use your location and tick the box to send.",
+    "seeMap": "See the map",
+    "another": "Report something else",
+    "sent": {
+      "created": "Thank you. Your report is saved.",
+      "repeat": "This report was already saved.",
+      "merged": "Someone reported this nearby a little earlier, so we counted yours as a confirmation of theirs.",
+      "live": "It is on the map now.",
+      "waiting": "It shows as unconfirmed until two verified people nearby confirm it."
+    },
+    "err": {
+      "photoTooBig": "The photo is too big. Pick one under {mb} MB.",
+      "offline": "No connection. Your report was not sent; try again when you have signal.",
+      "offCorridor": "Your location is not on the NH-44 corridor, so this report can't go on the map.",
+      "photo": "That file is not a photo we can read. Send a JPEG, PNG or WebP.",
+      "invalid": "Something in the report is not valid. Check it and try again.",
+      "signedOut": "You are signed out. Sign in again to send this report.",
+      "forbidden": "Your role can't post reports. If your role just changed, sign in again.",
+      "conflict": "Your account isn't ready to post yet. Finish setting it up, then try again.",
+      "tooMany": "You have sent a lot of reports this hour. Wait a while, then try again.",
+      "paused": "Reporting is paused for now. The map and advice still work.",
+      "server": "Could not send. Check your connection and try again."
     }
   }
 }

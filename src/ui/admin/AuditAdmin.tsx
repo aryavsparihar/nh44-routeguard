@@ -26,6 +26,9 @@ const ACTIONS = {
   "official_update.edited": "updateEdited",
   "official_update.deleted": "updateDeleted",
   "road_status.updated": "roadStatus",
+  "report.hidden": "reportHidden",
+  "report.resolved": "reportResolved",
+  "report.restored": "reportRestored",
 } as const;
 type Action = keyof typeof ACTIONS;
 const ROLES = ["grower", "trader", "agent", "driver", "police", "admin"] as const;

@@ -21,6 +21,7 @@ export type PublicReport = {
   confirmations: number;
   created_at: string;
   expires_at: string;
+  has_photo: boolean;
   is_demo: boolean;
 };
 
