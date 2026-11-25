@@ -280,3 +280,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Signing out turns alerts off in that browser · Phones are shared; the next person shouldn't get the last person's alerts.
 - **2026-11-25** · The VAPID public key is read on the server when `/me` is shown, not baked in as `NEXT_PUBLIC_` · The image is built without keys (CI); this way the same image works with whatever keys Azure has.
 
+
+## Round 3: tests, performance and demo (slice 12)
+
+- **2026-11-25** · Signed-in Playwright tests drive our own email-code sign-in screen with the seeded `+clerk_test` accounts and a Clerk testing token (`@clerk/testing`) · Tests the real screen people use. Rejected: Clerk's programmatic sign-in helper, which skips our screen. They write real rows, so they run only with `E2E_DB=1` and the seed clears them.
+- **2026-11-25** · The demo seed asks the running app's `POST /api/v1/advice` for each truck's advice · The board shows advice the real code produced. Rejected: hand-written advice in the seed (invented numbers) and importing `decide()` into a script (needs a TypeScript loader for the `@/` paths).
+- **2026-11-25** · MapLibre starts when the browser is idle (at most 1.5 s), and `<main>` is at least one screen tall · Lighthouse mobile on the map page went from 27 to 79 (TBT 2,050 → 130 ms, CLS 0.6 → 0). Rejected: loading the map only on tap, which hides the main feature.
+- **2026-11-25** · Map place names stay in English in all languages (C6 cut) · MapLibre can't shape Devanagari conjuncts, and Urdu needs a separate right-to-left plugin loaded from outside; broken labels are worse than English ones. Our own text on and around the map is translated.
+- **2026-11-25** · H3 hexes (C5) and Aadhaar Secure QR (E7, D6) cut for Round 3 · No corridor hex CSVs exist yet, and the Aadhaar check handles personal data and needs a careful review we don't have time for. Both stay listed as limitations; section 0 says to cut P1 when time is short.
+- **2026-11-25** · No GitHub issues made after the fact for each work package · The code was built by Claude with Aryaveer; assigning finished tasks to members who didn't do them would misstate who did what.
