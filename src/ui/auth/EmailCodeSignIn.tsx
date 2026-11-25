@@ -1,11 +1,28 @@
 "use client";
 
-import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
-import { useState, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { Field, Notice, buttonClass, inputClass, quietButtonClass } from "@/src/ui/admin/common";
 
 type Step = { kind: "email" } | { kind: "code"; email: string; flow: "signIn" | "signUp" };
+
+// The email typed before we cleared an old session (see sendCode), kept for
+// the one page load that follows. sessionStorage: this tab only, never the URL.
+const RETRY_KEY = "rg_signin_retry";
+let retryEmail: string | null | undefined; // read once per page load
+function readRetry(): string | null {
+  if (retryEmail === undefined) {
+    try {
+      retryEmail = sessionStorage.getItem(RETRY_KEY);
+      sessionStorage.removeItem(RETRY_KEY);
+    } catch {
+      retryEmail = null; // storage blocked (private mode): they retype it
+    }
+  }
+  return retryEmail;
+}
+const noSubscribe = () => () => {};
 
 // Where to go after signing in: the page that sent you here (Clerk adds
 // ?redirect_url=), but only a path on this site; otherwise your account page.
@@ -32,11 +49,16 @@ export function EmailCodeSignIn() {
   const t = useTranslations("auth");
   const { signIn, fetchStatus: signInStatus } = useSignIn();
   const { signUp, fetchStatus: signUpStatus } = useSignUp();
+  const clerk = useClerk();
   const [step, setStep] = useState<Step>({ kind: "email" });
-  const [email, setEmail] = useState("");
+  // Back from clearing an old session: the email is filled in and we say why.
+  const retried = useSyncExternalStore(noSubscribe, readRetry, () => null);
+  const [typed, setEmail] = useState<string | null>(null);
+  const email = typed ?? retried ?? "";
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [cleared, setCleared] = useState(false);
   const busy = signInStatus === "fetching" || signUpStatus === "fetching";
 
   function errorText(codeName: string): string {
@@ -52,8 +74,22 @@ export function EmailCodeSignIn() {
   async function sendCode(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setCleared(false);
     const address = email.trim();
     const { error: createError } = await signIn.create({ identifier: address });
+    if (createError && clerkCode(createError) === "session_exists") {
+      // This browser still holds an old sign-in that the server no longer
+      // accepts (its refresh failed, e.g. on plain http to a laptop's IP).
+      // Clear it here, come back to this page, and let them send the code.
+      try {
+        sessionStorage.setItem(RETRY_KEY, address);
+      } catch {
+        // storage blocked: they retype the email
+      }
+      await clerk.signOut({ redirectUrl: window.location.pathname + window.location.search });
+      setCleared(true); // when Clerk comes back without reloading the page
+      return;
+    }
     if (!createError) {
       const { error: sendError } = await signIn.emailCode.sendCode();
       if (sendError) return setError(errorText(clerkCode(sendError)));
@@ -128,6 +164,7 @@ export function EmailCodeSignIn() {
         {/* Clerk's bot check (a Cloudflare challenge) appears here when a new account is made. */}
         <div id="clerk-captcha" />
         {error && <Notice kind="error">{error}</Notice>}
+        {(cleared || (retried && typed === null)) && !error && <Notice kind="ok">{t("oldSession")}</Notice>}
         <button type="submit" className={buttonClass} disabled={busy || !email.includes("@")}>
           {busy ? t("working") : t("sendCode")}
         </button>
