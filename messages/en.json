@@ -360,7 +360,7 @@
       "users": "Roles",
       "reports": "Road reports",
       "jobs": "Failed jobs",
-      "control": "Control room"
+      "overview": "Road overview"
     },
     "hints": {
       "updates": "Post, edit or remove police and TCU updates",
@@ -369,7 +369,7 @@
       "users": "Give someone a role, including police or admin",
       "reports": "Hide, clear or restore reports, and see the flags",
       "jobs": "Background jobs that failed 5 times",
-      "control": "Risk, reports waiting for confirmation, police and TCU updates, and road status on one screen"
+      "overview": "Risk, reports waiting for confirmation, police and TCU updates, and road status on one screen"
     },
     "back": "Back to admin",
     "saving": "Saving…",
@@ -522,8 +522,8 @@
       "error": "Last error: {error}",
       "payload": "Ids: {payload}"
     },
-    "control": {
-      "heading": "Control room",
+    "overview": {
+      "heading": "Road overview",
       "intro": "Everything on this screen is what the public map and API already show, in one place. Nothing about people: no names, no truck positions. RouteGuard is not an official police service.",
       "nowHeading": "Now",
       "tiles": {
@@ -542,8 +542,8 @@
         "rail_parcel": "Budgam–Delhi parcel train"
       },
       "roadState": {
-        "open": "Open",
-        "closed": "Closed",
+        "open": "Open, according to the source",
+        "closed": "Closed, according to the source",
         "unknown": "Not known: nobody has set it with a source"
       },
       "roadSet": "set {time}",

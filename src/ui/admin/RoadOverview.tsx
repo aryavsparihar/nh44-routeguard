@@ -25,12 +25,12 @@ export function sortForReview(reports: PublicReport[]): PublicReport[] {
   );
 }
 
-// The control room: one screen for the police and admin accounts with what
+// The road overview: one screen for the police and admin accounts with what
 // the public map and API already show (risk, road reports, police/TCU
 // updates, road and rail status). Nothing about people: no names, no truck
 // positions. Reports and updates refresh by themselves like the map.
-export function ControlRoom({ canEditRoad }: { canEditRoad: boolean }) {
-  const t = useTranslations("admin.control");
+export function RoadOverview({ canEditRoad }: { canEditRoad: boolean }) {
+  const t = useTranslations("admin.overview");
   const locale = useLocale() as Locale;
   const risk = useRisk();
   const [reports, , refreshReports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
@@ -57,8 +57,8 @@ export function ControlRoom({ canEditRoad }: { canEditRoad: boolean }) {
     <div className="flex flex-col gap-6">
       <p>{t("intro")}</p>
 
-      <section aria-labelledby="control-now" className="flex flex-col gap-2">
-        <h2 id="control-now" className="text-lg font-bold">
+      <section aria-labelledby="overview-now" className="flex flex-col gap-2">
+        <h2 id="overview-now" className="text-lg font-bold">
           {t("nowHeading")}
         </h2>
         <ul className="grid grid-cols-2 gap-2">
@@ -76,8 +76,8 @@ export function ControlRoom({ canEditRoad }: { canEditRoad: boolean }) {
         </p>
       </section>
 
-      <section aria-labelledby="control-48h" className="flex flex-col gap-2">
-        <h2 id="control-48h" className="text-lg font-bold">
+      <section aria-labelledby="overview-48h" className="flex flex-col gap-2">
+        <h2 id="overview-48h" className="text-lg font-bold">
           {t("riskHeading")}
         </h2>
         <StripScreen />
@@ -92,8 +92,8 @@ export function ControlRoom({ canEditRoad }: { canEditRoad: boolean }) {
         </Link>
       </div>
 
-      <section aria-labelledby="control-road" className="flex flex-col gap-2">
-        <h2 id="control-road" className="text-lg font-bold">
+      <section aria-labelledby="overview-road" className="flex flex-col gap-2">
+        <h2 id="overview-road" className="text-lg font-bold">
           {t("roadHeading")}
         </h2>
         <ul className="flex flex-col gap-2">

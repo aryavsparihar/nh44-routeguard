@@ -71,3 +71,9 @@ The client IP is the first `X-Forwarded-For` entry, set by the Container Apps in
 **What:** we link 112. We print no TCU helpline number, because we have not verified one on an official J&K Traffic Police source. When one is verified, its source and date go in `docs/sources.md` first.
 
 **Why:** a wrong helpline number in an emergency is worse than none.
+
+## 10. The road overview for police and admin
+
+**What:** `/admin/overview` (`src/ui/admin/RoadOverview.tsx`) puts on one screen what the public map and API already show: zones at high and medium risk, the 48 h strip, road reports (unconfirmed first, with "I see it too"), police/TCU updates in force with their sources, and the Mughal Road / parcel train status. It is called "Road overview", not "control room", so it can't be taken for a police control room. It shows no names, no truck positions and no shipments. Only police and admin open it (`AdminGate` on the page; every write still goes through the same API checks). Road status reads "Open, according to the source" with the link, never a bare "Open". Changing road status stays admin-only.
+
+**Why:** the demo police account needs one place to watch the corridor, but a screen that looks like an official control room, or that shows people, would break rules 1 and 4.
