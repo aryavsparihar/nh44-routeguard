@@ -12,6 +12,7 @@ import { acceptInviteBody, createInviteBody } from "@/src/server/fleet/fleet.sch
 import type { RateLimitName } from "@/src/server/http/rate-limit";
 import type { Role } from "@/src/server/http/caller";
 import { incidentsQuery } from "@/src/server/incidents/incidents.schemas";
+import { deadLettersQuery } from "@/src/server/jobs/jobs.schemas";
 import { modelCard } from "@/src/server/model/model-card";
 import { decide, type Lot } from "@/src/shared/decide";
 import type { RiskRow } from "@/src/shared/risk";
@@ -65,6 +66,8 @@ export type Operation = {
   description?: string;
   access: Access;
   rateLimit?: RateLimitName;
+  // false for server-to-server routes with no Origin check (the queue worker).
+  checkOrigin?: false;
   params?: Record<string, z.ZodType>;
   query?: z.ZodType;
   body?: z.ZodType;
@@ -786,6 +789,57 @@ export const OPERATIONS: Operation[] = [
           },
         ],
       },
+    },
+  },
+
+  {
+    method: "get",
+    path: "/api/v1/admin/dead-letters",
+    tag: "Admin",
+    summary: "Queue jobs that failed 5 times (read-only)",
+    description: "Payloads hold ids only.",
+    access: ["admin"],
+    query: deadLettersQuery,
+    success: {
+      200: {
+        description: "Failed jobs, newest first.",
+        envelope: "list",
+        meta: page(1),
+        example: [
+          {
+            id: 3,
+            msg_id: 118,
+            job: "official_update.created",
+            payload: { update_id: UPDATE_ID },
+            attempts: 5,
+            last_error: "Error: push service answered 500",
+            enqueued_at: T,
+            failed_at: LATER,
+          },
+        ],
+      },
+    },
+  },
+
+  // Internal
+  {
+    method: "post",
+    path: "/api/v1/internal/jobs/run",
+    tag: "Internal",
+    summary: "Run the queue worker (called by pg_cron, not by browsers)",
+    description:
+      "Takes waiting jobs from the queue for up to 20 s: a finished job is removed, a failed one is tried again later, and after 5 tries it goes to the dead letters. No Origin check; the X-Jobs-Secret header is the lock.",
+    access: "public",
+    checkOrigin: false,
+    headers: [
+      { name: "X-Jobs-Secret", required: true, schema: z.string(), description: "The JOBS_SECRET value (also in Supabase Vault as jobs_secret)." },
+    ],
+    success: {
+      200: { description: "What this run did.", example: { done: 3, retry: 0, dead: 0, runs: 1 } },
+    },
+    errors: {
+      401: "Send the worker secret in the X-Jobs-Secret header.",
+      503: "The job worker is not set up on this server.",
     },
   },
 

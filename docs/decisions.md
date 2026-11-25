@@ -257,3 +257,15 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Swagger UI 5.34.1 copied from `swagger-ui-dist` into `public/vendor/` at build time and served by `/api/docs` · Section 6: our own files, not a CDN, so the CSP stays `'self'`. Pinned to a release more than two weeks old.
 - **2026-11-25** · A bad query string is documented as 400 (with the field list), a bad body as 422 · That is what the API does (section 6: "400: malformed JSON or query"); Postman caught the first draft saying 422.
 - **2026-11-25** · newman runs the two keyless Postman folders in CI against the Docker image; the signed-in and rate-limit folders run locally · CI has no database or Clerk keys by design. Nothing in the collection creates data: the 429 checks use invalid advice requests and wrong invite codes.
+
+## Round 3: job queue (B4, slice 11a)
+
+- **2026-11-25** · Supabase Queues (`pgmq`) in our own Postgres, no Redis or cloud queue · Section 17 asks for it; it is free, already ours, and needs no new Azure resource.
+- **2026-11-25** · The job is added in the same transaction as the write (an "outbox"), not after it · A report saved without its job, or a job for a report that rolled back, can't happen.
+- **2026-11-25** · Payloads carry ids only (`report_id`, `update_id`), at most 2 KB, and only three job names · The worker reads the row itself, so no personal data sits in the queue or the dead letters. The database refuses anything else.
+- **2026-11-25** · The worker runs as its own database role, `routeguard_worker`, reached only after the `X-Jobs-Secret` check · It can read, finish and fail jobs and nothing else; a bug in the worker can't read users or reports it wasn't given rights to.
+- **2026-11-25** · pg_cron wakes the worker every minute, but only when a job is due · The app scales to zero on Azure (section 4.1); calling it every minute regardless would keep a replica awake and spend credit. No GitHub Actions fallback for the same reason; the cron job is free.
+- **2026-11-25** · 5 tries, then the dead letters; tries are 30 s, 60 s, 90 s, 120 s apart · Section 17 says "fail 5 times". A worker that dies mid-job counts as a try (the job comes back after 60 s).
+- **2026-11-25** · Jobs may run twice, so every handler must be safe to repeat · `report.confirmed` is added for every new confirmation of a confirmed report (we don't know if it was already confirmed), and a worker can die after the work but before it says "done".
+- **2026-11-25** · Until Web Push (B6) the handlers only log the event · The queue, retries, dead letters and wake-up are real and tested against the database; the push fan-out is the next slice.
+

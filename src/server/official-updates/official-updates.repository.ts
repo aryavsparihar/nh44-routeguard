@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gt, isNull, or, sql, type SQL } from "drizzle-orm";
 import { auditSql, type AuditEntry } from "@/src/server/audit";
+import { enqueueSql } from "@/src/server/jobs/enqueue";
 import type { Db } from "@/src/server/db";
 import { officialUpdates } from "@/src/server/db/schema";
 import { DbError } from "@/src/server/http/db-errors";
@@ -130,6 +131,7 @@ export async function insertUpdate(
           meta: { version: 1, kind: row.kind, zone_id: row.zone_id },
         }),
       );
+      await tx.execute(enqueueSql("official_update.created", { update_id: row.id }));
       return row;
     });
   } catch (err) {

@@ -314,14 +314,16 @@
       "roadStatus": "Road and rail status",
       "audit": "Audit log",
       "users": "Roles",
-      "reports": "Road reports"
+      "reports": "Road reports",
+      "jobs": "Failed jobs"
     },
     "hints": {
       "updates": "Post, edit or remove police and TCU updates",
       "roadStatus": "Mughal Road and the parcel train",
       "audit": "Who changed what, when and why",
       "users": "Give someone a role, including police or admin",
-      "reports": "Hide, clear or restore reports, and see the flags"
+      "reports": "Hide, clear or restore reports, and see the flags",
+      "jobs": "Background jobs that failed 5 times"
     },
     "back": "Back to admin",
     "saving": "Saving…",
@@ -463,6 +465,16 @@
         "resolve": "Report marked cleared.",
         "restore": "Report restored as unconfirmed."
       }
+    },
+    "jobs": {
+      "heading": "Failed jobs",
+      "intro": "Background jobs (alerts after a report or an official update) that failed 5 times and were set aside. Newest first. Nothing here means the queue is healthy.",
+      "none": "No failed jobs.",
+      "attempts": "Tries: {count}",
+      "enqueued": "Queued {time}",
+      "failed": "Gave up {time}",
+      "error": "Last error: {error}",
+      "payload": "Ids: {payload}"
     }
   },
   "report": {

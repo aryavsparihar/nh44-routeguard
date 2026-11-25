@@ -118,6 +118,17 @@ export const incidents = pgTable("incidents", {
   external_id: text(),
 }).enableRLS();
 
+export const jobDeadLetters = pgTable("job_dead_letters", {
+  id: bigint({ mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  msg_id: bigint({ mode: "number" }).notNull(),
+  job: text().notNull(),
+  payload: jsonb().notNull(),
+  attempts: integer().notNull(),
+  last_error: text(),
+  enqueued_at: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+  failed_at: timestamp({ withTimezone: true, mode: "date" }).default(sql`now()`).notNull(),
+}).enableRLS();
+
 export const latestRisk = pgView("latest_risk", {
   id: bigint({ mode: "number" }),
   run_at: timestamp({ withTimezone: true, mode: "date" }),

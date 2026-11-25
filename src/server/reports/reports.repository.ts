@@ -5,6 +5,8 @@ import type { Db } from "@/src/server/db";
 import { publicReports, reports } from "@/src/server/db/schema";
 import { DbError } from "@/src/server/http/db-errors";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/src/server/http/errors";
+import { enqueueSql } from "@/src/server/jobs/enqueue";
+import type { JobName } from "@/src/server/jobs/jobs.schemas";
 import { ACTIVE_STATUSES, type ActiveStatus, type ModerateInput } from "./reports.schemas";
 import { REPORT_RULES_JSON } from "./rules";
 
@@ -65,6 +67,20 @@ function mapReportError(err: unknown, forbidden: string): never {
   throw err;
 }
 
+// Which job a report write puts on the queue. A new report always gets
+// report.created. A new confirmation (or a merge, which counts as one) on a
+// report that is now confirmed gets report.confirmed; the report may already
+// have been confirmed before, so the worker treats it as "maybe new".
+export function jobAfterSubmit(r: { status: string; outcome: SubmitOutcome }): JobName | null {
+  if (r.outcome === "created") return "report.created";
+  if (r.outcome === "merged" && r.status === "confirmed") return "report.confirmed";
+  return null;
+}
+
+export function jobAfterConfirm(r: { status: string; outcome: "confirmed" | "repeat" }): boolean {
+  return r.outcome === "confirmed" && r.status === "confirmed";
+}
+
 export async function submitReport(
   db: Db,
   r: {
@@ -78,13 +94,17 @@ export async function submitReport(
   },
 ): Promise<SubmitResult> {
   try {
-    const rows = await db.rls((tx) =>
-      tx.execute<{ report_id: string; status: string; outcome: SubmitOutcome }>(
+    const rows = await db.rls(async (tx) => {
+      const out = await tx.execute<{ report_id: string; status: string; outcome: SubmitOutcome }>(
         sql`select * from private.submit_report(${r.clientId}::uuid, ${r.hazard}::public.hazard_type,
           ${r.lat}::double precision, ${r.lng}::double precision, ${r.zoneId}::smallint, ${r.note}::text,
           ${r.photoPath}::text, ${REPORT_RULES_JSON}::jsonb)`,
-      ),
-    );
+      );
+      // The job is saved with the report or not at all (queue, section 17).
+      const job = jobAfterSubmit(out[0]);
+      if (job) await tx.execute(enqueueSql(job, { report_id: out[0].report_id }));
+      return out;
+    });
     return { id: rows[0].report_id, status: rows[0].status, outcome: rows[0].outcome };
   } catch (err) {
     mapReportError(err, "Your role can't post road reports.");
@@ -97,12 +117,14 @@ export async function confirmReport(
   at: { lat?: number; lng?: number },
 ): Promise<{ status: string; confirmations: number; outcome: "confirmed" | "repeat" }> {
   try {
-    const rows = await db.rls((tx) =>
-      tx.execute<{ status: string; confirmations: number; outcome: "confirmed" | "repeat" }>(
+    const rows = await db.rls(async (tx) => {
+      const out = await tx.execute<{ status: string; confirmations: number; outcome: "confirmed" | "repeat" }>(
         sql`select * from private.confirm_report(${id}::uuid, ${at.lat ?? null}::double precision,
           ${at.lng ?? null}::double precision, ${REPORT_RULES_JSON}::jsonb)`,
-      ),
-    );
+      );
+      if (jobAfterConfirm(out[0])) await tx.execute(enqueueSql("report.confirmed", { report_id: id }));
+      return out;
+    });
     return { ...rows[0], confirmations: Number(rows[0].confirmations) };
   } catch (err) {
     mapReportError(err, "You can't confirm this report: it is your own, or your account isn't verified yet.");

@@ -63,7 +63,7 @@ Checked in a browser on 2026-11-24 with `next start`: the home page, `/status` a
 
 ## How RLS works here
 
-The API checks roles in `withApi()`. The database checks again with Row Level Security, so a route that forgets a check still can't leak or change rows. The server talks to Postgres with Drizzle as `routeguard_app`, a login with no rights of its own: each request is one transaction that switches to `anon` or `authenticated` and sets the caller's Clerk claims (`sub`, `metadata.role`), which is what `auth.jwt()` reads. Only the hourly risk job (GitHub Actions) and the seed script use the secret key, which skips RLS.
+The API checks roles in `withApi()`. The database checks again with Row Level Security, so a route that forgets a check still can't leak or change rows. The server talks to Postgres with Drizzle as `routeguard_app`, a login with no rights of its own: each request is one transaction that switches to `anon` or `authenticated` and sets the caller's Clerk claims (`sub`, `metadata.role`), which is what `auth.jwt()` reads. Only the hourly risk job (GitHub Actions) and the seed script use the secret key, which skips RLS. The queue worker (`POST /api/v1/internal/jobs/run`) switches to a third role, `routeguard_worker`, which can only run the job functions; it gets there only after the `X-Jobs-Secret` check (constant-time, against `JOBS_SECRET`).
 
 Policies read two values from the Clerk token:
 
@@ -90,6 +90,8 @@ Migrations: `supabase/migrations/20261124160006_rls_helpers.sql` and `2026112416
 | `agent_invites` | the agent who made them | only through `create_agent_invite()` and `accept_agent_invite()` | grower can't make one, driver reads none |
 | `idempotency_keys` | your own | your own | someone else's key blocked |
 | `weather_readings` | nobody | risk job only | – |
+| `job_dead_letters` | admins | only `private.bury_job()` (the queue functions) | driver reads none, admin reads them |
+| queue `pgmq.q_jobs` and the job functions | nobody directly | `enqueue_job()`: signed-in writes, known job names and id-only payloads up to 2 KB. `read_jobs()`, `ack_job()`, `fail_job()`: only `routeguard_worker` | unknown job and big payload refused, signed-in user can't read jobs, worker can't read `users` |
 
 Signed-out visitors (`anon`) have no access at all to `users`, `reports`, `shipments`, `verifications`, `report_confirmations`, `report_flags`, `audit_log` and `idempotency_keys`.
 

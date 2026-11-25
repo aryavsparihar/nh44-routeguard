@@ -74,7 +74,7 @@ function limitText(name: Operation["rateLimit"]): string {
 export function errorsFor(op: Operation): Record<number, string> {
   const out: Record<number, string> = {};
   const writes = op.method !== "get";
-  if (writes && op.path !== "/api/v1/openapi.json") out[403] = "A write must carry our Origin header (CSRF check).";
+  if (writes && op.checkOrigin !== false) out[403] = "A write must carry our Origin header (CSRF check).";
   if (op.access !== "public") {
     out[401] = DEFAULT_DETAIL[401];
     if (op.access !== "signed-in") out[403] = "Your role can't do this.";

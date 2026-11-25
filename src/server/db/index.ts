@@ -23,9 +23,12 @@ import { databaseUrl, drizzleDb, type DrizzleDb } from "./client";
 export type Tx = Parameters<Parameters<DrizzleDb["transaction"]>[0]>[0];
 export type Db = { rls<T>(fn: (tx: Tx) => Promise<T>): Promise<T> };
 
-export const DB_ROLES = ["anon", "authenticated"] as const;
+// routeguard_worker is only for the queue worker (getWorkerDb below); a
+// caller's claims are never that role.
+export const DB_ROLES = ["anon", "authenticated", "routeguard_worker"] as const;
 export type DbRole = (typeof DB_ROLES)[number];
 export type Claims = { role: DbRole; sub?: string; metadata?: { role?: string } };
+export const WORKER_CLAIMS: Claims = { role: "routeguard_worker" };
 
 // The claims RLS reads (private.jwt_sub(), private.jwt_role()), built from the
 // caller Clerk has already verified. Nothing else from the token is passed on.
@@ -65,4 +68,13 @@ export async function getDb(): Promise<Db> {
   const url = databaseUrl();
   if (!url) throw new ServiceUnavailableError("The database is not set up on this server.");
   return rlsRunner(drizzleDb(url), claimsFor(await getCaller()));
+}
+
+// The database for the queue worker (POST /api/v1/internal/jobs/run, after
+// the JOBS_SECRET check). The routeguard_worker role can only run the private
+// job functions (read, finish, fail) and nothing else.
+export function getWorkerDb(): Db {
+  const url = databaseUrl();
+  if (!url) throw new ServiceUnavailableError("The database is not set up on this server.");
+  return rlsRunner(drizzleDb(url), WORKER_CLAIMS);
 }
