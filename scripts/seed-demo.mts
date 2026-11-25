@@ -168,6 +168,7 @@ if (reset) {
   if (ids.length) check("demo accounts' reports", await db.from("reports").delete().in("user_id", ids));
   check("shipments", await db.from("shipments").delete().eq("is_demo", true));
   if (ids.length) check("official updates", await db.from("official_updates").delete().in("created_by", ids));
+  if (ids.length) check("demo Aadhaar checks", await db.from("verifications").delete().in("user_id", ids).eq("method", "aadhaar_qr"));
   console.log("Removed demo reports, shipments and the demo accounts' official updates.");
   console.log("The demo accounts stay; delete them in the Clerk dashboard if you want them gone.");
   process.exit(0);
@@ -203,6 +204,10 @@ for (const u of USERS) {
     ),
   );
 }
+
+// Demo Aadhaar QR checks (docs/demo/aadhaar-demo-qr.png) start over, so the
+// demo driver can scan it again on stage.
+check("demo Aadhaar checks", await db.from("verifications").delete().in("user_id", Object.values(ids)).eq("method", "aadhaar_qr"));
 
 // The vouched driver's verification record, once.
 const vouch = check(
