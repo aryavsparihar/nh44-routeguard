@@ -20,7 +20,8 @@
     "db:seed-incidents": "node seed.mjs",
     "i18n:check": "node scripts/ci/check-i18n.mjs",
     "ui:icons": "node scripts/ui/gen-icons.mjs",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "db:seed-demo": "node scripts/seed-demo.mts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.25",
