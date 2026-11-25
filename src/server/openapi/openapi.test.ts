@@ -73,6 +73,16 @@ describe("OpenAPI coverage", () => {
     }
   });
 
+  it("marks the routes without an Origin check, and only those", () => {
+    const NO_ORIGIN = /export const (POST|PATCH|DELETE|PUT)\s*=\s*withApi(?:<[^>]*>)?\(\s*\{[^}]*checkOrigin:\s*false/g;
+    const inCode = routeFiles("app/api/v1")
+      .flatMap((file) => [...readFileSync(file, "utf8").matchAll(NO_ORIGIN)].map((m) => `${m[1].toLowerCase()} ${apiPath(file)}`))
+      .sort();
+    const inSpec = OPERATIONS.filter((o) => o.checkOrigin === false).map((o) => `${o.method} ${o.path}`).sort();
+    expect(inSpec).toEqual(inCode);
+    expect(inCode).toEqual(["post /api/v1/internal/jobs/run"]);
+  });
+
   it("has a request example the route's own schema accepts", () => {
     // The examples' times are on 26 Nov 2026; some schemas compare with now.
     vi.useFakeTimers({ now: new Date("2026-11-26T10:00:00Z"), toFake: ["Date"] });
