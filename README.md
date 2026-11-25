@@ -14,14 +14,16 @@ Demo accounts (made by `node scripts/seed-demo.mts`). They are Clerk test emails
 
 | Role | Email | Try this |
 | --- | --- | --- |
-| Admin | `routeguard.admin+clerk_test@example.com` | `/admin`: roles, official updates, reports, road status, audit log, failed jobs |
-| Police (demo) | `routeguard.police+clerk_test@example.com` | Post an official update with its source; confirm a report |
+| TCU (the only admin, demo account) | `routeguard.admin+clerk_test@example.com` | `/admin`: approve new accounts, official updates, reports, road status, roles, audit log, failed jobs |
 | Agent | `routeguard.agent+clerk_test@example.com` | `/board`: six demo trucks in different states, live updates |
 | Driver, vouched | `routeguard.driver1+clerk_test@example.com` | `/report/new`: the report goes live at once (solid marker); try it offline |
 | Driver, not vouched | `routeguard.driver2+clerk_test@example.com` | `/report/new` asks you to get verified first; `/me`: scan the demo Aadhaar QR (`docs/demo/aadhaar-demo-qr.png`), then you can report |
 | Grower | `routeguard.grower+clerk_test@example.com` | `/advisor`: advice for a lot; save it |
+| Driver, waiting for TCU | `routeguard.newdriver+clerk_test@example.com` | `/me` says "Waiting for TCU"; sign in as TCU, approve it at `/admin/approvals`, then `/report/new` opens |
 
 No sign-in is needed for the map, the 48 h strip and the advisor.
+
+**Joining:** "Create an account or sign in" (home page) → email code → pick your role on `/me` → TCU approves it at `/admin/approvals` (or turns it down with a reason the person sees). Until then the account has no role anywhere: not in the session token, not in the database checks (`20261126040000_tcu_approval.sql`). TCU (J&K Traffic Police Traffic Control Unit) is the only admin; the police role was merged into it, and the app can't make anyone admin. RouteGuard is still a student project, not an official police service: the TCU account in the demo is our own demo account.
 
 ## Screenshots
 
@@ -77,7 +79,7 @@ flowchart LR
 
 ## Verification levels
 
-`email` (Clerk code) → `agent_vouched` (your agent vouches for you) or `aadhaar_qr` (optional: scan the Secure QR on your Aadhaar card; we check UIDAI's signature and the name, and keep only the result and the last 4 digits) → `official` (police/admin, granted by an admin). Reports from vouched drivers and police go live at once; others need two confirmations from verified users within 2 km and 3 h. Details: [docs/verification.md](docs/verification.md).
+`email` (Clerk code) → `agent_vouched` (your agent vouches for you) or `aadhaar_qr` (optional: scan the Secure QR on your Aadhaar card; we check UIDAI's signature and the name, and keep only the result and the last 4 digits) → `official` (TCU). Every account is first approved by TCU. Reports from vouched drivers and TCU go live at once; others need two confirmations from verified users within 2 km and 3 h. Details: [docs/verification.md](docs/verification.md).
 
 ## Languages
 
@@ -148,10 +150,10 @@ jobs/.venv/bin/python jobs/run_risk.py --dry-run
 
 | What | How to run | Count (26 Nov 2026) |
 | --- | --- | --- |
-| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, the Aadhaar QR checker, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 645 tests in 68 files, all passing; 42.5% of lines covered (most UI files have no unit tests) |
+| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, the Aadhaar QR checker, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 658 tests in 68 files, all passing; 42.2% of lines covered (most UI files have no unit tests) |
 | Risk job (pytest) | `python3 -m pytest jobs/tests` | 154 passing |
-| Database tests (pgTAP): RLS, roles, reports, Aadhaar, audit | `npm run db:test` (runs on the linked Supabase project inside a transaction that is rolled back; no Docker) | 229 passing |
-| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone, plus 6 signed-in flows with the demo accounts (unverified driver asked to get verified, vouched driver's report, offline outbox, board, official update, Aadhaar demo QR); 9 per phone run in CI without keys |
+| Database tests (pgTAP): RLS, roles, reports, Aadhaar, audit | `npm run db:test` (runs on the linked Supabase project inside a transaction that is rolled back; no Docker) | 243 passing |
+| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone, plus 7 signed-in flows with the demo accounts (unverified driver asked to get verified, vouched driver's report, offline outbox, board, official update, TCU approving a new driver, Aadhaar demo QR); 9 per phone run in CI without keys |
 | Postman / newman | `npx newman run postman/RouteGuard.postman_collection.json -e postman/ci.postman_environment.json` | 42 requests |
 | Smoke test after each deploy | `node scripts/smoke.mjs <url>` | health, ready, risk + 304, home, 401, 404, 405, headers |
 

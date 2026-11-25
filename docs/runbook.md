@@ -61,7 +61,7 @@ Created so far (development instance):
 
 ### 6. The first admin (once per database)
 
-police and admin are never self-service, and only an admin can grant them. So the very first admin needs a hand-made start:
+TCU (`admin`) is never self-service and can't be given in the app at all. So the TCU account needs a hand-made start:
 
 1. In Clerk → Users → the admin user → Metadata → **Public**: `{ "role": "admin" }`.
 2. Give them a `users` row and an audit entry. Ask the team first, then run (replace the id):

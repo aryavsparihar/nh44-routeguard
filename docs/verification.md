@@ -35,10 +35,11 @@ Never stored or logged: the QR, the name, date of birth, gender, address, photo,
 
 The numbers live in `config/report-rules.json` (versioned, with a note on where each came from).
 
-- **Who can post:** drivers only once verified (`agent_vouched` or `aadhaar_qr`), plus agents, police and admins. A driver at `none` or `email` gets 403 from `POST /api/v1/reports` and a "First, get verified" card on `/report/new`; `private.submit_report()` refuses them again in the database (`20261126020000_verified_drivers_report.sql`). Aadhaar is never the only way: an agent's vouch always works.
+- **First, TCU approves the account.** Every new account waits for TCU (`/admin/approvals`); until then it has no role (`20261126040000_tcu_approval.sql`).
+- **Who can post:** drivers only once verified (`agent_vouched` or `aadhaar_qr`), plus agents and TCU. A driver at `none` or `email` gets 403 from `POST /api/v1/reports` and a "First, get verified" card on `/report/new`; `private.submit_report()` refuses them again in the database (`20261126020000_verified_drivers_report.sql`). Aadhaar is never the only way: an agent's vouch always works.
 - From a verified driver, police or admin: shown at once with a solid marker.
 - From an agent who isn't verified: "unconfirmed", dashed marker.
-- **Confirmed** when 2 other verified users within 2 km confirm it within 3 h, or police/admin confirms it.
+- **Confirmed** when 2 other verified users within 2 km confirm it within 3 h, or TCU confirms it.
 - **Expiry by type:** landslide, rockfall and flash flood 6 h; snow/ice 12 h; accident 3 h; other 3 h. Expired reports leave the map but stay in history.
 - **Duplicates:** the same hazard within 500 m and 60 min becomes a confirmation of the first report, not a new pin.
 - **Flags:** 3 flags from different users hide an unconfirmed report until an admin looks at it.

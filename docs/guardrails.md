@@ -10,15 +10,15 @@ We have no partnership with J&K Traffic Police or the TCU. RouteGuard must never
 
 ## 2. Official updates are copies with sources
 
-**What:** an admin or the demo police account types in what a public TCU / J&K Traffic Police advisory said, with its link, issue time and expiry (`POST /api/v1/admin/official-updates`). The source URL is required by the zod schema. The app shows it as "From J&K Traffic Police advisory · source · time" with the line "RouteGuard copies these from the source shown. It is not an official channel". Edits make a new version; deletes are soft with a written reason. We don't scrape their sites.
+**What:** TCU (the admin role; our demo TCU account in the demo) types in what a public TCU / J&K Traffic Police advisory said, with its link, issue time and expiry (`POST /api/v1/admin/official-updates`). The source URL is required by the zod schema. The app shows it as "From J&K Traffic Police advisory · source · time" with the line "RouteGuard copies these from the source shown. It is not an official channel". Edits make a new version; deletes are soft with a written reason. We don't scrape their sites.
 
 **Why:** the reader can always check the original. We never write our own instructions as if they were official.
 
 ## 3. Who can do what
 
-**What:** police and admin roles are granted only by an admin, with a written reason (`PATCH /api/v1/admin/users/{id}/role`). Every privileged action calls `public.write_audit()` (who, what, when, why, request id). The `audit_log` table has no insert, update or delete grant for app users, and triggers reject update, delete and truncate for everyone, admins included (`supabase/migrations/20261124160007_rls_policies.sql`).
+**What:** TCU is the only admin, and the app can't make anyone admin (the police role was merged into TCU on 26 Nov 2026). Every new account waits for TCU: a self-signup is saved as `pending`, and the role reaches the session token only after TCU approves it at `/admin/approvals` (`POST /api/v1/admin/users/{id}/review`); a rejection needs a reason the person sees. `private.jwt_role()` checks the token role against an approved, matching `users` row, so a pending, rejected or deleted account, or a leftover "police" token, has no role in any database rule (`20261126040000_tcu_approval.sql`). TCU sees each waiting person's email, name and requested role; the privacy page says so. Role changes after approval stay TCU-only, with a written reason (`PATCH /api/v1/admin/users/{id}/role`). Every privileged action calls `public.write_audit()` (who, what, when, why, request id). The `audit_log` table has no insert, update or delete grant for app users, and triggers reject update, delete and truncate for everyone, admins included (`supabase/migrations/20261124160007_rls_policies.sql`).
 
-**Why:** if someone misuses a police account, we can show exactly what happened, and nobody can hide it afterwards.
+**Why:** only people TCU has checked can post reports or run a fleet, and if someone misuses a staff account, we can show exactly what happened, and nobody can hide it afterwards.
 
 ## 4. Reports are about the road, not people
 
@@ -74,8 +74,8 @@ The client IP is the first `X-Forwarded-For` entry, set by the Container Apps in
 
 **Why:** a wrong helpline number in an emergency is worse than none.
 
-## 10. The road overview for police and admin
+## 10. The road overview for TCU
 
-**What:** `/admin/overview` (`src/ui/admin/RoadOverview.tsx`) puts on one screen what the public map and API already show: zones at high and medium risk, the 48 h strip, road reports (unconfirmed first, with "I see it too"), police/TCU updates in force with their sources, and the Mughal Road / parcel train status. It is called "Road overview", not "control room", so it can't be taken for a police control room. It shows no names, no truck positions and no shipments. Only police and admin open it (`AdminGate` on the page; every write still goes through the same API checks). Road status reads "Open, according to the source" with the link, never a bare "Open". Changing road status stays admin-only.
+**What:** `/admin/overview` (`src/ui/admin/RoadOverview.tsx`) puts on one screen what the public map and API already show: zones at high and medium risk, the 48 h strip, road reports (unconfirmed first, with "I see it too"), police/TCU updates in force with their sources, and the Mughal Road / parcel train status. It is called "Road overview", not "control room", so it can't be taken for a police control room. It shows no names, no truck positions and no shipments. Only TCU opens it (`AdminGate` on the page; every write still goes through the same API checks). Road status reads "Open, according to the source" with the link, never a bare "Open". Changing road status stays admin-only.
 
-**Why:** the demo police account needs one place to watch the corridor, but a screen that looks like an official control room, or that shows people, would break rules 1 and 4.
+**Why:** TCU needs one place to watch the corridor, but a screen that looks like an official control room, or that shows people, would break rules 1 and 4.
