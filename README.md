@@ -81,7 +81,7 @@ flowchart LR
 
 ## Languages
 
-English, Hindi and Urdu on every screen and every API error, chosen with a cookie (no language in the URL). Urdu is right-to-left. In Hindi and Urdu the map's town names are drawn by the browser, not the map library, so the script is shaped correctly. CI fails if the three message files don't have the same keys. Reviews of safety text are tracked in [messages/REVIEW.md](messages/REVIEW.md); as of 25 Nov 2026 the safety strings are machine-drafted and **not yet reviewed** by fluent readers.
+English, Hindi and Urdu on every screen and every API error, chosen with a cookie (no language in the URL). Urdu is right-to-left. In Hindi and Urdu the map's town names are drawn by the browser, not the map library, so the script is shaped correctly. CI fails if the three message files don't have the same keys. Reviews of safety text are tracked in [messages/REVIEW.md](messages/REVIEW.md); as of 25 Nov 2026 the safety strings are machine-drafted and **not yet reviewed** by fluent readers. Design tokens, fonts and RTL: [docs/ui-languages.md](docs/ui-languages.md).
 
 ## Offline
 
