@@ -1,0 +1,7 @@
+# Findings gitleaks reports that are not secrets. One fingerprint per line
+# (commit:file:rule:line), each with the reason above it. Only add a line
+# after checking the value really isn't a key.
+
+# A random test UUID used as an Idempotency-Key in the report route tests;
+# the variable was called KEY. Renamed to CLIENT_ID in the next commit.
+5faf993b638d05e0ed274e2c6b3e0504ac9e6e93:src/server/reports/reports.routes.test.ts:generic-api-key:49
