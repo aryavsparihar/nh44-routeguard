@@ -173,3 +173,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · The road line is `data/nh44_line.json` cut at `zone_starts_km`, done once on the server (`src/shared/corridor.ts`) · No extra request; the browser gets about 800 points.
 - **2026-11-25** · `GET /api/v1/reports` (read) arrives now with the map; writing reports comes with B2 · The map needs the markers; the list shows only what the `public_reports` view already exposes (no user ids).
 
+## Round 3: advice (E1, C4)
+
+- **2026-11-25** · One `decide()` in `src/shared/decide.ts` runs on the server (`POST /api/v1/advice`) and on the phone · Online, the advisor asks the server, so the answer comes from our backend (L12). With no signal, the phone runs the same function on the scores it saved last and says "worked out on this phone". A test sends the same inputs to both and expects the same answer.
+- **2026-11-25** · The Round 1 rules (SEND / HOLD / RAIL / DIVERT) from the Round 2 prototype, except Mughal Road and the parcel train · They are suggested only when an admin has marked them open / running in `road_status`. Unknown says "check with J&K Traffic Police (TCU)" or "check with Northern Railway" (L14). No month-based "in season" guess.
+- **2026-11-25** · No scores at all gives HOLD, never SEND · We can't call a road safe without data.
+- **2026-11-25** · Priority is a band (high / medium / low) with its inputs shown: share of shelf life used × load value in lakh rupees (L13) · A bare "2.00" meant nothing. The shelf-life days, ₹/kg, road hours and band cut-offs live in `config/advice-assumptions.json` (versioned) and are labelled "our starting assumptions, not sourced figures" on screen. On 2026-11-25 we looked for sources (Azadpur APMC prices, NHB and Indian shelf-life studies) and found none we could cite for a loaded truck, so the prototype's placeholder values stay as starting values.
+- **2026-11-25** · Advice answers are codes (`reason_code`, `delay_code`, `notes`) translated on the phone · Same words in all three languages, and the shipment board can store the code with `rules_version`.
+- **2026-11-25** · When every zone is low, the advisor doesn't name a "deciding" zone · Same reason as L2: a tie at 0.00 must not point at zone 1.
+
