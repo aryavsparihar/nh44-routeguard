@@ -455,7 +455,8 @@
         "roadStatus": "سڑک کی حالت طے کی",
         "reportHidden": "رپورٹ چھپائی گئی",
         "reportResolved": "رپورٹ صاف بتائی گئی",
-        "reportRestored": "رپورٹ واپس لائی گئی"
+        "reportRestored": "رپورٹ واپس لائی گئی",
+        "reportOfficialConfirm": "پولیس یا ایڈمن نے رپورٹ کی تصدیق کی"
       },
       "by": "{role} {id} نے",
       "target": "{target} پر",

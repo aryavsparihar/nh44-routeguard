@@ -455,7 +455,8 @@
         "roadStatus": "Road status set",
         "reportHidden": "Report hidden",
         "reportResolved": "Report cleared",
-        "reportRestored": "Report restored"
+        "reportRestored": "Report restored",
+        "reportOfficialConfirm": "Report confirmed by police or admin"
       },
       "by": "By {role} {id}",
       "target": "On {target}",

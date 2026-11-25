@@ -455,7 +455,8 @@
         "roadStatus": "सड़क की स्थिति तय की",
         "reportHidden": "रिपोर्ट छिपाई गई",
         "reportResolved": "रिपोर्ट साफ़ बताई गई",
-        "reportRestored": "रिपोर्ट वापस लाई गई"
+        "reportRestored": "रिपोर्ट वापस लाई गई",
+        "reportOfficialConfirm": "पुलिस या एडमिन ने रिपोर्ट की पुष्टि की"
       },
       "by": "{role} {id} ने",
       "target": "{target} पर",

@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(223);
+select plan(227);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -563,6 +563,26 @@ select throws_ok($$ select * from private.confirm_report(
   (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), null, null,
   (select j from report_rules)) $$,
   'P0002', null::text, 'reports: a hidden report cannot be confirmed');
+
+-- Police confirming on their own is a privileged action: it is audited
+-- (20261126010000_audit_official_confirm.sql). Still the police caller here.
+select is((select status || ' ' || outcome from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4'), null, null,
+  (select j from report_rules), 'req-police-confirm')),
+  'confirmed confirmed', 'reports: one police confirmation confirms a report');
+select is((select outcome from private.confirm_report(
+  (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4'), null, null,
+  (select j from report_rules), 'req-police-again')),
+  'repeat', 'reports: a repeat police confirmation counts once');
+set local role postgres;
+select is((select count(*) || ' ' || min(actor_id) || ' ' || min(actor_role) || ' ' || min(request_id)
+           from public.audit_log where action = 'report.official_confirm'
+             and target_id = (select id::text from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4')),
+  '1 user_testpolice police req-police-confirm', 'audit: a police confirmation is logged once, with who and the request id');
+select is((select count(*) from public.audit_log where action = 'report.official_confirm'
+             and target_id = (select id::text from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1')),
+  0::bigint, 'audit: confirmations by drivers are not in the audit log');
+set local role authenticated;
 
 set local role anon;
 set local request.jwt.claims = '{"role": "anon"}';
