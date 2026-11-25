@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     ".venv*/**",
     "jobs/.venv/**",
     "scripts/round2/.build/**",
+    // Copied from node_modules before dev/build (scripts/ui/copy-maplibre-worker.mjs).
+    "public/vendor/**",
     "team-guides/**",
   ]),
 ]);

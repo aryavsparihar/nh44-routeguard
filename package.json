@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/ui/copy-maplibre-worker.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/ui/copy-maplibre-worker.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -24,6 +26,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "drizzle-orm": "0.45.4",
+    "maplibre-gl": "6.17.0",
     "next": "16.4.6",
     "next-intl": "4.15.0",
     "pino": "10.4.0",

@@ -61,3 +61,6 @@ jobs/.cache/
 
 # Personal checklists (scripts/incidents_checklist.py)
 *.local.md
+
+# MapLibre worker, copied from node_modules before dev/build
+/public/vendor/
