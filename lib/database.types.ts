@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          agent_id: string
+          code: string
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          agent_id: string
+          code: string
+          created_at?: string
+          expires_at: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          agent_id?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_invites_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_invites_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string

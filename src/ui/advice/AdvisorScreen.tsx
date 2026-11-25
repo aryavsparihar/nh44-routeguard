@@ -10,9 +10,10 @@ import type { RiskMeta, RiskRow } from "@/src/shared/risk";
 import { getJson, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
 import { LevelBadge } from "@/src/ui/risk/LevelBadge";
+import { SignInLink } from "@/src/ui/SignInLink";
 
 type RoadRow = { item: string; state: RoadStatus["mughal_road"] };
-type Result = { advice: Advice; source: "server" | "phone" };
+type Result = { advice: Advice; source: "server" | "phone"; lot: Lot };
 
 const DECISION_STYLE: Record<Decision, { box: string; icon: IconName }> = {
   SEND: { box: "border-send-fill bg-send-bg text-send-text", icon: "decision-send" },
@@ -92,7 +93,7 @@ export function AdvisorScreen() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        setResult({ advice: (await res.json()).data as Advice, source: "server" });
+        setResult({ advice: (await res.json()).data as Advice, source: "server", lot: body });
         return;
       }
       if (res.status < 500) throw new Error("rejected"); // our form checks match the API's
@@ -101,7 +102,7 @@ export function AdvisorScreen() {
       // No signal or server down: the same rules on this phone.
       if (error instanceof TypeError && saved.current) {
         const s = saved.current;
-        setResult({ advice: decide(body, { rows: s.rows, run_at: s.run_at }, s.road), source: "phone" });
+        setResult({ advice: decide(body, { rows: s.rows, run_at: s.run_at }, s.road), source: "phone", lot: body });
       } else {
         setFailed(true);
       }
@@ -314,9 +315,68 @@ function AdviceResult({
       </p>
       <p className="text-sm font-bold">{t("disclaimer")}</p>
 
+      {source === "server" && <SaveLot lot={result.lot} />}
+
       <button type="button" onClick={onAgain} className="min-h-12 rounded-md border border-border-strong bg-elevated px-4 font-bold">
         {t("again")}
       </button>
+    </div>
+  );
+}
+
+// "Save this lot to my board" (D4): a grower, trader or agent keeps the lot,
+// with the advice the server gives at that moment, on /board.
+function SaveLot({ lot }: { lot: Lot }) {
+  const t = useTranslations("advice.save");
+  const [state, setState] = useState<"idle" | "busy" | "saved" | "signIn" | "wrongRole" | "error">("idle");
+
+  async function save() {
+    setState("busy");
+    const picked = new Date(Date.now() + 330 * 60_000);
+    picked.setUTCDate(picked.getUTCDate() - lot.days_since_picking);
+    try {
+      const res = await fetch("/api/v1/shipments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          variety: lot.variety,
+          harvest_date: picked.toISOString().slice(0, 10),
+          tonnes: lot.tonnes,
+          destination: lot.destination,
+          truck_type: lot.truck_type,
+        }),
+      });
+      setState(res.status === 201 ? "saved" : res.status === 401 ? "signIn" : res.status === 403 ? "wrongRole" : "error");
+    } catch {
+      setState("error");
+    }
+  }
+
+  if (state === "saved" || state === "signIn") {
+    return (
+      <p role="status" className="flex flex-wrap items-center gap-2">
+        {state === "saved" && <span>{t("saved")}</span>}
+        <SignInLink href="/board" className="underline">
+          {state === "saved" ? t("open") : t("signIn")}
+        </SignInLink>
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => void save()}
+        disabled={state === "busy"}
+        className="min-h-12 rounded-md bg-highway px-4 font-bold text-inverse disabled:opacity-60"
+      >
+        {t("label")}
+      </button>
+      {(state === "wrongRole" || state === "error") && (
+        <p role="alert" className="text-sm font-bold text-high-text">
+          {state === "wrongRole" ? t("wrongRole") : t("err")}
+        </p>
+      )}
     </div>
   );
 }

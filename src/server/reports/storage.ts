@@ -9,10 +9,9 @@ import { ServiceUnavailableError } from "@/src/server/http/errors";
 //
 // Uploads use the reporter's own Clerk session token, so Storage's RLS
 // decides: you can only write into the folder named after your user id.
-// Signed links are made as a signed-out visitor, which the policy allows only
-// for photos of reports that aren't hidden. No secret key is used here.
+// Photos are read as a signed-out visitor, which the policy allows only for
+// photos of reports that aren't hidden. No secret key is used here.
 export const PHOTO_BUCKET = "report-photos";
-export const SIGNED_URL_SECONDS = 600; // 10 minutes (section 10)
 
 function client(token?: string) {
   const env = getSupabasePublicEnv();
@@ -45,7 +44,10 @@ export async function removePhoto(path: string): Promise<void> {
   await client(await sessionToken()).storage.from(PHOTO_BUCKET).remove([path]);
 }
 
-export async function signedPhotoUrl(path: string): Promise<string | null> {
-  const { data, error } = await client().storage.from(PHOTO_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS);
-  return error || !data ? null : data.signedUrl;
+// The photo's bytes, or null if Storage won't give them. The route streams
+// them to the visitor, so the path (which holds the reporter's user id) never
+// leaves the server.
+export async function readPhoto(path: string): Promise<Uint8Array | null> {
+  const { data, error } = await client().storage.from(PHOTO_BUCKET).download(path);
+  return error || !data ? null : new Uint8Array(await data.arrayBuffer());
 }

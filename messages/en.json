@@ -295,7 +295,15 @@
     "assumptions": "Shelf life ({days} days) and price (₹{price}/kg) are our starting assumptions, not sourced figures (version {version}).",
     "computedServer": "Worked out by the RouteGuard server from scores of {time}.",
     "computedPhone": "No signal: worked out on this phone from saved scores of {time}.",
-    "disclaimer": "Advice only, not a road status. Follow J&K Traffic Police instructions."
+    "disclaimer": "Advice only, not a road status. Follow J&K Traffic Police instructions.",
+    "save": {
+      "label": "Save this lot to my board",
+      "saved": "Saved to your board.",
+      "open": "Open the board",
+      "signIn": "Sign in to save this lot",
+      "wrongRole": "Only growers, traders and agents save lots.",
+      "err": "Could not save. Try again."
+    }
   },
   "admin": {
     "heading": "Admin",
@@ -503,6 +511,129 @@
       "tooMany": "You have sent a lot of reports this hour. Wait a while, then try again.",
       "paused": "Reporting is paused for now. The map and advice still work.",
       "server": "Could not send. Check your connection and try again."
+    }
+  },
+  "board": {
+    "heading": "Board",
+    "loading": "Loading the board…",
+    "noRole": "Pick your role first.",
+    "pickRole": "Go to your account",
+    "wrongRole": "The board is for agents, drivers, growers and traders.",
+    "intro": {
+      "agent": "Your trucks, your drivers and the codes that let drivers join you.",
+      "driver": "The trucks you drive. Share where you are so your agent knows.",
+      "grower": "Lots you saved, with the advice from when you saved them.",
+      "trader": "Lots you saved, with the advice from when you saved them.",
+      "admin": "Every shipment, read only."
+    },
+    "live": {
+      "connecting": "Connecting for live updates…",
+      "live": "Live: changes show up by themselves",
+      "off": "Not live: this list reloads every minute"
+    },
+    "reload": "Reload",
+    "list": {
+      "agent": "Trucks",
+      "driver": "Your trucks",
+      "lots": "Your lots"
+    },
+    "empty": {
+      "agent": "No trucks yet. Add one above.",
+      "driver": "No truck is assigned to you yet. Ask your agent.",
+      "grower": "No lots yet. Save one above or from the Advisor.",
+      "trader": "No lots yet. Save one above or from the Advisor.",
+      "admin": "No shipments yet."
+    },
+    "status": {
+      "planned": "Planned",
+      "holding": "Holding",
+      "moving": "Moving",
+      "stuck": "Stuck",
+      "on_rail": "On the rail",
+      "diverted": "Diverted",
+      "delivered": "Delivered"
+    },
+    "lot": "{variety}, {tonnes} t to {destination}",
+    "coldStored": "Cold stored",
+    "demo": "Demo",
+    "adviceAtSave": "Advice when saved: {decision}",
+    "driver": "Driver",
+    "driverHidden": "Assigned",
+    "noDriver": "No driver",
+    "unnamed": "No name yet",
+    "harvested": "Picked on",
+    "eta": "Expected arrival (India time)",
+    "lastSeen": "Last seen",
+    "changeStatus": "Status",
+    "assignDriver": "Driver",
+    "saved": "Saved.",
+    "shareLocation": "Share where I am now",
+    "sending": "Sending…",
+    "locationSent": "Sent. Your agent sees the stretch of road, not your exact spot.",
+    "created": "Saved. Advice right now: {decision}.",
+    "new": {
+      "openAgent": "Add a truck",
+      "openLot": "Save a lot",
+      "headingAgent": "Add a truck",
+      "headingLot": "Save a lot",
+      "harvest": "Picked on",
+      "truckNumber": "Truck number (optional)",
+      "truckHint": "Like JK05G7712. One truck can have only one active shipment.",
+      "save": "Save",
+      "close": "Close"
+    },
+    "join": {
+      "heading": "Join your agent",
+      "code": "Invite code",
+      "hint": "8 letters and digits from your agent.",
+      "submit": "Join",
+      "joined": "You joined. Your agent can now give you trucks.",
+      "repeat": "You already joined with this code.",
+      "unknown": "That code doesn't exist. Check it with your agent.",
+      "used": "That code was already used or has expired. Ask your agent for a new one."
+    },
+    "fleet": {
+      "heading": "Your drivers",
+      "inviteHint": "A driver joins you by typing an invite code on their board. Each code works once, for 7 days.",
+      "newInvite": "Make an invite code",
+      "giveCode": "Give this code to the driver:",
+      "expires": "Works until {time}.",
+      "codes": "Your codes ({count})",
+      "usedBy": "used by {name}",
+      "expired": "expired",
+      "open": "not used yet",
+      "tooMany": "You have 20 codes nobody used yet. Wait until some are used or expire.",
+      "noDrivers": "No drivers yet. Give a driver an invite code.",
+      "sharesLocation": "shares location",
+      "noLocation": "location off",
+      "vouch": "I know this driver",
+      "vouched": "Done. {name} is now vouched for by you.",
+      "repeat": "{name} is already vouched for.",
+      "vouchHint": "Vouch only for drivers you know. Their road reports count for more, and it is written to the audit log.",
+      "privacy": "Privacy"
+    },
+    "level": {
+      "none": "Not verified",
+      "email": "Email checked",
+      "agent_vouched": "Vouched by agent",
+      "aadhaar_qr": "Aadhaar checked",
+      "official": "Official"
+    },
+    "err": {
+      "load": "Could not load this. Check your connection and try again.",
+      "offline": "No connection. Try again when you have signal.",
+      "signedOut": "You are signed out. Sign in again to continue.",
+      "forbidden": "Your role can't do this. If your role just changed, sign in again.",
+      "notFound": "Not found. Reload the board.",
+      "conflict": "This clashes with a change someone else made. Reload the board.",
+      "invalid": "Some fields are not valid. Check the marked fields.",
+      "tooMany": "Too many tries. Wait a while and try again.",
+      "server": "Could not save. Try again.",
+      "driver": "That driver isn't in your fleet.",
+      "truckActive": "This truck already has a shipment that isn't delivered. Mark that one delivered first.",
+      "consent": "Turn on location sharing in your account first.",
+      "outside": "Your position looks outside India. Try again outdoors.",
+      "noGps": "Could not get your position. Allow location for this site and try again."
     }
   }
 }

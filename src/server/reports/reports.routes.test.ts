@@ -35,7 +35,7 @@ const storage = vi.hoisted(() => ({
   photoPath: (user: string, id: string) => `${user}/${id}.webp`,
   uploadPhoto: vi.fn(),
   removePhoto: vi.fn(),
-  signedPhotoUrl: vi.fn(),
+  readPhoto: vi.fn(),
 }));
 vi.mock("@/src/server/reports/storage", () => storage);
 
@@ -264,13 +264,22 @@ describe("GET /api/v1/reports/{id}/photo", () => {
     expect((await get()).status).toBe(404);
   });
 
-  it("redirects to a short-lived signed link, never cached by shared caches", async () => {
+  it("sends the photo bytes itself, so the storage path never reaches the visitor", async () => {
     repo.visiblePhotoPath.mockResolvedValue("user_driver1/x.webp");
-    storage.signedPhotoUrl.mockResolvedValue("https://example.supabase.co/storage/v1/object/sign/report-photos/x?token=t");
+    storage.readPhoto.mockResolvedValue(new Uint8Array([82, 73, 70, 70]));
     const res = await get();
-    expect(res.status).toBe(302);
-    expect(res.headers.get("Location")).toContain("/object/sign/");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("image/webp");
+    expect(res.headers.get("Location")).toBeNull();
     expect(res.headers.get("Cache-Control")).toBe("private, max-age=300");
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([82, 73, 70, 70]));
+    expect(JSON.stringify([...res.headers])).not.toContain("user_driver1");
+  });
+
+  it("is 404 when Storage won't give the photo", async () => {
+    repo.visiblePhotoPath.mockResolvedValue("user_driver1/x.webp");
+    storage.readPhoto.mockResolvedValue(null);
+    expect((await get()).status).toBe(404);
   });
 });
 

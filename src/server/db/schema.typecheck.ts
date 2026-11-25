@@ -9,6 +9,7 @@ type Pub = Database["public"];
 type SameKeys<A, B> = [keyof A] extends [keyof B] ? ([keyof B] extends [keyof A] ? true : false) : false;
 type Check<T extends true> = T;
 
+export type agentInvitesColumns = Check<SameKeys<typeof s.agentInvites.$inferSelect, Pub["Tables"]["agent_invites"]["Row"]>>;
 export type auditLogColumns = Check<SameKeys<typeof s.auditLog.$inferSelect, Pub["Tables"]["audit_log"]["Row"]>>;
 export type hexesColumns = Check<SameKeys<typeof s.hexes.$inferSelect, Pub["Tables"]["hexes"]["Row"]>>;
 export type idempotencyKeysColumns = Check<SameKeys<typeof s.idempotencyKeys.$inferSelect, Pub["Tables"]["idempotency_keys"]["Row"]>>;
