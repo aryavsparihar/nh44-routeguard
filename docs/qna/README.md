@@ -21,10 +21,10 @@ The Supreme Court's 2018 Puttaswamy judgment stopped private companies from requ
 In `.env.local` on our machines and in Container Apps secrets in production, never in git. CI runs gitleaks, checks the browser bundle and the Docker image for secret values, and fails if code reads an env var that `.env.example` doesn't list.
 
 **What does the Aadhaar check prove, and what not?**
-Not built yet (P1, behind `FEATURE_AADHAAR_QR`). If built: the Secure QR signature proves UIDAI issued that data. It does not prove the person holding the phone is that person (no holder binding), and we are not a registered OVSE.
+Built, optional, behind `FEATURE_AADHAAR_QR` (`docs/verification.md`). The Secure QR signature, checked on our server against UIDAI's pinned certificate, proves UIDAI issued that data, and we compare its name with the profile. It does not prove the person holding the phone is that person (no holder binding), and we are not a registered OVSE.
 
 **What changed since Round 1, and why is it within 15%?**
-See the "Changes since Round 1" table in the README and BUILD_PROMPT section 3. The features are the same; what changed is how: Clerk email codes instead of Supabase phone OTP (SMS costs money on Clerk's free plan), Azure Container Apps instead of Vercel, and additions that make existing features trustworthy (verification, audit log, queue).
+See the "Changes since Round 1" table in the README and BUILD_PROMPT section 3. The features are the same; what changed is how: Clerk email codes instead of Supabase phone OTP (SMS costs money on Clerk's free plan), Azure Container Apps instead of Vercel, and additions that make existing features trustworthy (verification, audit log, queue, the optional Aadhaar check). Drivers post only once verified, which is what the PPT promised.
 
 **How does it scale?**
 `docs/scaling.md`. Risk is computed once an hour for everyone; reads are cached (ETag/304, 60 s memory cache); writes go through a Postgres queue; the app is stateless and runs 0 to 3 replicas.

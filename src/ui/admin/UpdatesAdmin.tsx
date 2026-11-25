@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { Locale } from "@/src/i18n/routing";
-import { formatDayTime, isolate } from "@/src/shared/format";
+import { EXTERNAL_REL, formatDayTime, isolate, sourceHost } from "@/src/shared/format";
 import { ApiFetchError, getJson, sendJson, type ApiList } from "@/src/ui/api";
 import { NotOfficial } from "@/src/ui/NotOfficial";
 import {
@@ -302,8 +302,9 @@ export function UpdatesAdmin() {
                 )}
                 <p>
                   <bdi>{tk("from", { name: u.source_name })}</bdi> ·{" "}
-                  <a href={u.source_url} target="_blank" rel="noopener noreferrer" className="underline">
+                  <a href={u.source_url} target="_blank" rel={EXTERNAL_REL} className="underline">
                     {tk("sourceLink")}
+                    {sourceHost(u.source_url) && <> ({isolate(sourceHost(u.source_url)!)})</>}
                   </a>
                 </p>
                 <p className="text-secondary">

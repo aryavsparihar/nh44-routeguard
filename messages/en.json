@@ -58,6 +58,8 @@
     "consent": "We ask you before turning on location sharing and before any identity check, and we record which version of this notice you agreed to. You can turn location sharing off at any time.",
     "deleteTitle": "Deleting your data",
     "delete": "You can delete your account. Your road reports then stay in the history without your name or user id.",
+    "contactTitle": "Contact",
+    "contact": "Questions about your data, or a request to correct or delete it: open an issue on our GitHub page, without personal details in it, and we answer there. Or delete your account yourself on your account page.",
     "emergency": "RouteGuard is not an emergency service. In an emergency call 112."
   },
   "risk": {
@@ -866,7 +868,7 @@
         "read": "Your phone reads the QR. Only the QR text goes to our server, where we check the signature and the name.",
         "keep": "We keep only: the result, the last 4 digits of your Aadhaar number, and the date. Not your name, date of birth, address or photo.",
         "never": "Never type your Aadhaar number anywhere in RouteGuard. No card photo is uploaded.",
-        "optional": "This is optional. RouteGuard is a student project, not a government service."
+        "optional": "This is optional: your transport agent can vouch for you instead. RouteGuard is a student project, not a government service."
       },
       "agree": "I agree to RouteGuard checking my Aadhaar Secure QR as described above.",
       "scan": "Scan with camera",

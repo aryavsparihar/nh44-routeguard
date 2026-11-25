@@ -176,6 +176,7 @@ The 7 MVP features, the roles, the risk model and the data design stay as in the
 | Extra languages on the cut list | English, Hindi, Urdu built | Users in J&K read Urdu and Hindi; was already planned as a stretch | Planned stretch |
 | `users.phone` column in the ER diagram | Phone number stays in Clerk only; our table keeps a verification level | Less personal data in our database | How, not what |
 | (not stated) | Cache + queue + autoscaling | Scaling bonus | How, not what |
+| Unverified reports stay "unconfirmed" | Drivers post only once verified (agent vouch, or the optional Aadhaar check); agents' reports still start "unconfirmed" (added 26 Nov 2026) | Stops fake reports from reaching the map; matches the PPT's "verified driver reports" | Tightening, not new |
 
 If anyone proposes anything that would change what the product does (a new user type, new core feature, different problem), the answer is no until after the round.
 
@@ -402,7 +403,7 @@ Write this as `docs/verification.md` and show a one-line version in the app wher
 
 **Reports**
 - New report from a verified driver, police or admin → shown at once with a solid marker.
-- From anyone else → "unconfirmed", dashed marker.
+- From anyone else → "unconfirmed", dashed marker. *(26 Nov 2026: drivers can't post until verified, so in practice this is an agent's report; see `docs/decisions.md`.)*
 - Confirmed when two other verified users within 2 km confirm it within 3 h, or police/admin confirms it.
 - Expiry by type, kept in config: landslide/rockfall 6 h, accident 3 h, snow/ice 12 h, flash flood 6 h. Expired reports leave the map but stay in history.
 - Duplicates: the same hazard within 500 m and 60 min becomes a confirmation of the first report, not a new pin.

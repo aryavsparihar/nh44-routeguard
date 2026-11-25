@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import type { Locale } from "@/src/i18n/routing";
 import type { OfficialUpdate, PublicReport } from "@/src/shared/api-types";
-import { formatDayTime, isolate } from "@/src/shared/format";
+import { EXTERNAL_REL, formatDayTime, isolate, sourceHost } from "@/src/shared/format";
 import { NotOfficial } from "@/src/ui/NotOfficial";
 import { ReportActions } from "./ReportActions";
 
@@ -37,8 +37,9 @@ export function OfficialUpdates({ updates }: { updates: OfficialUpdate[] }) {
               )}
               <p className="text-sm">
                 <bdi>{t("from", { name: u.source_name })}</bdi> ·{" "}
-                <a href={u.source_url} target="_blank" rel="noopener noreferrer" className="underline">
+                <a href={u.source_url} target="_blank" rel={EXTERNAL_REL} className="underline">
                   {t("sourceLink")}
+                  {sourceHost(u.source_url) && <> ({isolate(sourceHost(u.source_url)!)})</>}
                 </a>{" "}
                 · {t("issued", { time: isolate(formatDayTime(new Date(u.issued_at), locale)) })} ·{" "}
                 {t("validUntil", { time: isolate(formatDayTime(new Date(u.valid_until), locale)) })}

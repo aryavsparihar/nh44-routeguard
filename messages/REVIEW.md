@@ -17,7 +17,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `banner.*` | not yet reviewed | not yet reviewed | |
 | `header.*`, `nav.*`, `home.*`, `notFound.*`, `meta.*` | not yet reviewed | not yet reviewed | |
 | `risk.*`, `strip.*`, `summary.*` (risk levels) | not yet reviewed | not yet reviewed | Levels must read as advice, not as a road status |
-| `reason.*` (why a zone is risky) | not yet reviewed | not yet reviewed | Hazard words and units (mm, cm, m, °C); `places.*` stay English for now |
+| `reason.*` (why a zone is risky) | not yet reviewed | not yet reviewed | Hazard words and units (mm, cm, m, °C); place names are in the row above |
 | `advice.*` (safety: SEND/HOLD/RAIL/DIVERT) | not yet reviewed | not yet reviewed | Must not sound like an order or a road status; "check with TCU / Northern Railway" must stay clear |
 | `updates.*`, `reports.*` | not yet reviewed | not yet reviewed | "Closure", "one-way" must match what J&K Traffic Police say |
 | `report.*`, `reports.actions.*` (report screen, consent) | not yet reviewed | not yet reviewed | Safety and consent text: "photograph the road, not people", the location consent and "I see it too" must read clearly |
@@ -26,7 +26,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `auth.*`, `me.*` (sign-in, account, consent, deletion) | not yet reviewed | not yet reviewed | Consent and deletion text: "we deleted your last position", "this can't be undone" must be exact |
 | `offline.*`, `report.queued`, `board.savedCopy`, `me.signOutWaiting`, and `public/offline.html` | not yet reviewed | not yet reviewed | Tells people a report is saved and will send by itself; must not promise it was sent |
 | `push.*`, `me.alerts.*`, `privacy.collectAlerts` (alerts) | not yet reviewed | not yet reviewed | Alert text arrives on a locked phone: "confirmed" and the advisory line must be exact; the privacy line is consent text |
-| `me.aadhaar.*`, `privacy.collectAadhaar` (Aadhaar QR check) | not yet reviewed | not yet reviewed | Consent text: "we keep only the result and the last 4 digits" and "never type your Aadhaar number" must be exact |
+| `me.aadhaar.*`, `privacy.collectAadhaar`, `privacy.contact*`, `report.verify.*` (Aadhaar check, contact, get verified) | not yet reviewed | not yet reviewed | Consent text: "we keep only the result and the last 4 digits" and "never type your Aadhaar number" must be exact |
 | `risk.replay.*` (past-storm replay) | not yet reviewed | not yet reviewed | Safety text: must say clearly the map is a past storm, not today, and that later times are the weather that came, not a forecast |
 
 ## Choices for the reviewers
@@ -36,8 +36,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
   `src/i18n/locale.ts` if the Urdu reviewer prefers Urdu digits.
 - **Urdu font:** Noto Nastaliq Urdu with line height 1.9. If it is too tall
   on a small phone, switch to Noto Naskh Arabic in `src/ui/fonts.ts`.
-- **Place and zone names:** kept in English spelling until a reviewer
-  confirms the Hindi and Urdu spellings. Don't trust a machine for these.
+- **Place and zone names:** town names on the map and in risk reasons are drafted in Hindi and Urdu (`reason.places.*`, `risk.mapPlaces.*`) and need a reviewer who knows the local spellings. Zone names from the database stay in English. Don't trust a machine for these.
 - **Role words:** grower = उत्पादक / کاشتکار, trader = व्यापारी / تاجر,
   agent = एजेंट / ایجنٹ, driver = ड्राइवर / ڈرائیور.
 

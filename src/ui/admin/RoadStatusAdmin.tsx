@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import type { Locale } from "@/src/i18n/routing";
-import { formatDayTime, isolate } from "@/src/shared/format";
+import { EXTERNAL_REL, formatDayTime, isolate, sourceHost } from "@/src/shared/format";
 import { sendJson, useApi, type ApiList } from "@/src/ui/api";
 import { LoadError } from "@/src/ui/risk/states";
 import { Field, Notice, buttonClass, inputClass, useErrorText } from "./common";
@@ -79,8 +79,9 @@ function ItemForm({ item, row }: { item: Item; row: Row | null }) {
         {current?.source_url && (
           <>
             {" · "}
-            <a href={current.source_url} target="_blank" rel="noopener noreferrer" className="underline">
+            <a href={current.source_url} target="_blank" rel={EXTERNAL_REL} className="underline">
               {t("sourceNow")}
+              {sourceHost(current.source_url) && <> ({isolate(sourceHost(current.source_url)!)})</>}
             </a>
           </>
         )}

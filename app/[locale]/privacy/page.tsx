@@ -22,6 +22,10 @@ const COLLECT = [
   "collectLogs",
 ] as const;
 
+// Public contact for data questions (section 10.8). A GitHub issue, so no
+// team member's personal email is published.
+const CONTACT_URL = "https://github.com/aryavsparihar/nh44-routeguard/issues";
+
 export default async function PrivacyPage() {
   const t = await getTranslations("privacy");
   return (
@@ -48,6 +52,14 @@ export default async function PrivacyPage() {
 
       <h2>{t("deleteTitle")}</h2>
       <p>{t("delete")}</p>
+
+      <h2>{t("contactTitle")}</h2>
+      <p>
+        {t("contact")}{" "}
+        <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="underline">
+          <bdi>github.com/aryavsparihar/nh44-routeguard/issues</bdi>
+        </a>
+      </p>
 
       <p className="font-bold">{t("emergency")}</p>
     </article>
