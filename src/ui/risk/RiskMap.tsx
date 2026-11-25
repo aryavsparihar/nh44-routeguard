@@ -6,6 +6,7 @@ import type { GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
 import type { PublicReport } from "@/src/shared/api-types";
 import type { Level } from "@/src/shared/risk";
+import { SimpleMap } from "./SimpleMap";
 
 // The base map: OpenFreeMap (free, no key, OpenStreetMap data). Allowed in
 // the CSP (src/server/security-headers.ts).
@@ -22,9 +23,12 @@ export type MapProps = {
   levels: Record<number, Level>; // zone id → level to draw
   reports: PublicReport[];
   label: string; // what the map shows, for screen readers
-  failedText: string;
-  // Hindi/Urdu: our own town labels (page text) instead of the base map's.
-  placeLabels?: { name: string; lng: number; lat: number }[];
+  simpleText: string; // under the simple map: why it is simple
+  // Town names in the page's language. The full map draws them only when
+  // baseLabels is false (Hindi/Urdu: the base map's own labels would be
+  // English or badly shaped); the simple map always does.
+  places: { name: string; lng: number; lat: number }[];
+  baseLabels: boolean;
   // H3 cells along the road, each with the level to draw.
   hexes?: { boundary: [number, number][]; level: Level }[];
 };
@@ -38,6 +42,16 @@ function hexData(hexes: MapProps["hexes"]) {
       geometry: { type: "Polygon" as const, coordinates: [h.boundary] },
     })),
   };
+}
+
+// MapLibre needs WebGL 2. Brave and Chrome have none with "Use hardware
+// acceleration" off, so check before downloading the map's script.
+function hasWebGL2(): boolean {
+  try {
+    return !!document.createElement("canvas").getContext("webgl2");
+  } catch {
+    return false;
+  }
 }
 
 function cssColor(name: string): string {
@@ -56,22 +70,43 @@ function corridorData(segments: CorridorSegment[], levels: Record<number, Level>
 }
 
 // The map is a picture of the zone list below it, so it is hidden from
-// screen readers except for one label (role="img").
-export function RiskMap({ segments, bounds, levels, reports, label, failedText, placeLabels, hexes }: MapProps) {
+// screen readers except for one label (role="img"). When the full map can't
+// run (no WebGL, or the base map's host blocked by Brave Shields or an ad
+// blocker) it falls back to the simple SVG map (SimpleMap.tsx).
+export function RiskMap({ segments, bounds, levels, reports, label, simpleText, places, baseLabels, hexes }: MapProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const markers = useRef<Marker[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   // The newest props, for the map's load handler (which runs later).
-  const latest = useRef({ segments, levels, placeLabels, hexes });
+  const latest = useRef({ segments, levels, places, baseLabels, hexes });
   useEffect(() => {
-    latest.current = { segments, levels, placeLabels, hexes };
+    latest.current = { segments, levels, places, baseLabels, hexes };
   });
 
   useEffect(() => {
     let cancelled = false;
     let instance: MapLibreMap | null = null;
+    // Give up on the full map: drop it and show the simple one.
+    const fallBack = () => {
+      if (cancelled) return;
+      cancelled = true;
+      const old = instance;
+      instance = null;
+      map.current = null;
+      setFailed(true);
+      // Not inside MapLibre's own event handler.
+      if (old) setTimeout(() => old.remove(), 0);
+    };
+    if (!hasWebGL2()) {
+      // In a timeout, not straight in the effect body (one render at a time).
+      const t = setTimeout(fallBack, 0);
+      return () => {
+        cancelled = true;
+        clearTimeout(t);
+      };
+    }
     // MapLibre is about 1 MB of script. Start it once the browser is idle, so
     // the scores and text paint first (Lighthouse "total blocking time").
     const idle = new Promise<void>((resolve) => {
@@ -97,19 +132,21 @@ export function RiskMap({ segments, bounds, levels, reports, label, failedText, 
         created.touchZoomRotate.disableRotation();
         map.current = created;
         let ready = false;
+        // Before "load" an error means the style, its fonts or its icons
+        // didn't arrive (blocked or offline): nothing useful will draw.
         created.on("error", () => {
-          if (!ready) setFailed(true);
+          if (!ready) fallBack();
         });
         created.on("load", () => {
           ready = true;
           const m = created;
-          const { segments: segs, levels: lv, placeLabels: places, hexes: cells } = latest.current;
-          if (places?.length) {
+          const { segments: segs, levels: lv, places: names, baseLabels: base, hexes: cells } = latest.current;
+          if (!base) {
             // The base map's labels would be English or badly shaped here.
             for (const layer of m.getStyle().layers ?? []) {
               if (layer.type === "symbol") m.setLayoutProperty(layer.id, "visibility", "none");
             }
-            for (const p of places) {
+            for (const p of names) {
               const el = document.createElement("span");
               el.className = "map-place";
               el.textContent = p.name; // text, never HTML
@@ -156,7 +193,7 @@ export function RiskMap({ segments, bounds, levels, reports, label, failedText, 
           });
         });
       })
-      .catch(() => setFailed(true)); // no WebGL, or the script didn't load
+      .catch(fallBack); // WebGL failed after all, or the script didn't load
 
     return () => {
       cancelled = true;
@@ -208,7 +245,12 @@ export function RiskMap({ segments, bounds, levels, reports, label, failedText, 
   }, [loaded, reports]);
 
   if (failed) {
-    return <p className="rounded-md border border-border bg-surface p-3 text-sm">{failedText}</p>;
+    return (
+      <div className="flex flex-col gap-1">
+        <SimpleMap segments={segments} bounds={bounds} levels={levels} reports={reports} places={places} label={label} />
+        <p className="text-sm text-secondary">{simpleText}</p>
+      </div>
+    );
   }
   return (
     <div

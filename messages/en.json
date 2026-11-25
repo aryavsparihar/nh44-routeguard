@@ -102,7 +102,7 @@
     "retry": "Try again",
     "noScores": "No risk scores yet. The hourly update hasn't run.",
     "mapLabel": "Map of NH-44 from Jammu to Srinagar, coloured by risk {when}. The zone list below has the same information.",
-    "mapFailed": "The map couldn't load. The zone list below has the same information.",
+    "mapSimple": "Simple map: the full map can't run in this browser (it needs hardware acceleration and tiles.openfreemap.org). The zone list below has the same information.",
     "legendTitle": "Risk level",
     "lineNote": "A thicker line means higher risk.",
     "scoreLabel": "Score {score}",
