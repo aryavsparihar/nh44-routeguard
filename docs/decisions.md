@@ -151,3 +151,14 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Database errors become `DbError(code)` with only the SQLSTATE; the SQL text and parameters are dropped · Drizzle's own error message contains the query and its parameters, which can include personal data, and our logs must not.
 - **2026-11-25** · `sql.raw()` is allowed only inside `src/server/db/` (CI check `check-no-sql-raw.sh`) · Everything else uses `sql` templates, which bind every value as a parameter.
 - **2026-11-25** · The users insert uses a narrow table (`ownUserInsert`) with only the columns a user may set · Drizzle lists every column in an INSERT (with `default`), and the column-level grant on `users` refuses that.
+
+## Round 3: app shell and languages (D1)
+
+- **2026-11-25** · English, Hindi and Urdu with `next-intl` 4.15.0; the language lives in the `rg_lang` cookie and never in the URL · URLs stay `/board`, so links, the service worker and Clerk don't need to know about languages. On a first visit the phone's language decides; unknown languages get English.
+- **2026-11-25** · A hidden `app/[locale]` folder after all (BUILD_PROMPT section 12 said "no `[locale]` folders") · With `cacheComponents` on, reading the cookie in the root layout would make every page uncacheable or fail the build. `proxy.ts` rewrites `/board` to `/ur/board` inside the server, Next builds one cached page per language with the right `<html lang dir>` on the first paint, and the visitor never sees the folder. This is next-intl's documented `localePrefix: "never"` setup with `next/root-params`.
+- **2026-11-25** · Changing the language reloads the page · It changes `<html lang dir>`, the fonts and every word; a reload is the simplest way to get all of them right.
+- **2026-11-25** · Fonts from the Round 2 style guide (Barlow Semi Condensed, Atkinson Hyperlegible) plus Noto Sans Devanagari and Noto Nastaliq Urdu, through `next/font` · They are downloaded at build time and served from our own site, so the CSP keeps `font-src 'self'` and no visitor request goes to Google. The Hindi and Urdu fonts are not preloaded; a phone downloads them only for that language.
+- **2026-11-25** · Latin digits in all three languages, and values inside sentences wrapped in Unicode isolate marks (`isolate()`, the text form of `<bdi>`) · Truck numbers and times read the same everywhere, and "16:07" or "+48 h" can't be reordered inside Urdu text (L4). The Urdu reviewer can change the digits.
+- **2026-11-25** · Hindi and Urdu text is machine-drafted and marked "not yet reviewed" in `messages/REVIEW.md` · BUILD_PROMPT section 9: a fluent reader has to check the safety text before we rely on it.
+- **2026-11-25** · Icons are generated from `docs/ux/assets/icons/*.svg` into React components (`npm run ui:icons`) · Inline SVG takes the text colour and needs no `dangerouslySetInnerHTML`; the Round 2 files stay the one source.
+
