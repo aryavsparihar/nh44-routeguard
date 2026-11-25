@@ -46,7 +46,7 @@ const photoRoute = await import("@/app/api/v1/reports/[id]/photo/route");
 const adminRoute = await import("@/app/api/v1/admin/reports/route");
 const adminOneRoute = await import("@/app/api/v1/admin/reports/[id]/route");
 
-const KEY = "3b0f7a0e-2d55-4c1a-9a3e-6a1d2c3b4e5f";
+const CLIENT_ID = "3b0f7a0e-2d55-4c1a-9a3e-6a1d2c3b4e5f";
 const ID = "8c2d4e6f-1a3b-4c5d-8e7f-9a0b1c2d3e4f";
 const DRIVER: Caller = { userId: "user_driver1", role: "driver" };
 const GROWER: Caller = { userId: "user_grower1", role: "grower" };
@@ -69,7 +69,7 @@ function form(fields: Record<string, string | Blob>) {
 
 // The form is encoded to bytes first, as a phone sends it. (Passing undici a
 // FormData object directly makes its encoder throw once we stop reading.)
-async function postReport(body: FormData | string, extra: Record<string, string> = { "idempotency-key": KEY }) {
+async function postReport(body: FormData | string, extra: Record<string, string> = { "idempotency-key": CLIENT_ID }) {
   let bytes: string | Uint8Array<ArrayBuffer> = body as string;
   let type = "application/json";
   if (typeof body !== "string") {
@@ -166,12 +166,12 @@ describe("POST /api/v1/reports", () => {
     expect((await res.json()).data).toEqual({ id: ID, status: "unconfirmed", outcome: "created" });
 
     const [path, webp] = storage.uploadPhoto.mock.calls[0];
-    expect(path).toBe(`user_driver1/${KEY}.webp`);
+    expect(path).toBe(`user_driver1/${CLIENT_ID}.webp`);
     const meta = await sharp(webp).metadata();
     expect([meta.format, meta.exif, meta.width]).toEqual(["webp", undefined, 1600]);
 
     const args = repo.submitReport.mock.calls[0][1];
-    expect(args).toMatchObject({ clientId: KEY, hazard: "rockfall", lat: 33.242, lng: 75.238, photoPath: path });
+    expect(args).toMatchObject({ clientId: CLIENT_ID, hazard: "rockfall", lat: 33.242, lng: 75.238, photoPath: path });
     expect(args.note).toBe("Stones down. Call •••");
     expect(args.zoneId).toBeGreaterThanOrEqual(1);
   });
@@ -185,7 +185,7 @@ describe("POST /api/v1/reports", () => {
 
     expect(res.status).toBe(200);
     expect((await res.json()).data.outcome).toBe("merged");
-    expect(storage.removePhoto).toHaveBeenCalledWith(`user_driver1/${KEY}.webp`);
+    expect(storage.removePhoto).toHaveBeenCalledWith(`user_driver1/${CLIENT_ID}.webp`);
   });
 
   it("removes the uploaded photo when the database refuses the report", async () => {
