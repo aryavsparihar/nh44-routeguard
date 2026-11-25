@@ -26,7 +26,7 @@ const card = "flex flex-col gap-3 rounded-lg border border-border bg-elevated p-
 // location sharing (drivers), alerts, sign out and delete the account.
 export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string | null; aadhaar?: boolean }) {
   const t = useTranslations("me");
-  const [me, retry] = useApi<{ data: MeProfile }>("/api/v1/me");
+  const [me, retry, refresh] = useApi<{ data: MeProfile }>("/api/v1/me");
 
   if (me.state === "loading") return <p role="status">{t("loading")}</p>;
   if (me.state === "error") {
@@ -44,7 +44,7 @@ export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string
     <div className="flex flex-col gap-5">
       {profile.onboarded ? <Profile me={profile} onSaved={retry} /> : <Onboarding />}
       {profile.onboarded && aadhaar && (profile.role === "driver" || profile.role === "agent") && (
-        <AadhaarCard me={profile} onVerified={retry} />
+        <AadhaarCard me={profile} onVerified={refresh} />
       )}
       {profile.onboarded && <AlertsCard publicKey={pushKey} />}
       <Account me={profile} />

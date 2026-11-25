@@ -139,7 +139,7 @@ export function AadhaarCard({ me, onVerified }: { me: MeProfile; onVerified: () 
     </h2>
   );
 
-  if (me.verification_level === "aadhaar_qr" || me.verification_level === "official") {
+  if ((me.verification_level === "aadhaar_qr" || me.verification_level === "official") && !result) {
     return (
       <section className={card} aria-labelledby="aadhaar">
         {heading}
