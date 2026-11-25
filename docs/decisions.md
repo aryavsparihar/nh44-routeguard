@@ -238,3 +238,13 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Turning location sharing off deletes the last position at once, and a daily job clears it 7 days after delivery · The privacy page promised both; now the database does it.
 - **2026-11-25** · The "copies these from the source" note shows only next to official updates, not on the board, sign-in or report screens · It is about copied police/TCU updates; the footer disclaimer is on every page.
 
+## Round 3: offline (slice 9)
+
+- **2026-11-25** · A hand-written service worker (`public/sw.js`), no Workbox or next-pwa · Section 13 asks for the policy to be readable at the top of the file; a plugin would hide it in generated code. Its rules are unit-tested by loading the file with a fake `self`.
+- **2026-11-25** · The five public pages are cached although Next sends them as `private, no-store` · That header is Next's default for streamed pages; these pages show the same thing to everyone. Pages that need a sign-in are never cached; a test checks the worker's list against `protected-pages.ts`.
+- **2026-11-25** · The worker's URL carries the deploy version (`/sw.js?v=…`) · A hand-written worker doesn't change between deploys, so without it the browser would never see an update or clear old build files.
+- **2026-11-25** · Map tiles: only tiles touching the corridor box, at most 300 · Enough for the corridor at the zooms the map uses, without filling the phone. 300 is our choice, not a measured number.
+- **2026-11-25** · Queued reports older than their hazard's expiry are dropped, not sent · They would leave the map the moment they arrived. The API has no "observed at" field yet, so a late report is dated when it arrives (docs/offline.md).
+- **2026-11-25** · Report photos are shrunk on the phone to about 300 KB before sending, online or not · Section 13's target; it also helps on a weak signal. The server still checks and re-encodes every photo.
+- **2026-11-25** · The outbox only sends reports as the person who wrote them, and sign-out wipes it · Two people can share a phone; a report must never be posted under someone else's name.
+

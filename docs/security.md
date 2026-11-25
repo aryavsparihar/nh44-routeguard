@@ -43,6 +43,8 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 | Open redirect after sign-in | `redirect_url` is reduced to a path on our own origin, otherwise `/me` | `src/ui/auth/EmailCodeSignIn.tsx` (`safeRedirect`) | `safe-redirect.test.ts` |
 | Deleting an account by accident or by a stray request | `DELETE /api/v1/me` needs the body `{ "confirm": "DELETE" }`, a signed-in session and passes the Origin check; police and admin accounts can't delete themselves; it is audited (`user.deleted`) | `app/api/v1/me/route.ts`, `private.delete_my_account` | `users.routes.test.ts`, `rls.test.sql` |
 | Keeping a driver's position too long | Cleared when sharing is turned off and 7 days after delivery (pg_cron) | `20261125190000_location_retention.sql` | `rls.test.sql` (5 checks) |
+| Offline copies leaking private data | The service worker never caches signed-in pages or APIs, writes, or API answers marked `private`/`no-store`; your board copy sits in IndexedDB under your user id; sign-out wipes IndexedDB and every cache | `public/sw.js`, `src/ui/offline/private-store.ts` | `sw-policy.test.ts` |
+| A queued report posted as someone else | The outbox checks `GET /api/v1/me` and sends only the signed-in author's reports, with the original `Idempotency-Key`; sign-out empties it | `src/ui/offline/outbox.ts` | `outbox.test.ts` |
 
 ### Gaps we know about
 
