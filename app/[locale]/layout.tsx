@@ -47,7 +47,7 @@ export default async function LocaleLayout({ children }: LayoutProps<"/[locale]"
             <StaleBanner />
           </Suspense>
           <OfflineStatus version={SW_VERSION} register={SW_ENABLED} />
-          <main id="main" className="mx-auto w-full min-w-0 max-w-2xl flex-1 px-4 pt-4">
+          <main id="main" className="mx-auto w-full min-h-dvh min-w-0 max-w-2xl flex-1 px-4 pt-4">
             {children}
           </main>
           <Footer />
