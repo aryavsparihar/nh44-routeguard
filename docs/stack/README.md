@@ -55,6 +55,7 @@ Python risk job (GitHub Actions) <- weather from Open-Meteo
 | Tool | Page |
 | --- | --- |
 | Our API layer: withApi, problem+json, rate limits | [api-layer.md](api-layer.md) |
+| HTTP status codes (200, 201, 304, 400–429, 500, 503) | [status-codes.md](status-codes.md) |
 | Zod (input checks) | [zod.md](zod.md) |
 | Clerk (sign-in) | [clerk.md](clerk.md) |
 | Pino (logs) | [pino.md](pino.md) |
