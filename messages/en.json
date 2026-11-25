@@ -598,9 +598,19 @@
       "conflict": "Your account isn't ready to post yet. Finish setting it up, then try again.",
       "tooMany": "You have sent a lot of reports this hour. Wait a while, then try again.",
       "paused": "Reporting is paused for now. The map and advice still work.",
-      "server": "Could not send. Check your connection and try again."
+      "server": "Could not send. Check your connection and try again.",
+      "notVerified": "Only verified drivers can post reports. Ask your agent to vouch for you, or do the Aadhaar QR check on your account page."
     },
-    "queued": "No signal. Your report is saved on this phone and will be sent by itself when you're back online."
+    "queued": "No signal. Your report is saved on this phone and will be sent by itself when you're back online.",
+    "verify": {
+      "heading": "First, get verified",
+      "why": "Reports from drivers go on the map at once, so we take them only from verified drivers. This stops fake reports.",
+      "vouch": "Ask your transport agent to vouch for you. If you haven't joined them yet, type their invite code on your Board.",
+      "board": "Open my Board",
+      "aadhaar": "Or do the Aadhaar QR check on your account page. It is optional: we keep only the result and the last 4 digits.",
+      "account": "Open the Aadhaar check",
+      "meanwhile": "Until then you can still see the map, the reports and the advice."
+    }
   },
   "board": {
     "heading": "Board",

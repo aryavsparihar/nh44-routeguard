@@ -33,7 +33,7 @@ const chip =
 // Send twice (or a retry on a bad connection) can't post it twice. With no
 // signal the report waits in the phone's outbox (src/ui/offline/outbox.ts)
 // under the same key and is sent when the signal is back.
-export function ReportForm({ userId }: { userId: string }) {
+export function ReportForm({ userId, driver = false }: { userId: string; driver?: boolean }) {
   const t = useTranslations("report");
   const th = useTranslations("reports.hazard");
   const [key, setKey] = useState(() => newUuid());
@@ -139,7 +139,9 @@ export function ReportForm({ userId }: { userId: string }) {
     if (status === 422) return t("err.invalid");
     if (status === 413) return t("err.photoTooBig", { mb: MAX_PHOTO_MB });
     if (status === 401) return t("err.signedOut");
-    if (status === 403) return t("err.forbidden");
+    // A driver's 403 means "not verified" (the page shows that card first,
+    // so this is a vouch removed since, or a report saved offline before).
+    if (status === 403) return driver ? t("err.notVerified") : t("err.forbidden");
     if (status === 409) return t("err.conflict");
     if (status === 429) return t("err.tooMany");
     if (status === 503) return t("err.paused");
