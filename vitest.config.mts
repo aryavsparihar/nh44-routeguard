@@ -16,7 +16,7 @@ export default defineConfig({
   test: {
     environment: "node",
     env: { LOG_LEVEL: "silent" }, // keep test output readable
-    include: ["src/**/*.test.ts", "app/**/*.test.ts", "lib/**/*.test.ts", "scripts/**/*.test.mjs"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "app/**/*.test.ts", "lib/**/*.test.ts", "scripts/**/*.test.mjs"],
     // next-intl imports "next/server" without a file extension, which plain
     // Node ESM can't resolve; let Vite bundle it for the tests.
     server: { deps: { inline: ["next-intl"] } },

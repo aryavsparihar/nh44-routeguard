@@ -1,7 +1,6 @@
 // A note with HTML in it must show as text on the map list, never run (the
 // XSS row in docs/security.md). Rendered with React's server renderer, as
 // the page's first paint is.
-import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
@@ -28,12 +27,9 @@ const report: PublicReport = {
 describe("report notes", () => {
   it("render as text, not HTML", () => {
     const html = renderToStaticMarkup(
-      createElement(NextIntlClientProvider, {
-        locale: "en",
-        messages,
-        timeZone: "Asia/Kolkata",
-        children: createElement(RoadReports, { reports: [report] }),
-      }),
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="Asia/Kolkata">
+        <RoadReports reports={[report]} />
+      </NextIntlClientProvider>,
     );
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("<img");
