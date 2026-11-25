@@ -35,7 +35,7 @@ import {
   reportFields,
   reportId,
 } from "@/src/server/reports/reports.schemas";
-import { riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
+import { hexQuery, riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
 import { roadStatusBody } from "@/src/server/road-status/road-status.schemas";
 import {
   createShipmentBody,
@@ -257,6 +257,38 @@ export const OPERATIONS: Operation[] = [
         meta: { count: 1, next_cursor: null, run_at: RUN_AT, model_version: "rules-2026-11-25" },
         example: [exampleRisk],
         headers: { ETag: "The run time of these scores." },
+      },
+      304: { description: "Not modified: you already have this run.", envelope: "none" },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/risk/hexes",
+    tag: "Risk",
+    summary: "The newest scores for every H3 cell along NH-44, with outlines",
+    description:
+      "Resolution-8 H3 cells (about 0.7 km²) the highway passes through, built by `jobs/tools/build_hexes.py`. Each cell is scored with its slope (Copernicus DEM via Open-Meteo) and nearest weather point. `boundary` is a closed ring of [lng, lat]. The ETag is the run time and horizon.",
+    access: "public",
+    query: hexQuery,
+    success: {
+      200: {
+        description: "Cells of the newest run at one horizon.",
+        envelope: "list",
+        meta: { count: 1, next_cursor: null, run_at: RUN_AT },
+        example: [
+          {
+            h3_index: "883d308abdfffff",
+            zone_id: 4,
+            overall: 0.42,
+            hazards: { landslide: 0.2, rockfall: 0.42, flash_flood: 0.05, snow_ice: 0 },
+            level: "medium",
+            top_hazard: "rockfall",
+            confidence: "low",
+            boundary: [[75.2323, 33.2429], [75.2329, 33.2379], [75.2384, 33.2359], [75.2434, 33.2388], [75.2429, 33.2438], [75.2373, 33.2458], [75.2323, 33.2429]],
+          },
+        ],
+        headers: { ETag: "The run time and horizon of these scores." },
       },
       304: { description: "Not modified: you already have this run.", envelope: "none" },
     },
