@@ -790,6 +790,7 @@ export type Database = {
       users: {
         Row: {
           agent_id: string | null
+          approval: Database["public"]["Enums"]["approval_status"]
           consent_version: string | null
           created_at: string
           deleted_at: string | null
@@ -797,12 +798,16 @@ export type Database = {
           id: string
           language: string
           location_consent: boolean
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           verification_level: Database["public"]["Enums"]["verification_level"]
         }
         Insert: {
           agent_id?: string | null
+          approval?: Database["public"]["Enums"]["approval_status"]
           consent_version?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -810,12 +815,16 @@ export type Database = {
           id: string
           language?: string
           location_consent?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           verification_level?: Database["public"]["Enums"]["verification_level"]
         }
         Update: {
           agent_id?: string | null
+          approval?: Database["public"]["Enums"]["approval_status"]
           consent_version?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -823,6 +832,9 @@ export type Database = {
           id?: string
           language?: string
           location_consent?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           verification_level?: Database["public"]["Enums"]["verification_level"]
@@ -831,6 +843,13 @@ export type Database = {
           {
             foreignKeyName: "users_agent_id_fkey"
             columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_reviewed_by_fkey"
+            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1075,6 +1094,15 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      tcu_review_user: {
+        Args: {
+          p_decision: Database["public"]["Enums"]["approval_status"]
+          p_note?: string
+          p_request_id?: string
+          p_target: string
+        }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       write_audit: {
         Args: {
           p_action: string
@@ -1088,6 +1116,7 @@ export type Database = {
       }
     }
     Enums: {
+      approval_status: "pending" | "approved" | "rejected"
       confidence_level: "low" | "medium" | "high"
       flag_reason:
         | "not_there"
@@ -1256,6 +1285,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      approval_status: ["pending", "approved", "rejected"],
       confidence_level: ["low", "medium", "high"],
       flag_reason: [
         "not_there",

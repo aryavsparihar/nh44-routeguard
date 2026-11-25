@@ -31,6 +31,7 @@ const geography = customType<{ data: string; driverData: string }>({
   dataType: () => "extensions.geography(Point,4326)",
 });
 
+export const approvalStatus = pgEnum("approval_status", ["pending", "approved", "rejected"]);
 export const confidenceLevel = pgEnum("confidence_level", ["low", "medium", "high"]);
 export const flagReason = pgEnum("flag_reason", ["not_there", "wrong_place", "duplicate", "offensive", "other"]);
 export const hazardType = pgEnum("hazard_type", ["landslide", "rockfall", "flash_flood", "snow_ice", "accident", "other"]);
@@ -295,6 +296,10 @@ export const users = pgTable("users", {
   location_consent: boolean().default(sql`false`).notNull(),
   consent_version: text(),
   deleted_at: timestamp({ withTimezone: true, mode: "date" }),
+  approval: approvalStatus().default(sql`'approved'::approval_status`).notNull(),
+  reviewed_by: text(),
+  reviewed_at: timestamp({ withTimezone: true, mode: "date" }),
+  review_note: text(),
 }).enableRLS();
 
 export const verifications = pgTable("verifications", {
