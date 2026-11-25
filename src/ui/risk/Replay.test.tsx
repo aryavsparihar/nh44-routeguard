@@ -35,7 +35,7 @@ describe("ReplayBanner", () => {
     expect(html).toContain("(Snow/ice)");
     expect(html).toContain("not a forecast");
     expect(html).toContain('href="https://www.etvbharat.com/en/bharat/x"');
-    expect(html).toContain('rel="noopener noreferrer"');
+    expect(html).toContain('rel="noopener noreferrer nofollow"');
     expect(html).toContain("Back to today");
   });
 

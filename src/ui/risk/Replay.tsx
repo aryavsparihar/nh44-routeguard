@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { ReplaySummary } from "@/src/shared/api-types";
-import { formatDate, isolate } from "@/src/shared/format";
+import { EXTERNAL_REL, formatDate, isolate } from "@/src/shared/format";
 import { HAZARDS, type Hazard } from "@/src/shared/risk";
 import type { Locale } from "@/src/i18n/routing";
 
@@ -70,7 +70,7 @@ export function ReplayBanner({ replay, onBack }: { replay: ReplaySummary; onBack
       </p>
       <p className="text-sm">
         {safeUrl ? (
-          <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="underline">
+          <a href={safeUrl} target="_blank" rel={EXTERNAL_REL} className="underline">
             {t("replay.source", { publisher: replay.source_publisher })}
           </a>
         ) : (

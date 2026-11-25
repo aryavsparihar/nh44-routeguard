@@ -42,3 +42,21 @@ export function formatDate(date: Date, locale: Locale): string {
 export function isolate(value: string | number): string {
   return `⁨${value}⁩`;
 }
+
+// The site an https link points to, shown next to every source link so the
+// reader sees where it goes before tapping (BUILD_PROMPT section 16, XSS):
+// "tribuneindia.com". Null for anything that isn't a plain https URL.
+export function sourceHost(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:" || u.username || u.password) return null;
+    return u.hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+// rel for links to other sites that people typed in (official update sources,
+// road status sources): no access to our window, no referrer, no ranking.
+export const EXTERNAL_REL = "noopener noreferrer nofollow";

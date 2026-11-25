@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import type { Locale } from "@/src/i18n/routing";
 import type { OfficialUpdate, PublicReport } from "@/src/shared/api-types";
-import { formatDayTime, isolate } from "@/src/shared/format";
+import { EXTERNAL_REL, formatDayTime, isolate, sourceHost } from "@/src/shared/format";
 import { useApi, type ApiList } from "@/src/ui/api";
 import { OfficialUpdates, RoadReports } from "@/src/ui/risk/FeedLists";
 import { StripScreen } from "@/src/ui/risk/StripScreen";
@@ -112,8 +112,9 @@ export function RoadOverview({ canEditRoad }: { canEditRoad: boolean }) {
                     <>
                       {" "}
                       ·{" "}
-                      <a href={row.source_url} target="_blank" rel="noopener noreferrer" className="underline">
+                      <a href={row.source_url} target="_blank" rel={EXTERNAL_REL} className="underline">
                         {t("source")}
+                        {sourceHost(row.source_url) && <> ({isolate(sourceHost(row.source_url)!)})</>}
                       </a>
                     </>
                   )}
