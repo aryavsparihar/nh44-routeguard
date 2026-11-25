@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { LanguageSwitch } from "./LanguageSwitch";
+import { SignInLink } from "./SignInLink";
 
 // The title appears once (L3), with the language switch beside it.
 export async function AppHeader() {
@@ -22,7 +23,12 @@ export async function AppHeader() {
         >
           {t("title")}
         </Link>
-        <LanguageSwitch />
+        <div className="flex shrink-0 items-center gap-2">
+          <SignInLink href="/me" className="flex min-h-12 items-center px-1 text-sm underline">
+            {t("account")}
+          </SignInLink>
+          <LanguageSwitch />
+        </div>
       </div>
     </header>
   );

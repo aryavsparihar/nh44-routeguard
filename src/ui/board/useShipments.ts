@@ -89,7 +89,7 @@ async function realtimeToken(): Promise<string | null> {
 
 // JSON writes to our API. Returns the status and the parsed body (or null).
 export async function send<T = unknown>(
-  method: "POST" | "PATCH",
+  method: "POST" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<{ status: number; data: T | null; paths: string[] }> {

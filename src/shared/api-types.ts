@@ -81,3 +81,16 @@ export type AgentInvite = {
   accepted_at: string | null;
   accepted_by_name: string | null;
 };
+
+// GET /api/v1/me
+export type MeProfile = {
+  id: string;
+  role: "grower" | "trader" | "agent" | "driver" | "police" | "admin" | null;
+  display_name: string | null;
+  language: string | null;
+  verification_level: FleetDriver["verification_level"] | null;
+  location_consent: boolean;
+  consent_version: string | null;
+  agent_id: string | null;
+  onboarded: boolean;
+};
