@@ -104,5 +104,9 @@ export type RiskHex = {
   level: "low" | "medium" | "high";
   top_hazard: string | null;
   confidence: string | null;
+  reason: string;
+  reason_code: string | null;
+  reason_params: Record<string, unknown> | null;
+  slope_deg: number | null;
   boundary: [number, number][];
 };

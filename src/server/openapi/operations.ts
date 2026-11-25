@@ -269,7 +269,7 @@ export const OPERATIONS: Operation[] = [
     tag: "Risk",
     summary: "The newest scores for every H3 cell along NH-44, with outlines",
     description:
-      "Resolution-8 H3 cells (about 0.8 km² each here) the highway passes through, built by `jobs/tools/build_hexes.py`. Each cell is scored with its slope (Copernicus DEM via Open-Meteo) and nearest weather point. `boundary` is a closed ring of [lng, lat]. The ETag is the run time and horizon.",
+      "Resolution-8 H3 cells (about 0.8 km² each here) the highway passes through, built by `jobs/tools/build_hexes.py`. Each cell is scored with its slope (`slope_deg`: the steepest centre-to-corner slope, Copernicus DEM via Open-Meteo; null if unknown) and nearest weather point. `reason` is the job's English sentence; `reason_code` and `reason_params` are the same reason for translation (codes in `lib/risk/reason_codes.json`). `boundary` is a closed ring of [lng, lat]. The ETag is the run time and horizon.",
     access: "public",
     query: hexQuery,
     success: {
@@ -281,11 +281,15 @@ export const OPERATIONS: Operation[] = [
           {
             h3_index: "883d308abdfffff",
             zone_id: 4,
-            overall: 0.42,
-            hazards: { landslide: 0.2, rockfall: 0.42, flash_flood: 0.05, snow_ice: 0 },
-            level: "medium",
-            top_hazard: "rockfall",
+            overall: 0,
+            hazards: { landslide: 0, rockfall: 0, flash_flood: 0, snow_ice: 0 },
+            level: "low",
+            top_hazard: null,
             confidence: "low",
+            reason: "Zone 4: no rain, snow or frost trigger in the window",
+            reason_code: "none",
+            reason_params: { zone: 4 },
+            slope_deg: 16.6,
             boundary: [[75.2323, 33.2429], [75.2329, 33.2379], [75.2384, 33.2359], [75.2434, 33.2388], [75.2429, 33.2438], [75.2373, 33.2458], [75.2323, 33.2429]],
           },
         ],
