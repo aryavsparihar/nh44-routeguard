@@ -14,6 +14,9 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `privacy.*` (consent) | not yet reviewed | not yet reviewed | Legal meaning matters; keep "DPDP Act, 2023" |
 | `banner.*` | not yet reviewed | not yet reviewed | |
 | `header.*`, `nav.*`, `home.*`, `notFound.*`, `meta.*` | not yet reviewed | not yet reviewed | |
+| `risk.*`, `strip.*`, `summary.*` (risk levels) | not yet reviewed | not yet reviewed | Levels must read as advice, not as a road status |
+| `reason.*` (why a zone is risky) | not yet reviewed | not yet reviewed | Hazard words and units (mm, cm, m, °C); `places.*` stay English for now |
+| `updates.*`, `reports.*` | not yet reviewed | not yet reviewed | "Closure", "one-way" must match what J&K Traffic Police say |
 
 ## Choices for the reviewers
 

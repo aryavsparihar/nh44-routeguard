@@ -56,5 +56,155 @@
     "deleteTitle": "Deleting your data",
     "delete": "You can delete your account. Your road reports then stay in the history without your name or user id.",
     "emergency": "RouteGuard is not an emergency service. In an emergency call 112."
+  },
+  "risk": {
+    "horizon": {
+      "h0": "Now",
+      "h12": "In 12 h",
+      "h24": "In 24 h",
+      "h48": "In 48 h"
+    },
+    "forecastTime": "Forecast time",
+    "level": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "confidence": {
+      "low": "Low confidence",
+      "medium": "Medium confidence",
+      "high": "High confidence"
+    },
+    "hazard": {
+      "landslide": "Landslide",
+      "rockfall": "Rockfall",
+      "flash_flood": "Flash flood",
+      "snow_ice": "Snow/ice"
+    },
+    "allHazards": "All hazards",
+    "hazardFilter": "Show risk for",
+    "range": "Range {low} to {high}",
+    "zoneTitle": "Zone {zone}: {name}",
+    "whenNow": "right now",
+    "whenLater": "in {hours} h",
+    "allLow": "All six zones are low {when}.",
+    "worst": "Highest risk {when}: zone {zone} ({name}) is {level}, score {score}.",
+    "allLowHazard": "No zone is above low for {hazard} {when}.",
+    "worstHazard": "Highest {hazard} risk {when}: zone {zone} ({name}) is {level}, score {score}.",
+    "zonesHeading": "Zones",
+    "hazardScores": "Score for each hazard",
+    "englishTag": "English only",
+    "loading": "Loading risk scores…",
+    "loadError": "Couldn't load the risk scores. Check your connection and try again.",
+    "retry": "Try again",
+    "noScores": "No risk scores yet. The hourly update hasn't run.",
+    "mapLabel": "Map of NH-44 from Jammu to Srinagar, coloured by risk {when}. The zone list below has the same information.",
+    "mapFailed": "The map couldn't load. The zone list below has the same information.",
+    "legendTitle": "Risk level",
+    "lineNote": "A thicker line means higher risk.",
+    "scoreLabel": "Score {score}",
+    "details": "Why"
+  },
+  "reason": {
+    "none": "Zone {zone}: no rain, snow or frost trigger in the window",
+    "landslide_rain": "Landslide: {mm} mm rain in {hours} h",
+    "landslide_rain_burst": "Landslide: {mm} mm rain in {hours} h ({burst_mm} mm in {burst_hours} h)",
+    "rockfall_rain": "Rockfall: {mm} mm rain in {hours} h",
+    "rockfall_freeze_thaw": "Rockfall: {mm} mm rain in {hours} h, then below 0 °C",
+    "flash_flood_burst": "Flash flood: {mm} mm in {hours} h",
+    "snow_ice": "Snow/ice: {parts}",
+    "snowFresh": "{snow_cm} cm snow in 24 h",
+    "snowDepth": "{depth_m} m on the ground",
+    "blackIce": "below 0 °C on a wet road",
+    "noSnow": "no snow",
+    "listSeparator": ", ",
+    "sentence": "{head} near {place}; {tail}",
+    "exposure": {
+      "very_high": "zone {zone} is very exposed to {hazard}",
+      "high": "zone {zone} is exposed to {hazard}",
+      "some": "zone {zone} is somewhat exposed to {hazard}",
+      "low": "zone {zone} has low exposure to {hazard}"
+    },
+    "hazards": {
+      "landslide": "landslides",
+      "rockfall": "rockfall",
+      "flash_flood": "flash floods",
+      "snow_ice": "snow/ice"
+    },
+    "places": {
+      "z1_nagrota": "Nagrota",
+      "z1_jakhani": "Udhampur (Jakhani)",
+      "z2_chenani": "Chenani",
+      "z3_nashri": "Nashri",
+      "z3_peerah": "Peerah",
+      "z3_seri": "Seri",
+      "z4_ramban": "Ramban",
+      "z4_digdol": "Digdol",
+      "z4_marog": "Marog",
+      "z5_ramsoo": "Ramsoo",
+      "z5_banihal": "Banihal",
+      "z5_navyug_south": "Navyug tunnel (Banihal side)",
+      "z5_qazigund": "Qazigund",
+      "z6_bijbehara": "Anantnag (Bijbehara)",
+      "z6_srinagar": "Srinagar"
+    }
+  },
+  "reports": {
+    "heading": "Road reports",
+    "none": "No road reports on the map right now.",
+    "legendConfirmed": "Confirmed, or from police",
+    "legendUnconfirmed": "Unconfirmed (dashed outline)",
+    "status": {
+      "unconfirmed": "Unconfirmed",
+      "confirmed": "Confirmed"
+    },
+    "source": {
+      "driver": "Driver",
+      "police": "Police",
+      "admin": "Admin"
+    },
+    "item": "{hazard} in zone {zone}, reported {time}",
+    "confirmations": "{count, plural, =0 {No confirmations} one {# confirmation} other {# confirmations}}",
+    "demo": "Demo data",
+    "hazard": {
+      "landslide": "Landslide",
+      "rockfall": "Rockfall",
+      "flash_flood": "Flash flood",
+      "snow_ice": "Snow/ice",
+      "accident": "Accident",
+      "other": "Other hazard"
+    }
+  },
+  "updates": {
+    "heading": "Police and TCU updates",
+    "none": "No police or TCU updates in force right now.",
+    "kind": {
+      "closure": "Closure",
+      "one_way": "One-way traffic",
+      "reopened": "Reopened",
+      "advisory": "Advisory"
+    },
+    "wholeRoad": "Whole road",
+    "zone": "Zone {zone}",
+    "source": "Source: {name}",
+    "validUntil": "Until {time}",
+    "issued": "Issued {time}"
+  },
+  "strip": {
+    "heading": "Next 48 hours",
+    "intro": "Risk in each zone now and in 12, 24 and 48 hours. Tap a zone to see why on the map page.",
+    "allLow": "All six zones stay low for the next 48 hours.",
+    "worst": "Highest risk in the next 48 hours: zone {zone} ({name}) is {level} {when}.",
+    "zoneCol": "Zone",
+    "patternNote": "Medium cells have stripes and high cells cross-hatching, so the level reads without colour.",
+    "cellLabel": "Zone {zone}, {when}: {level}, score {score}"
+  },
+  "summary": {
+    "title": "NH-44 RouteGuard: road risk",
+    "scoresFrom": "Scores from {time} (India time).",
+    "line": "{when}: {body}",
+    "allLow": "all zones low",
+    "zoneLine": "zone {zone} {level} {score} ({hazard})",
+    "separator": "; "
   }
 }
