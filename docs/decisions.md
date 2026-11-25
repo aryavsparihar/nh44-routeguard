@@ -79,7 +79,7 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-24** · Added `GET /api/v1/me` · The onboarding screen needs to know whether the user has picked a role. It is in the API contract (section 6); `PATCH` and `DELETE /me` come later.
 - **2026-11-24** · Wrong role on a page shows the 404 page · Next 16's `forbidden()` is still experimental, and a 404 doesn't admit the page exists.
 - **2026-11-24** · The first admin is set up by hand once (runbook step 6) · police/admin are never self-service and only an admin can grant them, so the first one needs a start outside the API. Its audit row says "bootstrap".
-- **2026-11-24** · No rate limit on the role endpoints yet · Section 10 asks for 5 role attempts per user per hour, but the shared rate limiter (section 17) doesn't exist yet. Both routes carry a `TODO(rate-limit)`.
+- **2026-11-24** · No rate limit on the role endpoints yet · Section 10 asks for 5 role attempts per user per hour, but the shared rate limiter (section 17) doesn't exist yet. Both routes carried a `TODO(rate-limit)` until C3 (below) added the limit on 2026-11-25.
 
 
 ## Round 3: security (A5)
@@ -191,3 +191,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Admin forms take times in IST (`datetime-local` read as +05:30) · Every time the app shows is IST; a phone set to another time zone would otherwise post the wrong time.
 - **2026-11-25** · Roles are given by Clerk user id on `/admin/users`; there is no user search yet · Section 8 asks only for `PATCH /api/v1/admin/users/{id}/role`. A list of users would show personal data, so we wait until it is needed.
 - **2026-11-25** · Police and TCU updates show "From {publisher} · Open source · issued · until" and a "not official" note above the list · Section 12: we copy from a source, we are not that source.
+
+## Round 3: shared rate limits (C3)
+
+- **2026-11-25** · Rate limits are counted in Postgres (`private.rate_limits`, fixed windows, one upsert per hit), not Redis · Nobody has created an Upstash account, and section 17 allows a Postgres fallback. It holds across every replica, and each hit is one small query.
+- **2026-11-25** · The counter function sits in the `private` schema · Supabase's REST API only exposes `public`, so nobody can call it with the publishable key to fill someone else's bucket.
+- **2026-11-25** · IP buckets hold an HMAC of the address, keyed with the Clerk secret key we already have · IPs are personal data. No new secret to manage; rotating the Clerk key only resets the counters.
+- **2026-11-25** · If the counter fails, the request goes through and a warning is logged (fail open) · A broken counter shouldn't take the advisor down. Every write behind a limit needs the same database, so it fails anyway if the database is down.
+- **2026-11-25** · Admin writes (official updates, road status) have no rate limit · Section 10 doesn't list one; they are role-gated and audited.
+- **2026-11-25** · Onboarding and admin role changes share the "5 role attempts an hour per user" bucket · Section 10 names one limit for role attempts.
