@@ -52,6 +52,13 @@ describe("HexCard", () => {
     expect(html).toContain("Score 0.00");
   });
 
+  it("shows 'Not known' for fields missing from an older saved copy, instead of crashing", () => {
+    const old = { ...RAMBAN, slope: undefined, confidence: undefined, reason: { text: "", english: true } };
+    const html = render(old as unknown as PickedHex);
+    expect(html.match(/<dd>Not known<\/dd>/g)).toHaveLength(3); // why, confidence, slope
+    expect(html).not.toContain("English only");
+  });
+
   it("ignores a hazard name it doesn't know instead of breaking", () => {
     expect(render({ ...RAMBAN, topHazard: "<b>x</b>" })).toContain("<dd>None</dd>");
   });
