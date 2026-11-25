@@ -56,5 +56,155 @@
     "deleteTitle": "अपना डेटा मिटाना",
     "delete": "आप अपना खाता मिटा सकते हैं। तब आपकी सड़क रिपोर्ट आपके नाम या यूज़र आईडी के बिना इतिहास में रहती हैं।",
     "emergency": "RouteGuard कोई आपात सेवा नहीं है। आपात स्थिति में 112 पर कॉल करें।"
+  },
+  "risk": {
+    "horizon": {
+      "h0": "अभी",
+      "h12": "12 घंटे में",
+      "h24": "24 घंटे में",
+      "h48": "48 घंटे में"
+    },
+    "forecastTime": "पूर्वानुमान का समय",
+    "level": {
+      "low": "कम",
+      "medium": "मध्यम",
+      "high": "ऊँचा"
+    },
+    "confidence": {
+      "low": "कम भरोसा",
+      "medium": "मध्यम भरोसा",
+      "high": "ऊँचा भरोसा"
+    },
+    "hazard": {
+      "landslide": "भूस्खलन",
+      "rockfall": "चट्टान गिरना",
+      "flash_flood": "अचानक बाढ़",
+      "snow_ice": "बर्फ़/पाला"
+    },
+    "allHazards": "सभी ख़तरे",
+    "hazardFilter": "जोखिम दिखाएँ",
+    "range": "दायरा {low} से {high}",
+    "zoneTitle": "ज़ोन {zone}: {name}",
+    "whenNow": "अभी",
+    "whenLater": "{hours} घंटे में",
+    "allLow": "छहों ज़ोन {when} कम जोखिम पर हैं।",
+    "worst": "{when} सबसे ज़्यादा जोखिम: ज़ोन {zone} ({name}) {level} है, स्कोर {score}।",
+    "allLowHazard": "{when} {hazard} के लिए कोई ज़ोन कम से ऊपर नहीं है।",
+    "worstHazard": "{when} {hazard} का सबसे ज़्यादा जोखिम: ज़ोन {zone} ({name}) {level} है, स्कोर {score}।",
+    "zonesHeading": "ज़ोन",
+    "hazardScores": "हर ख़तरे का स्कोर",
+    "englishTag": "सिर्फ़ अंग्रेज़ी में",
+    "loading": "जोखिम स्कोर लोड हो रहे हैं…",
+    "loadError": "जोखिम स्कोर लोड नहीं हो सके। अपना कनेक्शन जाँचें और फिर कोशिश करें।",
+    "retry": "फिर कोशिश करें",
+    "noScores": "अभी कोई जोखिम स्कोर नहीं है। हर घंटे का अपडेट नहीं चला है।",
+    "mapLabel": "जम्मू से श्रीनगर तक NH-44 का नक्शा, {when} के जोखिम के रंग में। नीचे ज़ोन की सूची में यही जानकारी है।",
+    "mapFailed": "नक्शा लोड नहीं हो सका। नीचे ज़ोन की सूची में यही जानकारी है।",
+    "legendTitle": "जोखिम का स्तर",
+    "lineNote": "मोटी रेखा का मतलब ज़्यादा जोखिम।",
+    "scoreLabel": "स्कोर {score}",
+    "details": "क्यों"
+  },
+  "reason": {
+    "none": "ज़ोन {zone}: इस अवधि में बारिश, बर्फ़ या पाले का कोई कारण नहीं",
+    "landslide_rain": "भूस्खलन: {hours} घंटे में {mm} मिमी बारिश",
+    "landslide_rain_burst": "भूस्खलन: {hours} घंटे में {mm} मिमी बारिश ({burst_hours} घंटे में {burst_mm} मिमी)",
+    "rockfall_rain": "चट्टान गिरना: {hours} घंटे में {mm} मिमी बारिश",
+    "rockfall_freeze_thaw": "चट्टान गिरना: {hours} घंटे में {mm} मिमी बारिश, फिर 0 °C से नीचे",
+    "flash_flood_burst": "अचानक बाढ़: {hours} घंटे में {mm} मिमी",
+    "snow_ice": "बर्फ़/पाला: {parts}",
+    "snowFresh": "24 घंटे में {snow_cm} सेमी बर्फ़",
+    "snowDepth": "ज़मीन पर {depth_m} मी",
+    "blackIce": "गीली सड़क पर 0 °C से नीचे",
+    "noSnow": "बर्फ़ नहीं",
+    "listSeparator": ", ",
+    "sentence": "{head}, {place} के पास; {tail}",
+    "exposure": {
+      "very_high": "ज़ोन {zone} में {hazard} का ख़तरा बहुत ज़्यादा है",
+      "high": "ज़ोन {zone} में {hazard} का ख़तरा है",
+      "some": "ज़ोन {zone} में {hazard} का कुछ ख़तरा है",
+      "low": "ज़ोन {zone} में {hazard} का ख़तरा कम है"
+    },
+    "hazards": {
+      "landslide": "भूस्खलन",
+      "rockfall": "चट्टान गिरने",
+      "flash_flood": "अचानक बाढ़",
+      "snow_ice": "बर्फ़/पाले"
+    },
+    "places": {
+      "z1_nagrota": "Nagrota",
+      "z1_jakhani": "Udhampur (Jakhani)",
+      "z2_chenani": "Chenani",
+      "z3_nashri": "Nashri",
+      "z3_peerah": "Peerah",
+      "z3_seri": "Seri",
+      "z4_ramban": "Ramban",
+      "z4_digdol": "Digdol",
+      "z4_marog": "Marog",
+      "z5_ramsoo": "Ramsoo",
+      "z5_banihal": "Banihal",
+      "z5_navyug_south": "Navyug tunnel (Banihal side)",
+      "z5_qazigund": "Qazigund",
+      "z6_bijbehara": "Anantnag (Bijbehara)",
+      "z6_srinagar": "Srinagar"
+    }
+  },
+  "reports": {
+    "heading": "सड़क की रिपोर्टें",
+    "none": "अभी नक्शे पर कोई सड़क रिपोर्ट नहीं है।",
+    "legendConfirmed": "पुष्टि हुई, या पुलिस से",
+    "legendUnconfirmed": "पुष्टि नहीं हुई (टूटी किनारी)",
+    "status": {
+      "unconfirmed": "पुष्टि नहीं हुई",
+      "confirmed": "पुष्टि हुई"
+    },
+    "source": {
+      "driver": "ड्राइवर",
+      "police": "पुलिस",
+      "admin": "एडमिन"
+    },
+    "item": "ज़ोन {zone} में {hazard}, {time} पर रिपोर्ट",
+    "confirmations": "{count, plural, =0 {कोई पुष्टि नहीं} one {# पुष्टि} other {# पुष्टियाँ}}",
+    "demo": "डेमो डेटा",
+    "hazard": {
+      "landslide": "भूस्खलन",
+      "rockfall": "चट्टान गिरना",
+      "flash_flood": "अचानक बाढ़",
+      "snow_ice": "बर्फ़/पाला",
+      "accident": "दुर्घटना",
+      "other": "दूसरा ख़तरा"
+    }
+  },
+  "updates": {
+    "heading": "पुलिस और TCU की सूचनाएँ",
+    "none": "अभी पुलिस या TCU की कोई लागू सूचना नहीं है।",
+    "kind": {
+      "closure": "बंद",
+      "one_way": "एकतरफ़ा यातायात",
+      "reopened": "फिर से खुला",
+      "advisory": "सलाह"
+    },
+    "wholeRoad": "पूरी सड़क",
+    "zone": "ज़ोन {zone}",
+    "source": "स्रोत: {name}",
+    "validUntil": "{time} तक",
+    "issued": "जारी: {time}"
+  },
+  "strip": {
+    "heading": "अगले 48 घंटे",
+    "intro": "हर ज़ोन में अभी और 12, 24 और 48 घंटे में जोखिम। कारण देखने के लिए ज़ोन पर टैप करें।",
+    "allLow": "अगले 48 घंटे छहों ज़ोन कम जोखिम पर रहेंगे।",
+    "worst": "अगले 48 घंटे में सबसे ज़्यादा जोखिम: ज़ोन {zone} ({name}) {when} {level} है।",
+    "zoneCol": "ज़ोन",
+    "patternNote": "मध्यम खानों में धारियाँ हैं और ऊँचे खानों में जाली, ताकि रंग के बिना भी स्तर पढ़ा जा सके।",
+    "cellLabel": "ज़ोन {zone}, {when}: {level}, स्कोर {score}"
+  },
+  "summary": {
+    "title": "NH-44 RouteGuard: सड़क का जोखिम",
+    "scoresFrom": "{time} के स्कोर (भारतीय समय)।",
+    "line": "{when}: {body}",
+    "allLow": "सभी ज़ोन कम",
+    "zoneLine": "ज़ोन {zone} {level} {score} ({hazard})",
+    "separator": "; "
   }
 }

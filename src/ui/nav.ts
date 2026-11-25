@@ -4,7 +4,10 @@ import type { IconName } from "./icons";
 // Board, Report. A screen is listed here once it exists.
 export type NavItem = { href: string; label: "map" | "strip" | "advisor" | "board" | "report"; icon: IconName };
 
-export const NAV_ITEMS: NavItem[] = [{ href: "/", label: "map", icon: "nav-map" }];
+export const NAV_ITEMS: NavItem[] = [
+  { href: "/", label: "map", icon: "nav-map" },
+  { href: "/strip", label: "strip", icon: "nav-strip" },
+];
 
 // "/" is active only on the start page; "/board" also on "/board/123".
 export function isActive(pathname: string, href: string): boolean {

@@ -162,3 +162,14 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Hindi and Urdu text is machine-drafted and marked "not yet reviewed" in `messages/REVIEW.md` · BUILD_PROMPT section 9: a fluent reader has to check the safety text before we rely on it.
 - **2026-11-25** · Icons are generated from `docs/ux/assets/icons/*.svg` into React components (`npm run ui:icons`) · Inline SVG takes the text colour and needs no `dangerouslySetInnerHTML`; the Round 2 files stay the one source.
 
+## Round 3: risk read path and map (C1, C2)
+
+- **2026-11-25** · `GET /api/v1/risk` returns every zone row of the newest run (6 zones × 4 times) when called without filters · The map and the 48 h strip need all of it, so one request serves both screens and the horizon buttons switch without another call.
+- **2026-11-25** · Caching: ETag = the run time, 304 on a match, `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=3300`, and a 60 s copy in memory per server instance · Scores change once an hour and are the same for everyone (section 17). No Redis: nobody has created an Upstash account, so the shared cache is not built; the in-memory and HTTP caches are what we claim.
+- **2026-11-25** · Risk reasons are built from `reason_code` + `reason_params` with messages in each language; if a code is unknown or a param looks wrong, the screen shows the job's English sentence with an "English only" tag · Never a half-translated or broken sentence (L4). Place names keep their English spelling until a reviewer confirms them.
+- **2026-11-25** · Worst-zone card: "all zones low" when nothing is above low; otherwise highest level, then score, then the zone more exposed to its hazard, then zone order (`worstZone()` in `src/shared/risk.ts`) · L2: a tie at 0.00 must never crown zone 1.
+- **2026-11-25** · MapLibre GL `6.17.0` with OpenFreeMap's `positron` style (free, no key, OpenStreetMap data) · Already allowed in the CSP. Its worker file is copied from `node_modules` into `public/vendor/` before `dev` and `build` (`scripts/ui/copy-maplibre-worker.mjs`, gitignored output), because MapLibre 6 loads it by URL and the bundler doesn't emit it. A test fails if the version in the URL and `package.json` drift apart.
+- **2026-11-25** · The map is a picture of the zone list: one `role="img"` label, and the list below it has the same facts as text · Screen readers, phones without WebGL and a failed tile server all still get the risk. Line width as well as colour shows the level.
+- **2026-11-25** · The road line is `data/nh44_line.json` cut at `zone_starts_km`, done once on the server (`src/shared/corridor.ts`) · No extra request; the browser gets about 800 points.
+- **2026-11-25** · `GET /api/v1/reports` (read) arrives now with the map; writing reports comes with B2 · The map needs the markers; the list shows only what the `public_reports` view already exposes (no user ids).
+

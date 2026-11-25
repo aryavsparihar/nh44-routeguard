@@ -82,3 +82,14 @@ h3 {
   outline: 3px solid var(--color-rail);
   outline-offset: 2px;
 }
+
+/* Level patterns for the 48 h strip, so medium and high read without
+   colour: stripes for medium, cross-hatching for high. */
+.pattern-medium {
+  background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgb(255 255 255 / 0.45) 4px 7px);
+}
+.pattern-high {
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 4px, rgb(255 255 255 / 0.4) 4px 6px),
+    repeating-linear-gradient(-45deg, transparent 0 4px, rgb(255 255 255 / 0.4) 4px 6px);
+}

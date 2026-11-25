@@ -56,5 +56,155 @@
     "deleteTitle": "اپنا ڈیٹا مٹانا",
     "delete": "آپ اپنا اکاؤنٹ مٹا سکتے ہیں۔ تب آپ کی سڑک کی رپورٹیں آپ کے نام یا یوزر آئی ڈی کے بغیر تاریخ میں رہتی ہیں۔",
     "emergency": "RouteGuard کوئی ہنگامی سروس نہیں ہے۔ ہنگامی صورت میں 112 پر کال کریں۔"
+  },
+  "risk": {
+    "horizon": {
+      "h0": "ابھی",
+      "h12": "12 گھنٹے میں",
+      "h24": "24 گھنٹے میں",
+      "h48": "48 گھنٹے میں"
+    },
+    "forecastTime": "پیش گوئی کا وقت",
+    "level": {
+      "low": "کم",
+      "medium": "درمیانہ",
+      "high": "زیادہ"
+    },
+    "confidence": {
+      "low": "کم اعتماد",
+      "medium": "درمیانہ اعتماد",
+      "high": "زیادہ اعتماد"
+    },
+    "hazard": {
+      "landslide": "لینڈ سلائیڈ",
+      "rockfall": "پتھر گرنا",
+      "flash_flood": "اچانک سیلاب",
+      "snow_ice": "برف/پالا"
+    },
+    "allHazards": "تمام خطرات",
+    "hazardFilter": "خطرہ دکھائیں",
+    "range": "حد {low} سے {high}",
+    "zoneTitle": "زون {zone}: {name}",
+    "whenNow": "ابھی",
+    "whenLater": "{hours} گھنٹے میں",
+    "allLow": "چھ کے چھ زون {when} کم خطرے پر ہیں۔",
+    "worst": "{when} سب سے زیادہ خطرہ: زون {zone} ({name}) {level} ہے، اسکور {score}۔",
+    "allLowHazard": "{when} {hazard} کے لیے کوئی زون کم سے اوپر نہیں ہے۔",
+    "worstHazard": "{when} {hazard} کا سب سے زیادہ خطرہ: زون {zone} ({name}) {level} ہے، اسکور {score}۔",
+    "zonesHeading": "زون",
+    "hazardScores": "ہر خطرے کا اسکور",
+    "englishTag": "صرف انگریزی میں",
+    "loading": "خطرے کے اسکور لوڈ ہو رہے ہیں…",
+    "loadError": "خطرے کے اسکور لوڈ نہیں ہو سکے۔ اپنا کنکشن دیکھیں اور دوبارہ کوشش کریں۔",
+    "retry": "دوبارہ کوشش کریں",
+    "noScores": "ابھی خطرے کا کوئی اسکور نہیں۔ گھنٹہ وار اپڈیٹ نہیں چلا۔",
+    "mapLabel": "جموں سے سری نگر تک NH-44 کا نقشہ، {when} کے خطرے کے رنگ میں۔ نیچے زون کی فہرست میں یہی معلومات ہیں۔",
+    "mapFailed": "نقشہ لوڈ نہیں ہو سکا۔ نیچے زون کی فہرست میں یہی معلومات ہیں۔",
+    "legendTitle": "خطرے کی سطح",
+    "lineNote": "موٹی لکیر کا مطلب زیادہ خطرہ۔",
+    "scoreLabel": "اسکور {score}",
+    "details": "کیوں"
+  },
+  "reason": {
+    "none": "زون {zone}: اس مدت میں بارش، برف یا پالے کی کوئی وجہ نہیں",
+    "landslide_rain": "لینڈ سلائیڈ: {hours} گھنٹے میں {mm} ملی میٹر بارش",
+    "landslide_rain_burst": "لینڈ سلائیڈ: {hours} گھنٹے میں {mm} ملی میٹر بارش ({burst_hours} گھنٹے میں {burst_mm} ملی میٹر)",
+    "rockfall_rain": "پتھر گرنا: {hours} گھنٹے میں {mm} ملی میٹر بارش",
+    "rockfall_freeze_thaw": "پتھر گرنا: {hours} گھنٹے میں {mm} ملی میٹر بارش، پھر 0 °C سے نیچے",
+    "flash_flood_burst": "اچانک سیلاب: {hours} گھنٹے میں {mm} ملی میٹر",
+    "snow_ice": "برف/پالا: {parts}",
+    "snowFresh": "24 گھنٹے میں {snow_cm} سینٹی میٹر برف",
+    "snowDepth": "زمین پر {depth_m} میٹر",
+    "blackIce": "گیلی سڑک پر 0 °C سے نیچے",
+    "noSnow": "برف نہیں",
+    "listSeparator": "، ",
+    "sentence": "{head}، {place} کے قریب؛ {tail}",
+    "exposure": {
+      "very_high": "زون {zone} میں {hazard} کا خطرہ بہت زیادہ ہے",
+      "high": "زون {zone} میں {hazard} کا خطرہ ہے",
+      "some": "زون {zone} میں {hazard} کا کچھ خطرہ ہے",
+      "low": "زون {zone} میں {hazard} کا خطرہ کم ہے"
+    },
+    "hazards": {
+      "landslide": "لینڈ سلائیڈ",
+      "rockfall": "پتھر گرنے",
+      "flash_flood": "اچانک سیلاب",
+      "snow_ice": "برف/پالے"
+    },
+    "places": {
+      "z1_nagrota": "Nagrota",
+      "z1_jakhani": "Udhampur (Jakhani)",
+      "z2_chenani": "Chenani",
+      "z3_nashri": "Nashri",
+      "z3_peerah": "Peerah",
+      "z3_seri": "Seri",
+      "z4_ramban": "Ramban",
+      "z4_digdol": "Digdol",
+      "z4_marog": "Marog",
+      "z5_ramsoo": "Ramsoo",
+      "z5_banihal": "Banihal",
+      "z5_navyug_south": "Navyug tunnel (Banihal side)",
+      "z5_qazigund": "Qazigund",
+      "z6_bijbehara": "Anantnag (Bijbehara)",
+      "z6_srinagar": "Srinagar"
+    }
+  },
+  "reports": {
+    "heading": "سڑک کی رپورٹیں",
+    "none": "ابھی نقشے پر سڑک کی کوئی رپورٹ نہیں۔",
+    "legendConfirmed": "تصدیق شدہ، یا پولیس سے",
+    "legendUnconfirmed": "غیر تصدیق شدہ (ٹوٹا کنارہ)",
+    "status": {
+      "unconfirmed": "غیر تصدیق شدہ",
+      "confirmed": "تصدیق شدہ"
+    },
+    "source": {
+      "driver": "ڈرائیور",
+      "police": "پولیس",
+      "admin": "ایڈمن"
+    },
+    "item": "زون {zone} میں {hazard}، {time} پر رپورٹ",
+    "confirmations": "{count, plural, =0 {کوئی تصدیق نہیں} one {# تصدیق} other {# تصدیقیں}}",
+    "demo": "ڈیمو ڈیٹا",
+    "hazard": {
+      "landslide": "لینڈ سلائیڈ",
+      "rockfall": "پتھر گرنا",
+      "flash_flood": "اچانک سیلاب",
+      "snow_ice": "برف/پالا",
+      "accident": "حادثہ",
+      "other": "کوئی اور خطرہ"
+    }
+  },
+  "updates": {
+    "heading": "پولیس اور TCU کی اطلاعات",
+    "none": "ابھی پولیس یا TCU کی کوئی نافذ اطلاع نہیں۔",
+    "kind": {
+      "closure": "بند",
+      "one_way": "یک طرفہ ٹریفک",
+      "reopened": "دوبارہ کھلا",
+      "advisory": "مشورہ"
+    },
+    "wholeRoad": "پوری سڑک",
+    "zone": "زون {zone}",
+    "source": "ماخذ: {name}",
+    "validUntil": "{time} تک",
+    "issued": "جاری: {time}"
+  },
+  "strip": {
+    "heading": "اگلے 48 گھنٹے",
+    "intro": "ہر زون میں ابھی اور 12، 24 اور 48 گھنٹے میں خطرہ۔ وجہ دیکھنے کے لیے زون پر ٹیپ کریں۔",
+    "allLow": "اگلے 48 گھنٹے چھ کے چھ زون کم خطرے پر رہیں گے۔",
+    "worst": "اگلے 48 گھنٹے میں سب سے زیادہ خطرہ: زون {zone} ({name}) {when} {level} ہے۔",
+    "zoneCol": "زون",
+    "patternNote": "درمیانے خانوں میں دھاریاں اور زیادہ والے خانوں میں جالی ہے، تاکہ رنگ کے بغیر بھی سطح پڑھی جا سکے۔",
+    "cellLabel": "زون {zone}، {when}: {level}، اسکور {score}"
+  },
+  "summary": {
+    "title": "NH-44 RouteGuard: سڑک کا خطرہ",
+    "scoresFrom": "{time} کے اسکور (بھارتی وقت)۔",
+    "line": "{when}: {body}",
+    "allLow": "تمام زون کم",
+    "zoneLine": "زون {zone} {level} {score} ({hazard})",
+    "separator": "؛ "
   }
 }

@@ -4,8 +4,10 @@ import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/src/i18n/routing";
 import { getDb } from "@/src/server/db";
 import { latestRunAt } from "@/src/server/health/health.repository";
+import { corridorBounds, corridorSegments } from "@/src/shared/corridor";
 import { formatTime, isolate } from "@/src/shared/format";
 import { dataAgeMinutes } from "@/src/shared/freshness";
+import { RiskScreen } from "@/src/ui/risk/RiskScreen";
 
 async function LastRun() {
   await connection(); // read the database on every visit, not at build time
@@ -22,6 +24,10 @@ async function LastRun() {
   );
 }
 
+// The road line is cut into zones once, at build time.
+const SEGMENTS = corridorSegments();
+const BOUNDS = corridorBounds(SEGMENTS);
+
 export default async function Home() {
   const t = await getTranslations("home");
   return (
@@ -31,6 +37,7 @@ export default async function Home() {
       <Suspense fallback={null}>
         <LastRun />
       </Suspense>
+      <RiskScreen segments={SEGMENTS} bounds={BOUNDS} />
     </section>
   );
 }

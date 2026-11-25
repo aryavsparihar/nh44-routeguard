@@ -25,6 +25,8 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 | Error messages leaking internals | Unknown errors become a generic 500 problem+json with only the request id; logs redact tokens, cookies and phone numbers and never log query strings | `src/server/http/problem.ts`, `logger.ts` | `problem.test.ts`, `with-api.test.ts`, `logger.test.ts` |
 | Someone giving themselves police or admin | Users can only pick grower, trader, agent or driver; column grants stop a user token writing `users.role`; only `admin_set_role()` changes roles (admin only, not on yourself, reason required) | `supabase/migrations/20261124200000_admin_set_role.sql`, `src/server/users/` | `rls.test.sql`, `users.routes.test.ts` |
 | Editing or deleting the audit log | Rows only come from `write_audit()`, which takes the actor from the token; a trigger refuses update, delete and truncate, even by the owner | `20261124160007_rls_policies.sql` | `rls.test.sql` |
+| Bad query strings returning everything | Every query string goes through a zod `.strict()` schema (`readQuery`): `?zone=abc`, an unknown horizon or an extra parameter is a 400 problem+json, never an unfiltered 200 (L7). Cursors must match their exact format | `src/server/risk/risk.schemas.ts`, `src/server/schemas/zone-query.ts`, `src/server/incidents/incidents.schemas.ts` | `risk.routes.test.ts`, `lists.routes.test.ts` |
+| Personal data in public lists | Public lists select named columns only: reports come from the `public_reports` view (no user id), official updates leave out `created_by`, incidents show verified rows only | `src/server/reports/`, `src/server/official-updates/`, `src/server/incidents/` | `lists.routes.test.ts`; `rls.test.sql` for the view |
 
 ### Gaps we know about
 
