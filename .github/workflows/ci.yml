@@ -93,6 +93,17 @@ jobs:
       - name: Smoke test
         run: node scripts/smoke.mjs http://localhost:3000
 
+      # The Postman collection's keyless folders: public reads (200, or 503
+      # without a database), and 400/401/403/404/405/415/422 answers. The
+      # signed-in and rate-limit folders need real keys and run locally
+      # (postman/README.md).
+      - name: API tests (newman)
+        run: >
+          npx -y newman@6.2.3 run postman/RouteGuard.postman_collection.json
+          -e postman/ci.postman_environment.json
+          --folder "1 Public" --folder "2 Errors without signing in"
+          --reporters cli
+
       - name: No .env files or secret keys in the image
         run: |
           docker cp app:/app ./image-app

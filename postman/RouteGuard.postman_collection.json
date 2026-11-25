@@ -1,0 +1,2118 @@
+{
+  "info": {
+    "_postman_id": "197afffb-de42-5ce4-9a7f-db5eb7573a4c",
+    "name": "RouteGuard NH-44 API",
+    "description": "Requests and tests for /api/v1. Folders 1 and 2 need no keys and run in CI with newman against the app image. Folders 3 and 4 need the database and, for 3, Clerk session tokens of test users (see postman/README.md). RouteGuard is advisory and not an official police service. OpenAPI: {{baseUrl}}/api/docs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "id": "6e836569-0a7a-5a2a-b506-6560cd87c578",
+      "name": "1 Public",
+      "item": [
+        {
+          "id": "a4659f7f-8908-54c9-ab75-10809c61795e",
+          "name": "Health (liveness)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test(\"ok\", () => pm.expect(pm.response.json().data.status).to.eql(\"ok\"));",
+                  "pm.test(\"has X-Request-Id\", () => pm.expect(pm.response.headers.get(\"X-Request-Id\")).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "87341586-90cb-5b13-ad61-2bfe279bdd35",
+          "name": "Health (readiness)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health",
+                "ready"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data.database).to.eql(\"ok\");",
+                  "    pm.expect(body.data).to.have.property(\"stale\");",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b463c1a5-21fa-5143-a67f-7976ef5bc7e9",
+          "name": "Zones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/zones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "zones"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "    pm.expect(body.data.length).to.eql(6);",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2793b1bd-ad04-5118-8d56-c40b35679a10",
+          "name": "Risk (all rows of the newest run)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/risk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "risk"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "    pm.expect(body.meta).to.have.property(\"run_at\");",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "8d2ccc14-992b-5b47-af94-ad90866e70e3",
+          "name": "Risk (zone 4, 24 h)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/risk?horizon=24&zone=4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "risk"
+              ],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "24"
+                },
+                {
+                  "key": "zone",
+                  "value": "4"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "    body.data.forEach((r) => { pm.expect(r.zone_id).to.eql(4); pm.expect(r.horizon_hours).to.eql(24); });",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "0e229873-18b9-5344-8dd9-f255660cea94",
+          "name": "Risk summary (plain text, Hindi)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/risk/summary?lang=hi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "risk",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "hi"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) pm.test(\"plain text under 5 KB\", () => { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/plain\"); pm.expect(pm.response.responseSize).to.be.below(5120); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b1122e55-d281-5539-8235-fbcd5fe7308c",
+          "name": "Road status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/road-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "road-status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "5e425517-55a1-5849-845b-3e7c1f7df10f",
+          "name": "Reports on the map",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "    body.data.forEach((r) => pm.expect(r).to.not.have.any.keys(\"user_id\", \"reporter_id\", \"photo_path\"));",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "bc166035-0b60-5532-89ab-4d318630f4b0",
+          "name": "Official updates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/official-updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "official-updates"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "    body.data.forEach((u) => pm.expect(u.source_url).to.match(/^https:\\/\\//));",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "d06f50c5-783c-528e-923e-f6077720a50f",
+          "name": "Past closures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidents?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an(\"array\");",
+                  "    pm.expect(body.meta).to.have.property(\"count\");",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fe8fe947-ff47-5155-9cd4-2a504253da6a",
+          "name": "Model card",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/model",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "model"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test(\"advisory note\", () => pm.expect(pm.response.json().data.advisory).to.include(\"not an official police service\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "916042c5-b57f-5b5a-91f9-db475eed020d",
+          "name": "Advice for one lot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"days_since_picking\": 12,\n  \"tonnes\": 10,\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 503\", () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test(\"shape\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect([\"SEND\", \"HOLD\", \"RAIL\", \"DIVERT\"]).to.include(body.data.decision);",
+                  "    pm.expect(body.data.rules_version).to.be.a(\"string\");",
+                  "  });",
+                  "} else {",
+                  "  pm.test(\"503 is problem+json\", () => pm.expect(pm.response.json().status).to.eql(503));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b6d8c876-ec27-5631-861b-f7e27e57f61f",
+          "name": "OpenAPI document",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "openapi.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test(\"OpenAPI 3.1\", () => pm.expect(pm.response.json().openapi).to.eql(\"3.1.0\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "11f97f41-9f18-552f-9045-37a0dfe1b82e",
+      "name": "2 Errors without signing in",
+      "item": [
+        {
+          "id": "342cbd2c-7c3c-5ed9-abe1-be3aee3d0aaf",
+          "name": "401 signed out: GET /me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "5e20003e-e160-5877-9387-005ed22da37e",
+          "name": "401 signed out: PATCH /me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"hi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "9f611fc3-d857-5cc5-b172-64bb00a76455",
+          "name": "401 signed out: POST /me/onboarding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/onboarding",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "onboarding"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"driver\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "36a2a8a2-f9f2-526e-b4f9-8009af7d94da",
+          "name": "401 signed out: GET /me/realtime-token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/realtime-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "realtime-token"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2842e027-3555-584f-8608-1d61d9080568",
+          "name": "401 signed out: GET /shipments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shipments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "98d9d170-8dcb-542d-af47-e507f29a3f68",
+          "name": "401 signed out: POST /shipments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shipments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"tonnes\": 10,\n  \"harvest_date\": \"2026-11-14\",\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "bdc1c77a-2904-586f-9c15-79550122b288",
+          "name": "401 signed out: GET /agents/drivers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/drivers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "drivers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "47a6ffc1-f222-5268-8bc4-41434924da9b",
+          "name": "401 signed out: POST /agents/invites/accept",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/invites/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "invites",
+                "accept"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"K7MPQ2XR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "eae0dbd2-bce1-5906-ba6a-e70b7417e119",
+          "name": "401 signed out: POST /reports/6f1c2a7e-3b4d-4e5f-8a9b-0c1d2e3f4a5b/flag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/6f1c2a7e-3b4d-4e5f-8a9b-0c1d2e3f4a5b/flag",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "6f1c2a7e-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+                "flag"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"not_there\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "34aa0fba-ea07-5b03-abbb-5dd978536bc7",
+          "name": "401 signed out: GET /admin/audit-log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-log",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "audit-log"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "754e334f-becb-5066-ae91-1b37f5f3080e",
+          "name": "401 signed out: PATCH /admin/road-status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/road-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "road-status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": \"mughal_road\",\n  \"state\": \"open\",\n  \"source_url\": \"https://example.org\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(401);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "34ed3687-1ad1-5817-aa9d-7e364b9dc041",
+          "name": "403 write without Origin (CSRF check)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"days_since_picking\": 12,\n  \"tonnes\": 10,\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(403);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "dbe23ae7-70ee-5f64-b7a4-5451560bdc98",
+          "name": "403 write from another site",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "https://evil.example"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"days_since_picking\": 12,\n  \"tonnes\": 10,\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(403);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "62024de9-6a0e-5033-be43-5fbece851e89",
+          "name": "422 advice with an unknown field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"days_since_picking\": 12,\n  \"tonnes\": 10,\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\",\n  \"price\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(422);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"names the field\", () => pm.expect(pm.response.json().errors.map((e) => e.path)).to.include(\"price\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "04c42bae-46bf-57de-b102-f465637230ab",
+          "name": "422 advice with tonnes out of range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"days_since_picking\": 12,\n  \"tonnes\": 400,\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(422);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"names tonnes\", () => pm.expect(pm.response.json().errors.map((e) => e.path)).to.include(\"tonnes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "d5d7ebdf-0089-5973-9190-69f9a373618b",
+          "name": "400 risk with a horizon we don't have",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/risk?horizon=6",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "risk"
+              ],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "6"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(400);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"names horizon\", () => pm.expect(pm.response.json().errors.map((e) => e.path)).to.include(\"horizon\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "95895334-67ef-534f-b1ea-8c178613e4d6",
+          "name": "400 advice body that isn't JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{not json",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(400);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a313f40a-5b47-580c-91e7-f0113fcc6370",
+          "name": "415 advice body as text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "variety=delicious",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 415\", () => pm.response.to.have.status(415));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(415);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ff6e8233-0ee2-5444-9982-209890381aad",
+          "name": "404 unknown API path",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nothing-here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nothing-here"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(404);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a650d01e-b4fd-57e4-9ac7-149bcec2ee56",
+          "name": "405 wrong method",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/zones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "zones"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 405\", () => pm.response.to.have.status(405));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(405);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"Allow header\", () => pm.expect(pm.response.headers.get(\"Allow\")).to.include(\"GET\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bc79f0c1-8b43-5ca2-9ec9-2b996296bd49",
+      "name": "3 Signed in (local, needs tokens)",
+      "item": [
+        {
+          "id": "37546baa-d782-5715-8a00-a0cad0be57b7",
+          "name": "Grower: my profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{growerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get(\"growerToken\") && !pm.collectionVariables.get(\"growerToken\")) {",
+                  "  console.log(\"No growerToken set: skipped. See postman/README.md.\");",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test(\"is a grower\", () => pm.expect(pm.response.json().data.role).to.eql(\"grower\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "300a55ae-fbca-5c31-83fd-b662306bbcf9",
+          "name": "403 grower posting an official update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{growerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/official-updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "official-updates"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"closure\",\n  \"title\": \"Test\",\n  \"source_url\": \"https://example.org\",\n  \"source_name\": \"Test\",\n  \"issued_at\": \"2026-11-25T09:00:00+05:30\",\n  \"valid_until\": \"2027-11-25T09:00:00+05:30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get(\"growerToken\") && !pm.collectionVariables.get(\"growerToken\")) {",
+                  "  console.log(\"No growerToken set: skipped. See postman/README.md.\");",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(403);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cfe15360-8754-5ba7-b361-26d2ea6148c8",
+          "name": "422 grower saving a lot with a bad truck number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{growerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shipments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variety\": \"delicious\",\n  \"tonnes\": 10,\n  \"harvest_date\": \"2026-11-14\",\n  \"destination\": \"azadpur\",\n  \"truck_type\": \"heavy\",\n  \"truck_number\": \"NOT-A-TRUCK\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get(\"growerToken\") && !pm.collectionVariables.get(\"growerToken\")) {",
+                  "  console.log(\"No growerToken set: skipped. See postman/README.md.\");",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"problem+json with title and detail\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.status).to.eql(422);",
+                  "  pm.expect(p.title).to.be.a(\"string\");",
+                  "  pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"names truck_number\", () => pm.expect(pm.response.json().errors.map((e) => e.path)).to.include(\"truck_number\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "014b7b62-2f69-5204-be0b-a942ea9083fa",
+          "name": "Driver: my board",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shipments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get(\"driverToken\") && !pm.collectionVariables.get(\"driverToken\")) {",
+                  "  console.log(\"No driverToken set: skipped. See postman/README.md.\");",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test(\"a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "0c446815-9d65-5348-a174-a804e63921d2",
+          "name": "429 driver guessing invite codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/invites/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "invites",
+                "accept"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ZZZZZZZZ\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get(\"driverToken\") && !pm.collectionVariables.get(\"driverToken\")) {",
+                  "  console.log(\"No driverToken set: skipped. See postman/README.md.\");",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// The verification limit is 5 an hour per user. Five wrong codes, then this one.",
+                  "pm.test(\"status is 404 or 429\", () => pm.expect(pm.response.code).to.be.oneOf([404, 429]));",
+                  "const url = pm.request.url.toString();",
+                  "const headers = { Authorization: \"Bearer \" + pm.variables.get(\"driverToken\"), Origin: pm.variables.get(\"baseUrl\"), \"Content-Type\": \"application/json\" };",
+                  "const codes = [];",
+                  "function next(i) {",
+                  "  if (i === 0) {",
+                  "    pm.test(\"the sixth try in an hour is 429 with Retry-After\", () => pm.expect(codes).to.include(429));",
+                  "    return;",
+                  "  }",
+                  "  pm.sendRequest({ url, method: \"POST\", header: headers, body: { mode: \"raw\", raw: JSON.stringify({ code: \"ZZZZZZZZ\" }) } }, (err, res) => {",
+                  "    codes.push(res.code);",
+                  "    if (res.code === 429) pm.test(\"Retry-After\", () => pm.expect(res.headers.get(\"Retry-After\")).to.be.a(\"string\"));",
+                  "    next(i - 1);",
+                  "  });",
+                  "}",
+                  "next(6);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6ef5c713-ed89-5b69-af1b-5515db2d8169",
+      "name": "4 Rate limit (local, needs the database)",
+      "item": [
+        {
+          "id": "a97e6170-1de7-5f59-a4e6-9365608dcece",
+          "name": "429 advice: more than 60 a minute from one address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/advice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Sends 61 invalid requests (they are refused before touching the database,",
+                  "// but still count). Needs the database for the counter, so not in CI.",
+                  "const url = pm.request.url.toString();",
+                  "let seen429 = null;",
+                  "function next(i) {",
+                  "  if (i === 0) {",
+                  "    pm.test(\"429 with Retry-After\", () => {",
+                  "      pm.expect(seen429, \"no 429 after 61 requests\").to.not.eql(null);",
+                  "      pm.expect(seen429.headers.get(\"Retry-After\")).to.be.a(\"string\");",
+                  "      pm.expect(seen429.json().status).to.eql(429);",
+                  "    });",
+                  "    return;",
+                  "  }",
+                  "  pm.sendRequest({ url, method: \"POST\", header: { Origin: pm.variables.get(\"baseUrl\"), \"Content-Type\": \"application/json\" }, body: { mode: \"raw\", raw: \"{}\" } }, (err, res) => {",
+                  "    if (res && res.code === 429 && !seen429) seen429 = res;",
+                  "    next(seen429 ? 0 : i - 1);",
+                  "  });",
+                  "}",
+                  "next(61);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Every API answer carries a request id; every error is problem+json.",
+          "pm.test(\"X-Request-Id header\", () => pm.expect(pm.response.headers.get(\"X-Request-Id\")).to.be.a(\"string\"));",
+          "if (pm.response.code >= 400) {",
+          "  pm.test(\"error has a request_id\", () => pm.expect(pm.response.json().request_id).to.be.a(\"string\"));",
+          "}",
+          "pm.test(\"answers within 5 s\", () => pm.expect(pm.response.responseTime).to.be.below(5000));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
