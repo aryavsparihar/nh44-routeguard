@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { corridorBounds, corridorSegments, zoneAt } from "./corridor";
+import line from "@/data/nh44_line.json";
+import { corridorBounds, corridorSegments, nearestOnRoad, zoneAt } from "./corridor";
 
 describe("corridorSegments", () => {
   const segments = corridorSegments();
@@ -30,5 +31,22 @@ describe("zoneAt", () => {
     expect(zoneAt(0, starts)).toBe(1);
     expect(zoneAt(56.2, starts)).toBe(2);
     expect(zoneAt(90, starts)).toBe(3);
+  });
+});
+
+describe("nearestOnRoad", () => {
+  const points = line.points as [number, number][];
+
+  it("puts the first road point in zone 1 and the last in zone 6, on the road", () => {
+    const first = nearestOnRoad(...points[0]);
+    const last = nearestOnRoad(...points[points.length - 1]);
+    expect([first.zone, first.offRoadKm]).toEqual([1, 0]);
+    expect(last.zone).toBe(6);
+    expect(last.offRoadKm).toBe(0);
+  });
+
+  it("measures how far a spot is from the road", () => {
+    const [lat, lng] = points[100];
+    expect(nearestOnRoad(lat, lng + 0.3).offRoadKm).toBeGreaterThan(10);
   });
 });

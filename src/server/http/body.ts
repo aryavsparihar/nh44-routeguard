@@ -31,11 +31,15 @@ export function toFieldErrors(issues: z.core.$ZodIssue[]): FieldError[] {
 // Reads the body as text, but stops as soon as it passes maxBytes, so a huge
 // body can't fill the server's memory. Content-Length alone can't be trusted.
 async function readTextWithLimit(req: Request, maxBytes: number): Promise<string> {
+  return new TextDecoder().decode(await readBytesWithLimit(req, maxBytes));
+}
+
+async function readBytesWithLimit(req: Request, maxBytes: number): Promise<Uint8Array<ArrayBuffer>> {
   const declared = Number(req.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > maxBytes) {
     throw new PayloadTooLargeError(maxBytes);
   }
-  if (!req.body) return "";
+  if (!req.body) return new Uint8Array();
 
   const reader = req.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -50,7 +54,7 @@ async function readTextWithLimit(req: Request, maxBytes: number): Promise<string
     }
     chunks.push(value);
   }
-  return new TextDecoder().decode(Buffer.concat(chunks));
+  return new Uint8Array(Buffer.concat(chunks));
 }
 
 // For JSON bodies:
@@ -97,4 +101,19 @@ export function readQuery<Schema extends z.ZodType>(
     );
   }
   return result.data;
+}
+
+// For multipart/form-data bodies (a report with a photo): wrong type → 415,
+// over maxBytes → 413 (counted while reading), unreadable → 400.
+export async function readMultipart(req: Request, maxBytes: number): Promise<FormData> {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (contentType.split(";")[0].trim().toLowerCase() !== "multipart/form-data") {
+    throw new UnsupportedMediaTypeError("multipart/form-data");
+  }
+  const bytes = await readBytesWithLimit(req, maxBytes);
+  try {
+    return await new Response(bytes, { headers: { "content-type": contentType } }).formData();
+  } catch {
+    throw new BadRequestError("The form could not be read.");
+  }
 }
