@@ -1,0 +1,322 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/src/i18n/routing";
+import { decide, type Advice, type Decision, type Lot, type RoadStatus, type TruckType } from "@/src/shared/decide";
+import { formatDayTime, isolate } from "@/src/shared/format";
+import { ASSUMPTIONS, DESTINATIONS, VARIETIES, type Destination, type Variety } from "@/src/shared/priority";
+import type { RiskMeta, RiskRow } from "@/src/shared/risk";
+import { getJson, type ApiList } from "@/src/ui/api";
+import { Icon, type IconName } from "@/src/ui/icons";
+import { LevelBadge } from "@/src/ui/risk/LevelBadge";
+
+type RoadRow = { item: string; state: RoadStatus["mughal_road"] };
+type Result = { advice: Advice; source: "server" | "phone" };
+
+const DECISION_STYLE: Record<Decision, { box: string; icon: IconName }> = {
+  SEND: { box: "border-send-fill bg-send-bg text-send-text", icon: "decision-send" },
+  HOLD: { box: "border-hold-fill bg-hold-bg text-hold-text", icon: "decision-hold" },
+  RAIL: { box: "border-rail-fill bg-rail-bg text-rail-text", icon: "decision-rail" },
+  DIVERT: { box: "border-divert-fill bg-divert-bg text-divert-text", icon: "decision-divert" },
+};
+
+const field = "flex flex-col gap-1";
+const input = "min-h-12 rounded-md border border-border-strong bg-elevated px-3 text-base";
+
+// The dispatch advisor (E1, L12–L14). Online it asks POST /api/v1/advice, so
+// the answer comes from our server. With no signal it runs the same
+// decide() on this phone with the scores it saved last, and says so.
+export function AdvisorScreen() {
+  const t = useTranslations("advice");
+  const [lot, setLot] = useState({
+    variety: "delicious" as Variety,
+    days: "12",
+    tonnes: "10",
+    destination: "azadpur" as Destination,
+    truck_type: "heavy" as TruckType,
+  });
+  const [errors, setErrors] = useState<{ days?: boolean; tonnes?: boolean }>({});
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  // Scores and road status kept for the offline answer.
+  const saved = useRef<{ rows: RiskRow[]; run_at: string | null; road: RoadStatus } | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      getJson<ApiList<RiskRow, RiskMeta>>("/api/v1/risk"),
+      getJson<ApiList<RoadRow>>("/api/v1/road-status"),
+    ]).then(
+      ([risk, road]) => {
+        const state = (item: string) => road.data.find((r) => r.item === item)?.state ?? "unknown";
+        saved.current = {
+          rows: risk.data,
+          run_at: risk.meta.run_at,
+          road: { mughal_road: state("mughal_road"), rail_parcel: state("rail_parcel") },
+        };
+      },
+      () => {}, // offline on arrival: the service worker's copy is used, if any
+    );
+  }, []);
+
+  useEffect(() => {
+    if (result) resultRef.current?.focus();
+  }, [result]);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const days = Number(lot.days);
+    const tonnes = Number(lot.tonnes);
+    const bad = {
+      days: lot.days.trim() === "" || !Number.isInteger(days) || days < 0 || days > 120,
+      tonnes: lot.tonnes.trim() === "" || !(tonnes >= 0.1 && tonnes <= 40),
+    };
+    setErrors(bad);
+    if (bad.days || bad.tonnes) return;
+
+    const body: Lot = {
+      variety: lot.variety,
+      days_since_picking: days,
+      tonnes,
+      destination: lot.destination,
+      truck_type: lot.truck_type,
+    };
+    setBusy(true);
+    setFailed(false);
+    try {
+      const res = await fetch("/api/v1/advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setResult({ advice: (await res.json()).data as Advice, source: "server" });
+        return;
+      }
+      if (res.status < 500) throw new Error("rejected"); // our form checks match the API's
+      throw new TypeError("server unavailable");
+    } catch (error) {
+      // No signal or server down: the same rules on this phone.
+      if (error instanceof TypeError && saved.current) {
+        const s = saved.current;
+        setResult({ advice: decide(body, { rows: s.rows, run_at: s.run_at }, s.road), source: "phone" });
+      } else {
+        setFailed(true);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (result) return <AdviceResult result={result} onAgain={() => setResult(null)} focusRef={resultRef} />;
+
+  return (
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <label className={field}>
+        <span className="font-bold">{t("variety")}</span>
+        <select
+          className={input}
+          value={lot.variety}
+          onChange={(e) => setLot({ ...lot, variety: e.target.value as Variety })}
+        >
+          {VARIETIES.map((v) => (
+            <option key={v} value={v}>
+              {ASSUMPTIONS.varieties[v].name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className={field}>
+          <span className="font-bold">{t("days")}</span>
+          <input
+            className={input}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={120}
+            step={1}
+            dir="ltr"
+            value={lot.days}
+            aria-invalid={errors.days || undefined}
+            aria-describedby={errors.days ? "days-error" : undefined}
+            onChange={(e) => setLot({ ...lot, days: e.target.value })}
+          />
+          {errors.days && (
+            <span id="days-error" className="text-sm text-high-text">
+              {t("errDays")}
+            </span>
+          )}
+        </label>
+        <label className={field}>
+          <span className="font-bold">{t("tonnes")}</span>
+          <input
+            className={input}
+            type="number"
+            inputMode="decimal"
+            min={0.1}
+            max={40}
+            step={0.1}
+            dir="ltr"
+            value={lot.tonnes}
+            aria-invalid={errors.tonnes || undefined}
+            aria-describedby={errors.tonnes ? "tonnes-error" : undefined}
+            onChange={(e) => setLot({ ...lot, tonnes: e.target.value })}
+          />
+          {errors.tonnes && (
+            <span id="tonnes-error" className="text-sm text-high-text">
+              {t("errTonnes")}
+            </span>
+          )}
+        </label>
+      </div>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 font-bold">{t("destination")}</legend>
+        {DESTINATIONS.map((d) => (
+          <label key={d} className="flex min-h-12 items-center gap-3 rounded-md border border-border-strong bg-elevated px-3 has-checked:border-primary has-checked:bg-surface">
+            <input
+              type="radio"
+              name="destination"
+              className="size-5"
+              checked={lot.destination === d}
+              onChange={() => setLot({ ...lot, destination: d })}
+            />
+            <bdi>{ASSUMPTIONS.destinations[d].name}</bdi>
+          </label>
+        ))}
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 font-bold">{t("truck")}</legend>
+        {(["heavy", "light"] as const).map((k) => (
+          <label key={k} className="flex min-h-12 items-center gap-3 rounded-md border border-border-strong bg-elevated px-3 has-checked:border-primary has-checked:bg-surface">
+            <input
+              type="radio"
+              name="truck_type"
+              className="size-5"
+              checked={lot.truck_type === k}
+              onChange={() => setLot({ ...lot, truck_type: k })}
+            />
+            {t(`truckType.${k}`)}
+          </label>
+        ))}
+      </fieldset>
+
+      {failed && (
+        <p role="alert" className="rounded-md border border-high-fill bg-high-bg p-3 text-high-text">
+          {t("errServer")}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={busy}
+        className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-highway px-4 font-bold text-inverse disabled:opacity-60"
+      >
+        <Icon name="nav-advisor" className="size-5" />
+        {busy ? t("working") : t("submit")}
+      </button>
+    </form>
+  );
+}
+
+function AdviceResult({
+  result,
+  onAgain,
+  focusRef,
+}: {
+  result: Result;
+  onAgain: () => void;
+  focusRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const t = useTranslations("advice");
+  const tr = useTranslations("risk");
+  const locale = useLocale() as Locale;
+  const { advice, source } = result;
+  const style = DECISION_STYLE[advice.decision];
+  const when = (h: number) => (h === 0 ? tr("whenNow") : tr("whenLater", { hours: h }));
+  const runAt = isolate(advice.risk_run_at ? formatDayTime(new Date(advice.risk_run_at), locale) : "–");
+  const p = advice.priority;
+
+  const reasonValues: Record<string, string | number> = {
+    ...advice.reason_params,
+    hours: advice.delay_hours ?? 0,
+    when: advice.worst ? when(advice.worst.horizon) : "",
+  };
+  const showReason = !advice.notes.includes("no_scores");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        ref={focusRef}
+        tabIndex={-1}
+        className={`flex flex-col gap-2 rounded-lg border-s-8 p-4 outline-none ${style.box}`}
+        data-advice={advice.decision}
+      >
+        <p className="flex items-center gap-2 text-2xl font-bold">
+          {/* "Send" points forward: to the left in Urdu. */}
+          <Icon name={style.icon} className={advice.decision === "SEND" ? "size-7 rtl:-scale-x-100" : "size-7"} />
+          {t(`decision.${advice.decision}`)}
+        </p>
+        {showReason && <p>{t(`reason.${advice.reason_code}`, reasonValues)}</p>}
+        {advice.notes.map((note) => (
+          <p key={note} className="font-bold">
+            {t(`notes.${note}`)}
+          </p>
+        ))}
+      </div>
+
+      <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="rounded-lg border border-border bg-elevated p-3">
+          <dt className="text-sm text-secondary">{t("delayLabel")}</dt>
+          <dd className="font-bold">{t(`delay.${advice.delay_code}`, { hours: advice.delay_hours ?? 0 })}</dd>
+        </div>
+        <div className="rounded-lg border border-border bg-elevated p-3">
+          <dt className="text-sm text-secondary">{t("priorityLabel")}</dt>
+          <dd className="flex flex-col gap-1">
+            <span className="font-bold">{t(`band.${p.band}`)}</span>
+            <span className="text-sm">
+              {t("priorityInputs", { pct: isolate(Math.round(p.shelf_used * 100)), value: isolate(p.value_lakh.toFixed(1)) })}
+            </span>
+          </dd>
+        </div>
+        {advice.worst && advice.worst.level !== "low" && (
+          <div className="rounded-lg border border-border bg-elevated p-3 sm:col-span-2">
+            <dt className="text-sm text-secondary">{t("worstLabel")}</dt>
+            <dd className="flex flex-wrap items-center gap-2">
+              <span>
+                {t("worstValue", {
+                  zone: advice.worst.zone,
+                  when: when(advice.worst.horizon),
+                  level: tr(`level.${advice.worst.level}`),
+                  score: advice.worst.overall.toFixed(2),
+                })}
+              </span>
+              <LevelBadge level={advice.worst.level} />
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      <p className="text-sm text-secondary">
+        {t("assumptions", {
+          days: isolate(p.shelf_days),
+          price: isolate(p.price_rs_per_kg),
+          version: isolate(p.assumptions_version),
+        })}
+      </p>
+      <p className="text-sm text-secondary" data-source={source}>
+        {source === "server" ? t("computedServer", { time: runAt }) : t("computedPhone", { time: runAt })}
+      </p>
+      <p className="text-sm font-bold">{t("disclaimer")}</p>
+
+      <button type="button" onClick={onAgain} className="min-h-12 rounded-md border border-border-strong bg-elevated px-4 font-bold">
+        {t("again")}
+      </button>
+    </div>
+  );
+}
