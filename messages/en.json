@@ -186,9 +186,11 @@
     },
     "wholeRoad": "Whole road",
     "zone": "Zone {zone}",
-    "source": "Source: {name}",
     "validUntil": "Until {time}",
-    "issued": "Issued {time}"
+    "issued": "Issued {time}",
+    "from": "From {name}",
+    "sourceLink": "Open source",
+    "notOfficial": "RouteGuard copies these from the source shown. It is not an official channel: check the source before you act."
   },
   "strip": {
     "heading": "Next 48 hours",
@@ -267,5 +269,130 @@
     "computedServer": "Worked out by the RouteGuard server from scores of {time}.",
     "computedPhone": "No signal: worked out on this phone from saved scores of {time}.",
     "disclaimer": "Advice only, not a road status. Follow J&K Traffic Police instructions."
+  },
+  "admin": {
+    "heading": "Admin",
+    "intro": "Tools for admins and the demo police account. Every change here goes into the audit log with who made it and why.",
+    "links": {
+      "updates": "Official updates",
+      "roadStatus": "Road and rail status",
+      "audit": "Audit log",
+      "users": "Roles"
+    },
+    "hints": {
+      "updates": "Post, edit or remove police and TCU updates",
+      "roadStatus": "Mughal Road and the parcel train",
+      "audit": "Who changed what, when and why",
+      "users": "Give someone a role, including police or admin"
+    },
+    "back": "Back to admin",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "loadMore": "Show older",
+    "loading": "Loading…",
+    "err": {
+      "invalid": "Some fields are not valid. Check the marked fields.",
+      "signedOut": "You are signed out. Sign in again to continue.",
+      "forbidden": "Your role can't do this. If your role just changed, sign in again.",
+      "notFound": "Not found. Reload the page.",
+      "conflict": "This clashes with a change someone else made. Reload the page.",
+      "server": "Could not save. Check your connection and try again.",
+      "load": "Could not load this. Check your connection and try again."
+    },
+    "fieldInvalid": "Check this field.",
+    "updates": {
+      "heading": "Official updates",
+      "intro": "Only post what J&K Traffic Police or TCU have published, with the link to it. People see the source next to every update.",
+      "new": "New update",
+      "edit": "Edit: this saves version {version}",
+      "kind": "Type",
+      "zone": "Where",
+      "title": "Title",
+      "body": "Details (optional)",
+      "sourceName": "Published by",
+      "sourceNameHint": "For example: J&K Traffic Police advisory",
+      "sourceUrl": "Link to where it was published (https://)",
+      "issuedAt": "Issued (IST)",
+      "validUntil": "In force until (IST)",
+      "reason": "Why you are changing it (optional, for the audit log)",
+      "post": "Post update",
+      "saveVersion": "Save new version",
+      "history": "All versions",
+      "none": "No official updates yet.",
+      "status": {
+        "live": "In force",
+        "ended": "Ended",
+        "replaced": "Replaced",
+        "deleted": "Deleted"
+      },
+      "version": "Version {version}",
+      "deletedReason": "Reason: {reason}",
+      "editButton": "Edit",
+      "deleteButton": "Delete",
+      "deleteReason": "Why are you deleting it? (shown in the history)",
+      "confirmDelete": "Delete update",
+      "posted": "Posted. It shows on the map screen within a minute.",
+      "versionSaved": "Saved as version {version}.",
+      "deleted": "Deleted. It stays in the history.",
+      "conflict": "Someone changed this update already. Reload the list and edit the newest version."
+    },
+    "road": {
+      "heading": "Road and rail status",
+      "intro": "The advisor suggests Mughal Road or the parcel train only when they are marked open here. Mark one open or closed only with a link that says so.",
+      "item": {
+        "mughal_road": "Mughal Road (light trucks)",
+        "rail_parcel": "Budgam–Delhi parcel train"
+      },
+      "state": {
+        "open": "Open",
+        "closed": "Closed",
+        "unknown": "Unknown"
+      },
+      "current": "Now: {state}",
+      "updated": "Set {time}",
+      "sourceNow": "Source",
+      "source": "Source link (https://), needed for open or closed",
+      "reason": "Note for the audit log (optional)",
+      "save": "Save",
+      "saved": "Saved. The advisor uses it from the next question."
+    },
+    "audit": {
+      "heading": "Audit log",
+      "intro": "Every privileged action, newest first. Nobody can change or delete these rows, not even an admin.",
+      "filter": "Show",
+      "all": "All actions",
+      "action": {
+        "roleChanged": "Role changed",
+        "updateCreated": "Update posted",
+        "updateEdited": "Update edited",
+        "updateDeleted": "Update deleted",
+        "roadStatus": "Road status set"
+      },
+      "by": "By {role} {id}",
+      "target": "On {target}",
+      "reason": "Reason: {reason}",
+      "request": "Request {id}",
+      "none": "Nothing in the audit log yet."
+    },
+    "users": {
+      "heading": "Roles",
+      "intro": "Give someone a role, including police or admin. A written reason is required and goes into the audit log. You can't change your own role.",
+      "userId": "Clerk user id (starts with user_)",
+      "role": "New role",
+      "roles": {
+        "grower": "Grower",
+        "trader": "Trader",
+        "agent": "Agent",
+        "driver": "Driver",
+        "police": "Police (demo account)",
+        "admin": "Admin"
+      },
+      "reason": "Reason",
+      "save": "Change role",
+      "done": "Role changed from {from} to {to}. They get it within about a minute, or when they sign in again.",
+      "noRole": "no role",
+      "notFound": "No user with this id.",
+      "self": "You can't change your own role. Ask another admin."
+    }
   }
 }
