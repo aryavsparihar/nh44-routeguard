@@ -43,13 +43,14 @@ test("an unknown page shows the not-found screen", async ({ page }) => {
   expect(res?.status()).toBe(404);
 });
 
-test("signed-out visitors of the agent board are sent to sign in", async ({ page }) => {
-  await page.goto("/board");
-  await expect(page).toHaveURL(/sign-in/);
-});
+// These need the app's keys (Clerk, database), which CI's image doesn't have.
+test.describe("with keys and the database", () => {
+  test.skip(!process.env.E2E_DB, "needs keys and the database: set E2E_DB=1");
 
-test.describe("with the database", () => {
-  test.skip(!process.env.E2E_DB, "needs the database: set E2E_DB=1");
+  test("signed-out visitors of the agent board are sent to sign in", async ({ page }) => {
+    await page.goto("/board");
+    await expect(page).toHaveURL(/sign-in/);
+  });
 
   test("the advisor answers from the server", async ({ page }) => {
     await page.goto("/advisor");

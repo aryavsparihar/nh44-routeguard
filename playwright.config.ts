@@ -6,7 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
 //   npm run build && npm run e2e             starts `next start` on port 3000
 //   E2E_BASE_URL=http://localhost:3100 npm run e2e   uses a running server
 //
-// Tests that need the database (advisor answer) run only when E2E_DB=1, so
+// Tests that need keys and the database (sign-in redirect, advisor answer)
+// run only when E2E_DB=1, so
 // CI, which has no database, runs the rest.
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 
