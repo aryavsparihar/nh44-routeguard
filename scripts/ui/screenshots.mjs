@@ -3,7 +3,7 @@
 //   node scripts/ui/screenshots.mjs [base-url]
 //
 // Pixel 5 size, English, Hindi and Urdu, saved to docs/screenshots/ as JPEG.
-// Run against `npm start` with the database, after `node scripts/seed-demo.mts`.
+// macOS (Metal). Run against `npm start` with the database, after `node scripts/seed-demo.mts`.
 import { chromium, devices } from "@playwright/test";
 import fs from "node:fs";
 
@@ -12,7 +12,9 @@ const PAGES = { home: "/", strip: "/strip", advisor: "/advisor" };
 const out = "docs/screenshots";
 fs.mkdirSync(out, { recursive: true });
 
-const browser = await chromium.launch();
+// The GPU renderer: headless Chromium's software WebGL leaves a blank band
+// across the top of the map at the Pixel 5's 2.75 pixel ratio.
+const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=metal"] });
 for (const lang of ["en", "hi", "ur"]) {
   const context = await browser.newContext({ ...devices["Pixel 5"] });
   await context.addCookies([{ name: "rg_lang", value: lang, url: base }]);
