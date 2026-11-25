@@ -226,3 +226,15 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · The board gets its Realtime token from `GET /api/v1/me/realtime-token` and uses `@supabase/realtime-js` alone, not Clerk's browser library or the full supabase-js · It is the same short-lived token the browser already has in Clerk's cookie; the bundle stays small, and the bundle secret check stays strict (both libraries carry secret-key names in their code). `@supabase/realtime-js` is pinned to the version supabase-js uses.
 - **2026-11-25** · Links to sign-in pages (`/board`, `/report/new`, `/me`) are plain `<a>` links (`SignInLink`) · Signed out, the server redirects to Clerk; an in-app fetch can't follow that under our CSP and logs an error.
 - **2026-11-25** · The bundle secret check looks for key-shaped values and the real secret values, not variable names; the names are checked in our source instead (every reader is `server-only`) · Clerk's browser code (needed for the localised sign-in) lists `CLERK_SECRET_KEY` by name in a constants file, which made the name check fail on any Clerk component. No key value can reach the bundle without matching the new patterns.
+
+## Round 3: sign-in, onboarding and your account (D2, slice 8)
+
+- **2026-11-25** · Our own email-code sign-in page (`/sign-in`) built with Clerk's hooks (`useSignIn`, `useSignUp`); the same form signs in or creates the account · Section 8: every word comes from our messages files, so Urdu works (Clerk has no Urdu). `proxy.ts` sends signed-out visitors here with `signInUrl`.
+- **2026-11-25** · After sign-in we go back only to a path on our own site (`safeRedirect`), otherwise to `/me` · `redirect_url` comes from the address bar, so it must not become an open redirect.
+- **2026-11-25** · Our own "Sign out" button instead of Clerk's `<UserButton>` · The button's menu would be English only, and the only thing we need from it is signing out.
+- **2026-11-25** · Clerk's browser library loads only on `/sign-in` and `/me` (`<ClerkProvider>` around those screens) · Other pages stay light; the board gets its token from our API.
+- **2026-11-25** · Turning location sharing on stores the privacy notice version on the server (`PRIVACY_VERSION`); the client can't send one · The consent record must say which notice the person saw.
+- **2026-11-25** · Deleting an account: the database first (row, audit entry, photo paths), then the photos, then the Clerk user · If anything after the database fails, the data is already gone and sending the request again finishes the job; a photo that can't be removed is logged, not a reason to keep the account.
+- **2026-11-25** · Turning location sharing off deletes the last position at once, and a daily job clears it 7 days after delivery · The privacy page promised both; now the database does it.
+- **2026-11-25** · The "copies these from the source" note shows only next to official updates, not on the board, sign-in or report screens · It is about copied police/TCU updates; the footer disclaimer is on every page.
+

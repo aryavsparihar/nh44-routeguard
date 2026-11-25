@@ -40,6 +40,9 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 | Tracking drivers | Location is sent only by the assigned driver, only with `location_consent` on, only for a shipment that isn't delivered, and stored rounded to about 1 km | `private.shipment_location` | `rls.test.sql` (no consent 55000, other driver P0002, rounding) |
 | Live updates leaking other people's shipments | Realtime runs with the user's own token, so RLS filters every change; the change only triggers a reload through our API | `src/ui/board/useShipments.ts`, migration `20261125180000_shipments_fleet.sql` | `rls.test.sql` (publication), RLS rows above |
 | A report photo link showing who took it | The photo route reads the bytes and sends them; no redirect, so the storage path (which holds the user id) never reaches the browser | `app/api/v1/reports/[id]/photo/route.ts` | `reports.routes.test.ts` |
+| Open redirect after sign-in | `redirect_url` is reduced to a path on our own origin, otherwise `/me` | `src/ui/auth/EmailCodeSignIn.tsx` (`safeRedirect`) | `safe-redirect.test.ts` |
+| Deleting an account by accident or by a stray request | `DELETE /api/v1/me` needs the body `{ "confirm": "DELETE" }`, a signed-in session and passes the Origin check; police and admin accounts can't delete themselves; it is audited (`user.deleted`) | `app/api/v1/me/route.ts`, `private.delete_my_account` | `users.routes.test.ts`, `rls.test.sql` |
+| Keeping a driver's position too long | Cleared when sharing is turned off and 7 days after delivery (pg_cron) | `20261125190000_location_retention.sql` | `rls.test.sql` (5 checks) |
 
 ### Gaps we know about
 

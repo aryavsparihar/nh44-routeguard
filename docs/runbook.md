@@ -15,6 +15,7 @@ Use the Clerk application **`app_3MY5xJ8fczFe0sOEafACBTW6tNY`**. Don't create a 
    - Turn on **email address** with **email verification code** (no password).
    - Leave **phone number / SMS** off. On our free Hobby plan SMS is a paid feature (checked 24 Nov 2026), and we don't spend money on it. The app must say "email", never "phone" (BUILD_PROMPT section 8).
    - The dashboard's "paid features" note should then no longer list SMS.
+   - Our own page `/sign-in` asks for the email and the code (all three languages). It needs only email + email code; if the dashboard also asks for a password, a name or legal consent at sign-up, our page shows "Could not sign in". Clerk's bot check for new accounts shows inside our page (`#clerk-captcha`).
 3. **Role in the session token:** Sessions → Customize session token → add:
    ```json
    { "metadata": "{{user.public_metadata}}" }
