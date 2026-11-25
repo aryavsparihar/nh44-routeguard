@@ -18,6 +18,7 @@ export type jobDeadLettersColumns = Check<SameKeys<typeof s.jobDeadLetters.$infe
 export type latestRiskColumns = Check<SameKeys<typeof s.latestRisk._.selectedFields, Pub["Views"]["latest_risk"]["Row"]>>;
 export type officialUpdatesColumns = Check<SameKeys<typeof s.officialUpdates.$inferSelect, Pub["Tables"]["official_updates"]["Row"]>>;
 export type publicReportsColumns = Check<SameKeys<typeof s.publicReports._.selectedFields, Pub["Views"]["public_reports"]["Row"]>>;
+export type pushSubscriptionsColumns = Check<SameKeys<typeof s.pushSubscriptions.$inferSelect, Pub["Tables"]["push_subscriptions"]["Row"]>>;
 export type reportConfirmationsColumns = Check<SameKeys<typeof s.reportConfirmations.$inferSelect, Pub["Tables"]["report_confirmations"]["Row"]>>;
 export type reportFlagsColumns = Check<SameKeys<typeof s.reportFlags.$inferSelect, Pub["Tables"]["report_flags"]["Row"]>>;
 export type reportsColumns = Check<SameKeys<typeof s.reports.$inferSelect, Pub["Tables"]["reports"]["Row"]>>;

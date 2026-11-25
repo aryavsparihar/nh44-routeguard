@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(192);
+select plan(213);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -748,6 +748,66 @@ set local role postgres;
 select is((select count(*) from cron.job where jobname = 'jobs-worker'), 1::bigint,
   'jobs: the worker is woken by pg_cron every minute');
 
+-- Web Push (20261125210000_push_subscriptions.sql)
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select lives_ok($$ select private.save_push_subscription('https://fcm.googleapis.com/fcm/send/pgtap-driver',
+  '{"p256dh": "BPgtap", "auth": "pgtap"}', array[3, 3]::smallint[], 'hi') $$,
+  'push: a driver turns alerts on for zone 3');
+select lives_ok($$ select private.save_push_subscription('https://fcm.googleapis.com/fcm/send/pgtap-driver',
+  '{"p256dh": "BPgtap", "auth": "pgtap"}', array[4, 3]::smallint[], 'hi') $$,
+  'push: saving the same browser again updates it');
+select is((select zones from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver'),
+  array[3, 4]::smallint[], 'push: the driver reads their own row, zones sorted without repeats');
+select throws_ok($$ select private.save_push_subscription('https://fcm.googleapis.com/fcm/send/pgtap-x',
+  '{"p256dh": "B", "auth": "a"}', array[99]::smallint[], 'en') $$, '22023', null::text,
+  'push: an unknown zone is refused');
+select throws_ok($$ insert into public.push_subscriptions (user_id, endpoint, keys, zones)
+  values ('user_testdriver', 'https://fcm.googleapis.com/fcm/send/pgtap-y', '{"p256dh": "B", "auth": "a"}', '{3}') $$,
+  '42501', null::text, 'push: no direct inserts, only through the function');
+select throws_ok($$ update public.push_subscriptions set zones = '{1}' $$, '42501', null::text,
+  'push: no direct updates');
+set local request.jwt.claims = '{"sub": "user_testgrower", "role": "authenticated", "metadata": {"role": "grower"}}';
+select is((select count(*) from public.push_subscriptions), 0::bigint, 'push: a grower sees nobody else''s browsers');
+delete from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver';
+select throws_ok($$ select * from private.push_targets('x', 3::smallint) $$, '42501', null::text,
+  'push: signed-in users cannot list who gets alerts');
+set local request.jwt.claims = '{"sub": "user_nobodyyet", "role": "authenticated", "metadata": {}}';
+select throws_ok($$ select private.save_push_subscription('https://fcm.googleapis.com/fcm/send/pgtap-z',
+  '{"p256dh": "B", "auth": "a"}', array[3]::smallint[], 'en') $$, '42501', null::text,
+  'push: someone who hasn''t picked a role yet cannot turn alerts on');
+set local request.jwt.claims = '{"sub": "user_testvouched1", "role": "authenticated", "metadata": {"role": "driver"}}';
+select lives_ok($$ select private.save_push_subscription('https://updates.push.services.mozilla.com/wpush/v2/pgtap-v1',
+  '{"p256dh": "B", "auth": "a"}', array[1]::smallint[], 'en') $$,
+  'push: another driver turns alerts on for zone 1');
+set local role anon;
+select throws_ok($$ select private.save_push_subscription('https://fcm.googleapis.com/fcm/send/pgtap-anon',
+  '{"p256dh": "B", "auth": "a"}', array[3]::smallint[], 'en') $$, '42501', null::text,
+  'push: signed-out visitors cannot turn alerts on');
+
+set local role routeguard_worker;
+select is((select count(*) from private.push_targets('pgtap:event', 3::smallint)
+           where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver'), 1::bigint,
+  'push: the worker finds the zone 3 browser (the grower''s delete did nothing)');
+select is((select count(*) from private.push_targets('pgtap:event', 1::smallint)
+           where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver'), 0::bigint,
+  'push: a browser not following zone 1 is left out');
+select is((select count(*) from private.push_targets('pgtap:event', null)
+           where endpoint like '%pgtap%'), 2::bigint,
+  'push: a whole-road update goes to every browser');
+select lives_ok($$ select private.mark_push_sent('pgtap:event') $$, 'push: the worker marks an event as sent');
+select is((select count(*) from private.push_targets('pgtap:event', null)), 0::bigint,
+  'push: an event already sent goes to nobody again');
+select is((select count(*) from private.push_report('00000000-0000-4000-8000-0000000000f9')), 0::bigint,
+  'push: no alert for a report that is not there or not confirmed');
+select throws_ok($$ select count(*) from public.push_subscriptions $$, '42501', null::text,
+  'push: the worker cannot read the table directly');
+select lives_ok($$ select private.drop_push_subscription('https://fcm.googleapis.com/fcm/send/pgtap-driver') $$,
+  'push: the worker drops a browser the push service says is gone');
+set local role postgres;
+select is((select count(*) from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver'),
+  0::bigint, 'push: the dropped browser is gone');
+
 -- Account deletion
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
@@ -759,6 +819,8 @@ select lives_ok($$ select * from private.delete_my_account((select j from report
 set local role postgres;
 select is((select count(*) from public.users where id = 'user_testvouched1'), 0::bigint,
   'delete account: the users row is gone');
+select is((select count(*) from public.push_subscriptions where user_id = 'user_testvouched1'), 0::bigint,
+  'delete account: their push subscriptions go with it');
 select is((select count(*) from public.reports where client_id = '00000000-0000-4000-8000-0000000000c4' and user_id is null),
   1::bigint, 'delete account: their report stays, without their id');
 select is((select count(*) from public.audit_log where action = 'user.deleted' and target_id = 'user_testvouched1'),

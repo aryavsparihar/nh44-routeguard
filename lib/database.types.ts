@@ -381,6 +381,47 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          keys: Json
+          language: string
+          updated_at: string
+          user_id: string
+          zones: number[]
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          keys: Json
+          language?: string
+          updated_at?: string
+          user_id: string
+          zones: number[]
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          keys?: Json
+          language?: string
+          updated_at?: string
+          user_id?: string
+          zones?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_confirmations: {
         Row: {
           created_at: string
