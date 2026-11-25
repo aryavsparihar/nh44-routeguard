@@ -41,6 +41,9 @@ jobs:
       - name: No raw SQL outside src/server/db
         run: bash scripts/ci/check-no-sql-raw.sh
 
+      - name: Translations match (en, hi, ur)
+        run: npm run i18n:check
+
       - name: Lint
         run: npm run lint
 
