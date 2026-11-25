@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { PublicReport } from "@/src/shared/api-types";
 import { sendJson } from "@/src/ui/api";
 import { quietButtonClass, inputClass } from "@/src/ui/admin/common";
+import { SignInLink } from "@/src/ui/SignInLink";
 
 const FLAG_REASONS = ["not_there", "wrong_place", "duplicate", "offensive", "other"] as const;
 type FlagReason = (typeof FLAG_REASONS)[number];
@@ -137,9 +137,9 @@ export function ReportActions({
         <p role={message.kind === "error" ? "alert" : "status"} className={message.kind === "error" ? "text-high-text" : "text-send-text"}>
           {message.text}{" "}
           {message.signIn && (
-            <Link href="/report/new" prefetch={false} className="underline">
+            <SignInLink href="/report/new" className="underline">
               {t("signInLink")}
-            </Link>
+            </SignInLink>
           )}
         </p>
       )}

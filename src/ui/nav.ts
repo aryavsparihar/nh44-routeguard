@@ -2,9 +2,9 @@ import type { IconName } from "./icons";
 
 // The bottom navigation from the Round 2 prototype: Map, 48 h, Advisor,
 // Board, Report. A screen is listed here once it exists.
-// signIn: the page sends signed-out visitors to Clerk. Those links aren't
-// prefetched, because the prefetch would follow the redirect to Clerk's host,
-// which our CSP (rightly) blocks for fetches.
+// signIn: the page sends signed-out visitors to Clerk. Those are plain <a>
+// links (a full page load): an in-app fetch or prefetch would follow the
+// redirect to Clerk's host, which our CSP (rightly) blocks for fetches.
 export type NavItem = {
   href: string;
   label: "map" | "strip" | "advisor" | "board" | "report";
@@ -16,6 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "map", icon: "nav-map" },
   { href: "/strip", label: "strip", icon: "nav-strip" },
   { href: "/advisor", label: "advisor", icon: "nav-advisor" },
+  { href: "/board", label: "board", icon: "nav-board", signIn: true },
   { href: "/report/new", label: "report", icon: "nav-report", signIn: true },
 ];
 
