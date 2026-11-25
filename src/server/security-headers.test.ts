@@ -42,6 +42,13 @@ describe("contentSecurityPolicy", () => {
     expect(contentSecurityPolicy(PROD)).toContain("upgrade-insecure-requests");
   });
 
+  it("drops only upgrade-insecure-requests with LOCAL_HTTP=1 (a phone on the same Wi-Fi)", () => {
+    const local = contentSecurityPolicy({ ...PROD, LOCAL_HTTP: "1" });
+    expect(local).not.toContain("upgrade-insecure-requests");
+    expect(local).toBe(contentSecurityPolicy(PROD).replace("; upgrade-insecure-requests", ""));
+    expect(contentSecurityPolicy({ ...PROD, LOCAL_HTTP: "true" })).toContain("upgrade-insecure-requests");
+  });
+
   it("lets the browser talk to our Supabase project over https and wss", () => {
     const connect = directive(contentSecurityPolicy(PROD), "connect-src");
     expect(connect).toContain("https://abcdefgh.supabase.co");
