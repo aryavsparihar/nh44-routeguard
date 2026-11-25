@@ -175,6 +175,31 @@ Failed jobs: a job that fails 5 times moves to `job_dead_letters`, shown to admi
 
 To pause the worker: `select cron.unschedule('jobs-worker');`. To start it again: `select cron.schedule('jobs-worker', '* * * * *', 'select private.wake_job_worker()');`.
 
+## Web Push
+
+Alerts go out from the queue worker (section above), so the worker must be set up first. Once:
+
+1. Make the key pair on your Mac (it prints a public and a private key; copy them into your password manager, never into chat or git):
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+2. For your own machine, add to `.env.local`: `VAPID_PUBLIC_KEY=...`, `VAPID_PRIVATE_KEY=...` and `VAPID_SUBJECT=mailto:<the team's address>`.
+3. For Azure, the private key as a secret, the other two as plain settings:
+
+   ```bash
+   az containerapp secret set --name $APP --resource-group $RG --secrets vapid-private-key=<paste>
+   ```
+
+   ```bash
+   az containerapp update --name $APP --resource-group $RG --set-env-vars VAPID_PRIVATE_KEY=secretref:vapid-private-key VAPID_PUBLIC_KEY=<public key> VAPID_SUBJECT=mailto:<team address>
+   ```
+
+4. Check it: open `/me` on a phone (installed app, or Chrome), pick a zone, tap "Turn alerts on" and allow notifications. Post an official update for that zone from `/admin/updates`; the alert should arrive within about a minute.
+
+Never change the key pair once people have turned alerts on: their browsers are tied to the public key, and everyone would have to turn alerts on again. To stop alerts without removing the keys, set `FEATURE_PUSH=false`.
+
 ## Risk job timing
 
 The risk job (`.github/workflows/risk-job.yml`) runs on GitHub Actions. GitHub's own hourly schedule skipped most hours (it ran every 6 to 12 hours in November 2026), so Supabase starts it instead:
