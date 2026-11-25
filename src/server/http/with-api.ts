@@ -6,6 +6,7 @@ import { MethodNotAllowedError } from "./errors";
 import { checkOrigin, requireAccess, type Access } from "./guards";
 import { hashUserId, logger } from "./logger";
 import { toProblemResponse } from "./problem";
+import { checkRateLimit, type RateLimitName } from "./rate-limit";
 import { getRequestId } from "./request-id";
 
 type Params = Record<string, string | string[]>;
@@ -15,6 +16,8 @@ export type ApiOptions = {
   // Leave on. Only turn off for server-to-server routes that prove who they
   // are another way (the queue worker uses a JOBS_SECRET header).
   checkOrigin?: boolean;
+  // A shared limit from RATE_LIMITS (rate-limit.ts), checked after access.
+  rateLimit?: RateLimitName;
 };
 
 export type ApiContext<P extends Params> = {
@@ -29,10 +32,11 @@ export type ApiContext<P extends Params> = {
 //   1. gives the request an id,
 //   2. checks Origin on writes (CSRF),
 //   3. finds the caller and checks their access,
-//   4. runs the handler,
-//   5. turns any thrown error into problem+json,
-//   6. adds X-Request-Id (and no-store on non-public routes),
-//   7. writes one log line.
+//   4. checks the route's rate limit, if it has one (429),
+//   5. runs the handler,
+//   6. turns any thrown error into problem+json,
+//   7. adds X-Request-Id (and no-store on non-public routes),
+//   8. writes one log line.
 //
 // Usage in app/api/v1/.../route.ts:
 //   export const GET = withApi({ access: "public" }, async ({ req }) => ok(...));
@@ -58,6 +62,11 @@ export function withApi<P extends Params = Params>(
       if (options.checkOrigin !== false) checkOrigin(req);
       caller = await getCaller();
       requireAccess(caller, options.access);
+      if (options.rateLimit) {
+        await checkRateLimit(options.rateLimit, caller, req.headers, (err) =>
+          log.warn({ err: { name: (err as Error)?.name }, limit: options.rateLimit }, "rate limit store failed; request allowed"),
+        );
+      }
       const params = await context.params;
       response = await handler({ req, params, caller, requestId, log });
     } catch (error) {

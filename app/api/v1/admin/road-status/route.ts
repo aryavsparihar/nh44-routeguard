@@ -2,8 +2,6 @@
 // trucks?) or the parcel train (running?) with the link that says so. The
 // advice (POST /api/v1/advice) reads it on the next request. Audited.
 // Admin only. The public read is GET /api/v1/road-status.
-//
-// TODO(rate-limit): admin writes (section 10) once the shared limiter exists.
 import { getDb } from "@/src/server/db";
 import { readJson } from "@/src/server/http/body";
 import { requireCaller } from "@/src/server/http/guards";

@@ -4,8 +4,6 @@
 //      https link to where it was published. Audited.
 // Admin and police only (BUILD_PROMPT sections 7 and 12). The public list is
 // GET /api/v1/official-updates.
-//
-// TODO(rate-limit): admin writes (section 10) once the shared limiter exists.
 import { getDb } from "@/src/server/db";
 import { readJson, readQuery } from "@/src/server/http/body";
 import { requireCaller } from "@/src/server/http/guards";
