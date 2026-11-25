@@ -438,9 +438,13 @@ az group delete --name rg-routeguard
 
 The optional check on `/me` (docs/verification.md). Off unless `FEATURE_AADHAAR_QR=true`.
 
-### Pin UIDAI's real certificate (before turning it on for real people)
+### UIDAI's certificates
 
-1. On uidai.gov.in, find the public certificate UIDAI signs Secure QR codes with (the developer / offline verification pages). We could not fetch it automatically on 25 Nov 2026, so a person downloads it and checks they are on uidai.gov.in.
+Pinned on 25 Nov 2026 from the page in step 1: `uidai-2026` (`uidai_offline_publickey_2026.cer`, CN "DS Unique Identification Authority of India 06", valid 3 Feb 2026 to 3 Feb 2029) and `uidai-2024` (`uidai_offline_publickey_17022026.cer`, CN "... 05", valid 21 Feb 2024 to 16 Feb 2026). The older one stays pinned because cards and e-Aadhaar PDFs made before Feb 2026 were signed with it; a signature made while a certificate was valid still checks out. Neither has been tried with a real card yet (step 3).
+
+### Pin a new certificate (when UIDAI publishes one)
+
+1. Open [uidai.gov.in/en/data-and-download](https://uidai.gov.in/en/data-and-download), table "Offline e-KYC public key certificates" (UIDAI says these validate both Offline e-KYC and the Secure QR Code). Download the newest `.cer`. Old links under `/916-developer-section/...` give 404 since UIDAI moved its pages.
 2. `node scripts/aadhaar/pin-cert.mjs <downloaded file> uidai-<year>`. It prints the subject, issuer, dates and fingerprint; compare them with UIDAI's page.
 3. Check with your own e-Aadhaar on your own machine only: sign in on `localhost`, scan, expect "Checked" without the demo badge. Never put a real card in a screenshot, test file or commit.
 4. Commit `config/uidai/certs.json` in a pull request.

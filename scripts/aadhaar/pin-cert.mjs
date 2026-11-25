@@ -7,7 +7,7 @@
 // Reads the certificate (DER or PEM), prints its subject, issuer, validity and
 // SHA-256 fingerprint so you can compare them with UIDAI's page, and adds it
 // to config/uidai/certs.json as a real (test: false) key. Download the
-// certificate only from uidai.gov.in. Runbook: docs/runbook.md, "Aadhaar QR".
+// certificate only from https://uidai.gov.in/en/data-and-download. Runbook: docs/runbook.md, "Aadhaar QR".
 import { createHash, createPublicKey, X509Certificate } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 
