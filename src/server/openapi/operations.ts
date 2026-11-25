@@ -5,6 +5,7 @@
 //
 // The examples show the shape of each answer. Their values are made up for
 // the example (ids, names, times); they are not readings from the road.
+import { AADHAAR_CONSENT_VERSION, aadhaarQrBody } from "@/src/server/aadhaar/aadhaar.schemas";
 import { z } from "zod";
 import { adviceRequest } from "@/src/server/advice/advice.schemas";
 import { auditLogQuery } from "@/src/server/audit-log/audit-log.schemas";
@@ -35,7 +36,7 @@ import {
   reportFields,
   reportId,
 } from "@/src/server/reports/reports.schemas";
-import { riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
+import { hexQuery, riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
 import { roadStatusBody } from "@/src/server/road-status/road-status.schemas";
 import {
   createShipmentBody,
@@ -257,6 +258,38 @@ export const OPERATIONS: Operation[] = [
         meta: { count: 1, next_cursor: null, run_at: RUN_AT, model_version: "rules-2026-11-25" },
         example: [exampleRisk],
         headers: { ETag: "The run time of these scores." },
+      },
+      304: { description: "Not modified: you already have this run.", envelope: "none" },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/risk/hexes",
+    tag: "Risk",
+    summary: "The newest scores for every H3 cell along NH-44, with outlines",
+    description:
+      "Resolution-8 H3 cells (about 0.7 km²) the highway passes through, built by `jobs/tools/build_hexes.py`. Each cell is scored with its slope (Copernicus DEM via Open-Meteo) and nearest weather point. `boundary` is a closed ring of [lng, lat]. The ETag is the run time and horizon.",
+    access: "public",
+    query: hexQuery,
+    success: {
+      200: {
+        description: "Cells of the newest run at one horizon.",
+        envelope: "list",
+        meta: { count: 1, next_cursor: null, run_at: RUN_AT },
+        example: [
+          {
+            h3_index: "883d308abdfffff",
+            zone_id: 4,
+            overall: 0.42,
+            hazards: { landslide: 0.2, rockfall: 0.42, flash_flood: 0.05, snow_ice: 0 },
+            level: "medium",
+            top_hazard: "rockfall",
+            confidence: "low",
+            boundary: [[75.2323, 33.2429], [75.2329, 33.2379], [75.2384, 33.2359], [75.2434, 33.2388], [75.2429, 33.2438], [75.2373, 33.2458], [75.2323, 33.2429]],
+          },
+        ],
+        headers: { ETag: "The run time and horizon of these scores." },
       },
       304: { description: "Not modified: you already have this run.", envelope: "none" },
     },
@@ -644,6 +677,29 @@ export const OPERATIONS: Operation[] = [
     params: { driverId: userId },
     success: { 200: { description: "Vouched.", example: { verification_level: "agent_vouched", outcome: "vouched" } } },
     errors: { 404: "Not a driver in your fleet." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/verify/aadhaar-qr",
+    tag: "Agents",
+    summary: "Optional Aadhaar Secure QR check (raises you to aadhaar_qr)",
+    description:
+      "Behind `FEATURE_AADHAAR_QR` (404 when off). Send the digits your camera read from the Secure QR on an Aadhaar card or e-Aadhaar, with the consent tick. The server checks UIDAI's RSA signature against the pinned certificate (`config/uidai/certs.json`), reads the name and compares it with your profile name, and stores only the verdict, the last 4 digits, the consent version and the certificate version. The QR, name, date of birth, address and photo are never stored or logged. `test_key: true` means the demo key signed it (only when `AADHAAR_ALLOW_TEST_CERT=true`). Never send an Aadhaar number.",
+    access: ["driver", "agent"],
+    rateLimit: "verification",
+    body: aadhaarQrBody,
+    bodyExample: { qr: "48356781203947561029384756", consent: true, consent_version: AADHAAR_CONSENT_VERSION },
+    success: {
+      200: {
+        description: "The check ran. A verdict of rejected is still a 200; `reason` says why.",
+        example: { verdict: "verified", reason: null, verification_level: "aadhaar_qr", test_key: false },
+      },
+    },
+    errors: {
+      404: "The Aadhaar check is not turned on.",
+      409: "Finish onboarding first.",
+      503: "No UIDAI certificate is pinned on this server.",
+    },
   },
 
   // Admin

@@ -280,3 +280,32 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Signing out turns alerts off in that browser · Phones are shared; the next person shouldn't get the last person's alerts.
 - **2026-11-25** · The VAPID public key is read on the server when `/me` is shown, not baked in as `NEXT_PUBLIC_` · The image is built without keys (CI); this way the same image works with whatever keys Azure has.
 
+
+## Round 3: tests, performance and demo (slice 12)
+
+- **2026-11-25** · Signed-in Playwright tests drive our own email-code sign-in screen with the seeded `+clerk_test` accounts and a Clerk testing token (`@clerk/testing`) · Tests the real screen people use. Rejected: Clerk's programmatic sign-in helper, which skips our screen. They write real rows, so they run only with `E2E_DB=1` and the seed clears them.
+- **2026-11-25** · The demo seed asks the running app's `POST /api/v1/advice` for each truck's advice · The board shows advice the real code produced. Rejected: hand-written advice in the seed (invented numbers) and importing `decide()` into a script (needs a TypeScript loader for the `@/` paths).
+- **2026-11-25** · MapLibre starts when the browser is idle (at most 1.5 s), and `<main>` is at least one screen tall · Lighthouse mobile on the map page went from 27 to 79 (TBT 2,050 → 130 ms, CLS 0.6 → 0). Rejected: loading the map only on tap, which hides the main feature.
+- **2026-11-25** · One GitHub issue per work package, made after the code, unassigned, each saying who built it and linking its pull requests · Aryaveer asked for them to track the packages. Assigning finished tasks to members who didn't do them would misstate who did what, so the issues name the plan's owner and the real builder separately.
+
+## Round 3: hexes, map labels and Aadhaar QR (slice 13)
+
+- **2026-11-25** · Earlier today we cut C5, C6 and the Aadhaar check; Aryaveer asked for all three as our differentiator, so they are back in · They are what sets RouteGuard apart in the demo.
+- **2026-11-25** · H3 cells at resolution 8 (about 0.7 km²), only the cells the OSM driving line passes through (291) · Small enough to tell a gorge stretch from a flat one, few enough to score hourly and send to a phone (one request, cached per run). Rejected: resolution 9 (about 2,000 cells for little gain at weather-point scale) and a buffer of neighbouring cells (the hazard is to the road).
+- **2026-11-25** · Slope per cell = the steepest slope from the cell centre to its six corners, from Open-Meteo's elevation API (Copernicus DEM GLO-90) · Free, no key, the provider we already use. The road itself is often flat; the hillside above it is what fails. Rejected: slope at the road point only, which said gorge roads were gentle.
+- **2026-11-25** · The server sends each cell's outline (h3-js on the server) · The phone doesn't download the H3 library (hundreds of KB).
+- **2026-11-25** · Hindi and Urdu town names are drawn as page text over the map, and the base map's own labels are hidden in those languages · MapLibre draws text with its own glyphs: it can't build Devanagari conjuncts or join Urdu letters without an extra plugin loaded from outside. The browser shapes page text correctly. Rejected: the base map's `name:hi` labels (broken shaping) and the RTL plugin (another third-party script in our CSP).
+- **2026-11-25** · The blank band across the top of the map in our screenshots came from headless Chromium's software WebGL at the Pixel 5's 2.75 pixel ratio, not from the app · A real browser and headless Chromium with the GPU (`--use-angle=metal`) draw the whole map; the screenshot script uses the GPU now.
+- **2026-11-25** · Aadhaar Secure QR is checked on our server against certificates pinned in the repo with fingerprints; the phone only reads the QR · The signature check needs UIDAI's public key and must not be skippable by a changed phone app. Pinning (not downloading at run time) means a swapped certificate shows up in a pull request.
+- **2026-11-25** · Only the verdict, the last 4 digits and the consent and certificate versions are stored · BUILD_PROMPT section 11 and the DPDP Act's data minimisation. The name is compared in memory and dropped.
+- **2026-11-25** · Name match: identical after normalising → verified; another word order or one typo → manual review; else rejected · A loose match would let someone use another person's card; an exact-only match would turn away people who typed their name slightly differently. Manual review raises nothing.
+- **2026-11-25** · A demo key made by `scripts/aadhaar/make-demo-qr.mjs`, accepted only with `AADHAAR_ALLOW_TEST_CERT=true`, and shown as "Demo check (test key)" · No real Aadhaar card may be scanned on stage or in tests. The private key was never saved, so nobody can sign more demo codes.
+- **2026-11-25** · QR from the camera or from a picture chosen on the phone, decoded on the phone (`BarcodeDetector`, `jsQR` fallback) · e-Aadhaar is a PDF on many phones; a screenshot of it works. The picture never leaves the phone.
+- **2026-11-25** · Pinned UIDAI's current offline e-KYC / Secure QR certificate (valid to Feb 2029) and the one before it (expired Feb 2026) · UIDAI's page says these validate the Secure QR Code; cards and e-Aadhaar PDFs made before Feb 2026 carry signatures from the older key, which were valid when made. Rejected: checking expiry at scan time, which would turn away every older card. The two certificates in the page's separate "Secure QR Code" table expired in 2020–21 and are not pinned.
+
+## Round 3: live map (D4b)
+
+- **2026-11-25** · New reports and official updates reach open maps through a Realtime broadcast with no data on the public topic `map`, sent by a statement trigger; the map then reloads both lists from our API · Same pattern as the agent board: the API stays the one place that decides what is public (no user ids, no hidden reports). A broadcast needs no sign-in, so signed-out visitors get it too, and it carries nothing to leak.
+- **2026-11-25** · The signal can never fail a write (errors in the trigger are swallowed), and the map also reloads every minute while it is on screen · The signal is a hint. Expired reports leave the map without any write, so the minute reload is still needed.
+- **2026-11-25** · A reload after a signal skips the browser's HTTP cache (`cache: "no-cache"`) · `GET /api/v1/reports` allows a 30 s cached copy, which would hide the report the signal was about.
+

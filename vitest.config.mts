@@ -20,5 +20,13 @@ export default defineConfig({
     // next-intl imports "next/server" without a file extension, which plain
     // Node ESM can't resolve; let Vite bundle it for the tests.
     server: { deps: { inline: ["next-intl"] } },
+    // `npm test -- --coverage` (CI runs it): a summary in the log and an
+    // HTML report in coverage/. No threshold yet; we report the number.
+    coverage: {
+      provider: "v8",
+      include: ["src/**", "app/**", "lib/**"],
+      exclude: ["**/*.test.*", "lib/database.types.ts"],
+      reporter: ["text-summary", "html"],
+    },
   },
 });

@@ -433,3 +433,27 @@ Delete everything in one go so the rest of the credit stays (asks to confirm):
 ```bash
 az group delete --name rg-routeguard
 ```
+
+## Aadhaar QR
+
+The optional check on `/me` (docs/verification.md). Off unless `FEATURE_AADHAAR_QR=true`.
+
+### UIDAI's certificates
+
+Pinned on 25 Nov 2026 from the page in step 1: `uidai-2026` (`uidai_offline_publickey_2026.cer`, CN "DS Unique Identification Authority of India 06", valid 3 Feb 2026 to 3 Feb 2029) and `uidai-2024` (`uidai_offline_publickey_17022026.cer`, CN "... 05", valid 21 Feb 2024 to 16 Feb 2026). The older one stays pinned because cards and e-Aadhaar PDFs made before Feb 2026 were signed with it; a signature made while a certificate was valid still checks out. Neither has been tried with a real card yet (step 3).
+
+### Pin a new certificate (when UIDAI publishes one)
+
+1. Open [uidai.gov.in/en/data-and-download](https://uidai.gov.in/en/data-and-download), table "Offline e-KYC public key certificates" (UIDAI says these validate both Offline e-KYC and the Secure QR Code). Download the newest `.cer`. Old links under `/916-developer-section/...` give 404 since UIDAI moved its pages.
+2. `node scripts/aadhaar/pin-cert.mjs <downloaded file> uidai-<year>`. It prints the subject, issuer, dates and fingerprint; compare them with UIDAI's page.
+3. Check with your own e-Aadhaar on your own machine only: sign in on `localhost`, scan, expect "Checked" without the demo badge. Never put a real card in a screenshot, test file or commit.
+4. Commit `config/uidai/certs.json` in a pull request.
+
+### Settings
+
+| Name | Local demo | Production |
+| --- | --- | --- |
+| `FEATURE_AADHAAR_QR` | `true` | `true` once UIDAI's certificate is pinned |
+| `AADHAAR_ALLOW_TEST_CERT` | `true` (accepts `docs/demo/aadhaar-demo-qr.png`) | `true` only for the demo day, then blank |
+
+`npm run db:seed-demo` clears the demo accounts' Aadhaar checks and resets their levels, so the demo driver can scan the demo QR again.

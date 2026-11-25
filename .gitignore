@@ -64,3 +64,9 @@ jobs/.cache/
 
 # MapLibre worker, copied from node_modules before dev/build
 /public/vendor/
+
+# Test reports
+/coverage/
+/test-results/
+/playwright-report/
+/.claude/launch.json

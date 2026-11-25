@@ -48,6 +48,7 @@
     "collectShipments": "Shipments you add: truck number, load, destination and status.",
     "collectLocation": "Drivers only, and only if you turn it on: your latest location, rounded to about 1 km, shared only with your own transport agent.",
     "collectAlerts": "Only if you turn alerts on: your browser's push address (made by Google, Mozilla, Apple or Microsoft, not by us), the zones you follow and your language. It is deleted when you turn alerts off, sign out in that browser or delete your account. Alerts go through that company's push service.",
+    "collectAadhaar": "Only if you choose the optional Aadhaar QR check: the result (checked, close or not matched), the last 4 digits of your Aadhaar number and the version of the consent and certificate. The QR, your name, date of birth, address and photo are checked in memory and never stored. It is deleted with your account.",
     "collectLogs": "Server logs: the time, a request id and a short scrambled code instead of your user id. No message contents, photos or phone numbers.",
     "whyTitle": "Why",
     "why": "To show the risk on the road, to let drivers report and confirm hazards, and to let agents follow their own trucks. We don't sell data and we don't show ads.",
@@ -105,7 +106,16 @@
     "legendTitle": "Risk level",
     "lineNote": "A thicker line means higher risk.",
     "scoreLabel": "Score {score}",
-    "details": "Why"
+    "details": "Why",
+    "mapPlaces": {
+      "jammu": "Jammu",
+      "udhampur": "Udhampur",
+      "ramban": "Ramban",
+      "banihal": "Banihal",
+      "qazigund": "Qazigund",
+      "srinagar": "Srinagar"
+    },
+    "hexNote": "Zoom in to see the road in cells of about 0.7 km², each scored with its own slope and the nearest weather point."
   },
   "reason": {
     "none": "Zone {zone}: no rain, snow or frost trigger in the window",
@@ -771,6 +781,41 @@
       "notReady": "Alerts need the app's offline files. Reload the page and try again.",
       "notSetUp": "Alerts are not set up on this server yet.",
       "error": "Could not change alerts. Check your connection and try again."
+    },
+    "aadhaar": {
+      "heading": "Aadhaar QR check (optional)",
+      "what": "Scan the Secure QR on your Aadhaar card or e-Aadhaar. We check UIDAI's digital signature and that the name matches your profile name. If it does, your road reports count as from a verified driver. You don't need this to use RouteGuard.",
+      "alreadyDone": "Done: your Aadhaar QR was checked.",
+      "consentHeading": "What we read and what we keep",
+      "consent": {
+        "read": "Your phone reads the QR. Only the QR text goes to our server, where we check the signature and the name.",
+        "keep": "We keep only: the result, the last 4 digits of your Aadhaar number, and the date. Not your name, date of birth, address or photo.",
+        "never": "Never type your Aadhaar number anywhere in RouteGuard. No card photo is uploaded.",
+        "optional": "This is optional. RouteGuard is a student project, not a government service."
+      },
+      "agree": "I agree to RouteGuard checking my Aadhaar Secure QR as described above.",
+      "scan": "Scan with camera",
+      "picture": "Use a picture of the QR",
+      "pictureNote": "The picture stays on your phone. Only the QR text is sent.",
+      "cameraLabel": "Camera view for scanning the QR",
+      "pointCamera": "Hold the QR flat inside the square, in good light.",
+      "cancel": "Cancel",
+      "checking": "Checking the signature…",
+      "verified": "Checked. Your level is now \"Aadhaar checked\".",
+      "close": "The name on the card is close to your profile name but not the same, so your level stays as it was. Change your profile name to match the card exactly, then try again.",
+      "reason": {
+        "name": "The name on the card doesn't match your profile name. Your level stays as it was.",
+        "signature": "The signature didn't check out. This may not be a genuine Aadhaar Secure QR, or it is an older code. Download a new e-Aadhaar from UIDAI and try again.",
+        "unreadable": "We couldn't read this QR. Try again in better light."
+      },
+      "testKey": "Demo check (test key)",
+      "again": "Try again",
+      "notSecureQr": "That isn't an Aadhaar Secure QR. Use the large QR on the card or e-Aadhaar.",
+      "notFound": "No QR found in that picture.",
+      "noCamera": "The camera isn't available. Allow camera access, or use a picture of the QR.",
+      "tooMany": "Too many tries. Wait an hour and try again.",
+      "off": "The Aadhaar check isn't available right now.",
+      "error": "Something went wrong. Try again."
     }
   },
   "offline": {

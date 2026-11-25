@@ -15,3 +15,9 @@ export const summaryQuery = z
     lang: z.enum(["en", "hi", "ur"]).default("en"),
   })
   .strict();
+
+export const hexQuery = z
+  .object({
+    horizon: z.enum(["0", "12", "24", "48"]).default("0").transform(Number),
+  })
+  .strict();

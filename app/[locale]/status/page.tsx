@@ -73,12 +73,12 @@ async function LatestRun() {
 
 export default function StatusPage() {
   return (
-    <main className="p-6 text-sm [&_table]:mt-4 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left">
+    <div className="text-sm [&_table]:mt-4 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left">
       <h1 className="text-lg font-semibold">Risk job status</h1>
       <p>Horizon 0 h (now). Internal check page.</p>
       <Suspense fallback={<p>Loading latest run…</p>}>
         <LatestRun />
       </Suspense>
-    </main>
+    </div>
   );
 }

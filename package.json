@@ -19,7 +19,9 @@
     "db:set-app-password": "bash scripts/db/set-app-password.sh",
     "db:seed-incidents": "node seed.mjs",
     "i18n:check": "node scripts/ci/check-i18n.mjs",
-    "ui:icons": "node scripts/ui/gen-icons.mjs"
+    "ui:icons": "node scripts/ui/gen-icons.mjs",
+    "e2e": "playwright test",
+    "db:seed-demo": "node scripts/seed-demo.mts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.25",
@@ -27,6 +29,8 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "drizzle-orm": "0.45.4",
+    "h3-js": "^4.5.0",
+    "jsqr": "^1.4.0",
     "maplibre-gl": "6.17.0",
     "next": "16.4.6",
     "next-intl": "4.15.0",
@@ -40,12 +44,17 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.3.8",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.1.0",
+    "autocannon": "^9.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "qrcode": "^1.5.4",
     "supabase": "^3.1.0",
     "swagger-ui-dist": "5.34.1",
     "tailwindcss": "4.3.3",

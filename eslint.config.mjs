@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated test reports.
+    "coverage/**",
+    "test-results/**",
+    "playwright-report/**",
     // Local Python virtualenvs and build output: not our code, not in git.
     ".venv*/**",
     "jobs/.venv/**",

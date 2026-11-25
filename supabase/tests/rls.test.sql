@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(213);
+select plan(223);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -808,6 +808,25 @@ set local role postgres;
 select is((select count(*) from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver'),
   0::bigint, 'push: the dropped browser is gone');
 
+-- Aadhaar QR check (private.record_aadhaar_check)
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+select throws_ok($$ select * from private.record_aadhaar_check('verified', '4821', 'aadhaar-2026-11-25', 'test') $$,
+  '42501', null::text, 'aadhaar: police cannot use the check');
+set local request.jwt.claims = '{"sub": "user_testdriver3", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.record_aadhaar_check('verified', '48a1', 'aadhaar-2026-11-25', 'test') $$,
+  '22023', null::text, 'aadhaar: last4 must be 4 digits');
+select is((select verification_level from private.record_aadhaar_check('rejected', null, 'aadhaar-2026-11-25', 'test')),
+  'email', 'aadhaar: a rejected check leaves the level as it was');
+select is((select verification_level from private.record_aadhaar_check('verified', '4821', 'aadhaar-2026-11-25', 'test', 'req-pgtap-aadhaar')),
+  'aadhaar_qr', 'aadhaar: a verified check raises the driver to aadhaar_qr');
+set local role postgres;
+select is((select string_agg(verdict::text || ':' || coalesce(last4, '-'), ',' order by created_at) from public.verifications
+           where user_id = 'user_testdriver3' and method = 'aadhaar_qr'),
+  'rejected:-,verified:4821', 'aadhaar: only the verdict and last 4 are stored, none for a rejection');
+select is((select count(*) from public.audit_log where action = 'verification.aadhaar_qr' and request_id = 'req-pgtap-aadhaar'),
+  1::bigint, 'aadhaar: the check is audited');
+
 -- Account deletion
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
@@ -829,6 +848,20 @@ select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.prona
            where n.nspname = 'public' and p.proname in ('create_agent_invite', 'accept_agent_invite', 'vouch_driver',
                                                           'shipment_location', 'delete_my_account')),
   0::bigint, 'fleet functions are not in the public schema (no REST access)');
+
+-- Live map signal (20261125230000_map_live_signal.sql)
+set local role postgres;
+select is((select count(*) from pg_trigger where tgname in ('reports_map_signal', 'official_updates_map_signal')
+           and not tgisinternal), 2::bigint, 'live map: reports and official updates send a signal');
+create temp table map_signals_before on commit drop as
+  select count(*) as n from realtime.messages where topic = 'map' and event = 'changed';
+update public.reports set note = note where client_id = '00000000-0000-4000-8000-0000000000c4';
+select is((select count(*) from realtime.messages where topic = 'map' and event = 'changed') > (select n from map_signals_before),
+  true, 'live map: a report change broadcasts "changed" on the public map topic');
+select is((select payload - 'id' from realtime.messages where topic = 'map' and event = 'changed' order by inserted_at desc limit 1),
+  '{}'::jsonb, 'live map: the signal carries no report data (only Realtime''s own message id)');
+select throws_ok($$ set local role anon; select private.signal_map_changed() $$, '42501', null::text,
+  'live map: nobody can call the signal function directly');
 
 select * from finish();
 

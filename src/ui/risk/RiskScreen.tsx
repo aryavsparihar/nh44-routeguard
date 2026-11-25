@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
-import type { OfficialUpdate, PublicReport } from "@/src/shared/api-types";
+import type { OfficialUpdate, PublicReport, RiskHex } from "@/src/shared/api-types";
 import {
   HAZARDS,
   HORIZONS,
+  levelFor,
   scoreFor,
   worstZone,
   type Hazard,
@@ -18,6 +19,8 @@ import { Icon, type IconName } from "@/src/ui/icons";
 import { OfficialUpdates, RoadReports } from "./FeedLists";
 import { RiskMap } from "./RiskMap";
 import { LoadError, Loading } from "./states";
+import { MAP_PLACES } from "@/src/shared/map-places";
+import { useMapSignal } from "./useMapSignal";
 import { useRisk } from "./useRisk";
 import { ZoneList } from "./ZoneList";
 
@@ -36,9 +39,16 @@ const chip =
 // from the public API.
 export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; bounds: [LngLat, LngLat] }) {
   const t = useTranslations("risk");
+  const locale = useLocale();
   const risk = useRisk();
-  const [reports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
-  const [updates] = useApi<ApiList<OfficialUpdate>>("/api/v1/official-updates");
+  const [reports, , refreshReports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
+  const [updates, , refreshUpdates] = useApi<ApiList<OfficialUpdate>>("/api/v1/official-updates");
+  // New reports and updates appear without a reload (D4b).
+  const refreshFeeds = useCallback(() => {
+    refreshReports();
+    refreshUpdates();
+  }, [refreshReports, refreshUpdates]);
+  useMapSignal(refreshFeeds);
   const [horizon, setHorizon] = useState<Horizon>(0);
   const [hazard, setHazard] = useState<Hazard | null>(null);
 
@@ -51,6 +61,14 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
     for (const row of rows) out[row.zone_id] = scoreFor(row, hazard).level;
     return out;
   }, [rows, hazard]);
+  const [hexRows] = useApi<ApiList<RiskHex>>(`/api/v1/risk/hexes?horizon=${horizon}`);
+  const hexes = useMemo(
+    () =>
+      hexRows.state === "ready"
+        ? hexRows.value.data.map((h) => ({ boundary: h.boundary, level: hazard ? levelFor(h.hazards[hazard]) : h.level }))
+        : [],
+    [hexRows, hazard],
+  );
   const shownReports = useMemo(() => {
     const list = reports.state === "ready" ? reports.value.data : [];
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;
@@ -95,6 +113,12 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             reports={shownReports}
             label={t("mapLabel", { when })}
             failedText={t("mapFailed")}
+            hexes={hexes}
+            placeLabels={
+              locale === "en"
+                ? undefined
+                : MAP_PLACES.map((p) => ({ name: t(`mapPlaces.${p.id}`), lng: p.lng, lat: p.lat }))
+            }
           />
           <Legend />
 
@@ -171,6 +195,7 @@ function Legend() {
         ))}
       </ul>
       <p className="text-secondary">{t("lineNote")}</p>
+      <p className="text-secondary">{t("hexNote")}</p>
     </div>
   );
 }

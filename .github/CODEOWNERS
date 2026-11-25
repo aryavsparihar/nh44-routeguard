@@ -1,0 +1,35 @@
+# Who reviews what (BUILD_PROMPT section 21). The last matching line wins.
+*                                   @aryavsparihar
+
+# WP-B: field data, reports, police updates, alerts
+/data/                              @se7en-6xt9 @aryavsparihar
+/src/server/reports/                @se7en-6xt9
+/src/server/official-updates/       @se7en-6xt9
+/src/server/road-status/            @se7en-6xt9
+/src/server/jobs/                   @se7en-6xt9
+/src/server/push/                   @se7en-6xt9
+
+# WP-C: map, risk read path, priority
+/src/ui/risk/                       @navayasharma
+/src/server/risk/                   @navayasharma
+/src/shared/priority.ts             @navayasharma
+/src/server/http/rate-limit*.ts     @navayasharma @aryavsparihar
+
+# WP-D: UI, languages, offline, frontend tests
+/messages/                          @riyanotcooked
+/src/i18n/                          @riyanotcooked
+/src/ui/offline/                    @riyanotcooked
+/src/ui/board/                      @riyanotcooked
+/public/sw.js                       @riyanotcooked
+/e2e/                               @riyanotcooked
+
+# WP-E: advice, API docs, tests, demo
+/src/shared/decide.ts               @mayankupadhayay40-source
+/src/server/advice/                 @mayankupadhayay40-source
+/src/server/openapi/                @mayankupadhayay40-source
+/postman/                           @mayankupadhayay40-source
+
+# Security-sensitive: Aryaveer reviews
+/supabase/migrations/               @aryavsparihar
+/proxy.ts                           @aryavsparihar
+/.github/workflows/                 @aryavsparihar

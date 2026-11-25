@@ -10,6 +10,8 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 
 | Section | Hindi reviewed by (date) | Urdu reviewed by (date) | Notes |
 | --- | --- | --- | --- |
+| `reason.places.*`, `risk.mapPlaces.*` (place names) | not yet reviewed | not yet reviewed | Town names on the map and in risk reasons. Check local spellings (e.g. Banihal: बनिहाल / بانہال, Qazigund: क़ाज़ीगुंड / قاضی گنڈ) |
+| `risk.hexNote` | not yet reviewed | not yet reviewed | |
 | `footer.disclaimer` (safety) | not yet reviewed | not yet reviewed | Must say clearly: not official, follow J&K Traffic Police, call 112 |
 | `privacy.*` (consent) | not yet reviewed | not yet reviewed | Legal meaning matters; keep "DPDP Act, 2023" |
 | `banner.*` | not yet reviewed | not yet reviewed | |
@@ -24,6 +26,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `auth.*`, `me.*` (sign-in, account, consent, deletion) | not yet reviewed | not yet reviewed | Consent and deletion text: "we deleted your last position", "this can't be undone" must be exact |
 | `offline.*`, `report.queued`, `board.savedCopy`, `me.signOutWaiting`, and `public/offline.html` | not yet reviewed | not yet reviewed | Tells people a report is saved and will send by itself; must not promise it was sent |
 | `push.*`, `me.alerts.*`, `privacy.collectAlerts` (alerts) | not yet reviewed | not yet reviewed | Alert text arrives on a locked phone: "confirmed" and the advisory line must be exact; the privacy line is consent text |
+| `me.aadhaar.*`, `privacy.collectAadhaar` (Aadhaar QR check) | not yet reviewed | not yet reviewed | Consent text: "we keep only the result and the last 4 digits" and "never type your Aadhaar number" must be exact |
 
 ## Choices for the reviewers
 
