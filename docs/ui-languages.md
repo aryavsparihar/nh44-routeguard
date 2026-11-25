@@ -1,4 +1,4 @@
- RouteGuard UI and Languages
+# RouteGuard UI and Languages
 
 > The design system and multilingual layer of NH-44 RouteGuard: Tailwind CSS 4 styling, next-intl translations, right-to-left Urdu and self-hosted fonts, built for 360 px phones.
 
@@ -14,7 +14,7 @@ RouteGuard's users are apple growers, traders, agents and drivers on mobile phon
 
 - **Design tokens**: one shared palette and spacing scale used by every screen.
 - **Tailwind CSS 4** styling, mobile-first.
-- **Three languages**: English, Hindi and Urdu, 396 translation keys each.
+- **Three languages**: English, Hindi and Urdu, with the same translation keys in each.
 - **Right-to-left layout** for Urdu.
 - **Self-hosted fonts** loaded per language.
 - **Icons** generated from SVG files.
@@ -46,7 +46,7 @@ Colours and spacing come from one tokens file, `docs/ux/data/tokens.json`, and f
 | Library | next-intl |
 | Languages | English (`en`), Hindi (`hi`), Urdu (`ur`) |
 | Message files | `messages/en.json`, `messages/hi.json`, `messages/ur.json` |
-| Keys | 396 per language |
+| Keys | The same keys in all three files; `npm run i18n:check` counts them |
 | Language choice | Stored in the `rg_lang` cookie, never shown in the URL |
 | Direction | Urdu is right-to-left, English and Hindi left-to-right |
 | Digits | Latin digits in all three languages |
@@ -60,15 +60,17 @@ The advisor works with reason codes (for example why a lot should be held). `rea
 
 ## Fonts
 
-Fonts are self-hosted, so no external font service is called, and each is loaded only for its own language to save data:
+Fonts are set up in `src/ui/fonts.ts` with `next/font`, which downloads them at build time and serves them from our own site, so no request goes to a font service when someone opens the app:
 
-- **Noto Sans** for English
+- **Atkinson Hyperlegible** for body text and **Barlow Semi Condensed** for headings (Latin script, from the Round 2 style guide)
 - **Noto Sans Devanagari** for Hindi
-- **Noto Nastaliq Urdu** for Urdu
+- **Noto Nastaliq Urdu** for Urdu, with a taller line height because Nastaliq is tall
+
+The Hindi and Urdu fonts are not preloaded: a phone downloads them only when a page in that language draws their letters.
 
 ## Icons
 
-SVG icons live in `docs/ux/assets/icons/`. A script converts them into `src/ui/icons.tsx`, so they ship as React components with no extra network requests.
+SVG icons live in `docs/ux/assets/icons/`. `scripts/ui/gen-icons.mjs` converts them into `src/ui/icons.tsx`, so they ship as inline React components that take the text colour, with no extra network requests.
 
 ## Screens that use this layer
 
@@ -77,11 +79,14 @@ SVG icons live in `docs/ux/assets/icons/`. A script converts them into `src/ui/i
 | `/` | Map with worst-zone card, filters, zone list, updates and road reports |
 | `/strip` | 48-hour view |
 | `/advisor` | SEND / HOLD / RAIL / DIVERT advice |
+| `/board` | Agent board: shipments, drivers and live updates |
 | `/report/new` | Road report form |
+| `/me` | Account: role, name, language, location sharing, alerts, optional Aadhaar check |
+| `/sign-in` | Sign in with an email code |
 | `/admin/*` | Police and admin screens |
 | `/privacy`, `/status` | Privacy notice and system status |
 
-Every page shows a header with the language switch, a stale-data banner, a bottom navigation bar (Map, 48 h, Advisor, Report) and the disclaimer footer.
+Every page shows a header with the language switch, a stale-data banner, a bottom navigation bar (Map, 48 h, Advisor, Board, Report) and the disclaimer footer.
 
 ## Tech
 
@@ -96,7 +101,7 @@ Every page shows a header with the language switch, a stale-data banner, a botto
 ```
 messages/           en.json, hi.json, ur.json, REVIEW.md
 src/i18n/           Language routing
-src/ui/             Client components and generated icons.tsx
+src/ui/             Client components, fonts.ts and the generated icons.tsx
 src/shared/         reason.ts, format.ts, freshness.ts and other shared code
 docs/ux/data/       tokens.json
 docs/ux/assets/     SVG icons
