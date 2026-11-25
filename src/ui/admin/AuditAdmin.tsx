@@ -29,6 +29,7 @@ const ACTIONS = {
   "report.hidden": "reportHidden",
   "report.resolved": "reportResolved",
   "report.restored": "reportRestored",
+  "report.official_confirm": "reportOfficialConfirm",
 } as const;
 type Action = keyof typeof ACTIONS;
 const ROLES = ["grower", "trader", "agent", "driver", "police", "admin"] as const;

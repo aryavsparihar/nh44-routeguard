@@ -115,12 +115,13 @@ export async function confirmReport(
   db: Db,
   id: string,
   at: { lat?: number; lng?: number },
+  requestId: string,
 ): Promise<{ status: string; confirmations: number; outcome: "confirmed" | "repeat" }> {
   try {
     const rows = await db.rls(async (tx) => {
       const out = await tx.execute<{ status: string; confirmations: number; outcome: "confirmed" | "repeat" }>(
         sql`select * from private.confirm_report(${id}::uuid, ${at.lat ?? null}::double precision,
-          ${at.lng ?? null}::double precision, ${REPORT_RULES_JSON}::jsonb)`,
+          ${at.lng ?? null}::double precision, ${REPORT_RULES_JSON}::jsonb, ${requestId}::text)`,
       );
       if (jobAfterConfirm(out[0])) await tx.execute(enqueueSql("report.confirmed", { report_id: id }));
       return out;

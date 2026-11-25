@@ -236,7 +236,9 @@ describe("POST /api/v1/reports/{id}/confirm", () => {
     repo.confirmReport.mockResolvedValue({ status: "confirmed", confirmations: 2, outcome: "confirmed" });
     const res = await confirm(ID, { lat: 33.24, lng: 75.24 });
     expect(res.status).toBe(200);
-    expect(repo.confirmReport.mock.calls[0].slice(1)).toEqual([ID, { lat: 33.24, lng: 75.24 }]);
+    expect(repo.confirmReport.mock.calls[0].slice(1, 3)).toEqual([ID, { lat: 33.24, lng: 75.24 }]);
+    // The request id goes to the database for the audit log (police/admin confirmations).
+    expect(repo.confirmReport.mock.calls[0][3]).toBe(res.headers.get("x-request-id"));
   });
 });
 
