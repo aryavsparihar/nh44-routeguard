@@ -12,9 +12,12 @@ node_modules
 .pytest_cache
 *.tsbuildinfo
 coverage
-jobs
+# The app reads two files from these folders (weather point names, the road line).
+jobs/*
+!jobs/points.json
 supabase
-data
+data/*
+!data/nh44_line.json
 docs
 team-guides
 ui ux round
