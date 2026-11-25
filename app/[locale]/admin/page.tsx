@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/admin/road-status", key: "roadStatus", roles: ["admin"] },
   { href: "/admin/audit", key: "audit", roles: ["admin"] },
   { href: "/admin/users", key: "users", roles: ["admin"] },
+  { href: "/admin/jobs", key: "jobs", roles: ["admin"] },
 ] as const;
 
 export default async function AdminPage() {
