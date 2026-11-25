@@ -598,7 +598,7 @@
     "adviceAtSave": "Advice when saved: {decision}",
     "driver": "Driver",
     "driverHidden": "Assigned",
-    "noDriver": "No driver",
+    "noDriver": "Not assigned",
     "unnamed": "No name yet",
     "harvested": "Picked on",
     "eta": "Expected arrival (India time)",
