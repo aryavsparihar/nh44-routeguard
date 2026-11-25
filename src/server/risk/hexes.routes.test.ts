@@ -30,7 +30,9 @@ beforeEach(() => {
   db.getDb.mockResolvedValue({});
   repo.latestRunRows.mockResolvedValue([{ run_at: RUN_AT, zone_id: 4, horizon_hours: 0, overall: 0.4, level: "medium" }]);
   repo.latestHexRows.mockResolvedValue([
-    { h3_index: CELL, zone_id: 4, landslide: 0.2, rockfall: 0.42, flash_flood: 0.05, snow_ice: null, overall: 0.42, level: "medium", top_hazard: "rockfall", confidence: "low", slope_deg: 16.6 },
+    { h3_index: CELL, zone_id: 4, landslide: 0.2, rockfall: 0.42, flash_flood: 0.05, snow_ice: null, overall: 0.42, level: "medium", top_hazard: "rockfall", confidence: "low", slope_deg: 16.6,
+      reason: "Rain 27 mm in 48 h near Ramban; zone 4 high rockfall", reason_code: "rockfall_rain",
+      reason_params: { mm: 27, hours: 48, place: "z4_ramban", zone: 4, exposure: "high" } },
   ]);
 });
 
@@ -45,6 +47,7 @@ describe("GET /api/v1/risk/hexes", () => {
     expect(body.meta).toMatchObject({ count: 1, run_at: RUN_AT.toISOString() });
     expect(body.data[0].hazards).toEqual({ landslide: 0.2, rockfall: 0.42, flash_flood: 0.05, snow_ice: 0 });
     expect(body.data[0].slope_deg).toBe(16.6);
+    expect(body.data[0]).toMatchObject({ reason_code: "rockfall_rain", reason_params: { zone: 4, place: "z4_ramban" } });
     const ring = body.data[0].boundary;
     expect(ring).toHaveLength(7); // 6 corners, closed
     expect(ring[0]).toEqual(ring[6]);

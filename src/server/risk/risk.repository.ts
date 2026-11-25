@@ -76,6 +76,9 @@ export async function latestHexRows(db: Db, horizonHours: number) {
         level: latestRisk.level,
         top_hazard: latestRisk.top_hazard,
         confidence: latestRisk.confidence,
+        reason: latestRisk.reason,
+        reason_code: latestRisk.reason_code,
+        reason_params: latestRisk.reason_params,
         slope_deg: hexes.slope_deg, // public table, from jobs/tools/build_hexes.py
       })
       .from(latestRisk)

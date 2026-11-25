@@ -10,6 +10,11 @@ export type HexFeature = {
   level: "low" | "medium" | "high";
   top_hazard: string | null;
   confidence: string | null;
+  // Why, as the job's English sentence and as a code + params the phone
+  // turns into Hindi or Urdu (src/shared/reason.ts), like the zone rows.
+  reason: string;
+  reason_code: string | null;
+  reason_params: Record<string, unknown> | null;
   slope_deg: number | null; // steepest centre-to-corner slope of the cell
   boundary: [number, number][]; // [lng, lat], closed ring
 };
@@ -32,6 +37,9 @@ export function withBoundaries(rows: HexRow[]): HexFeature[] {
       level: r.level as HexFeature["level"],
       top_hazard: r.top_hazard,
       confidence: r.confidence,
+      reason: r.reason ?? "",
+      reason_code: r.reason_code,
+      reason_params: (r.reason_params as Record<string, unknown> | null) ?? null,
       slope_deg: r.slope_deg ?? null,
       boundary: cellToBoundary(r.h3_index, true).map(([lng, lat]) => [round(lng), round(lat)] as [number, number]),
     }));
