@@ -105,7 +105,16 @@
     "legendTitle": "خطرے کی سطح",
     "lineNote": "موٹی لکیر کا مطلب زیادہ خطرہ۔",
     "scoreLabel": "اسکور {score}",
-    "details": "کیوں"
+    "details": "کیوں",
+    "mapPlaces": {
+      "jammu": "جموں",
+      "udhampur": "ادھم پور",
+      "ramban": "رام بن",
+      "banihal": "بانہال",
+      "qazigund": "قاضی گنڈ",
+      "srinagar": "سری نگر"
+    },
+    "hexNote": "سڑک کو تقریباً 0.7 مربع کلومیٹر کے خانوں میں دیکھنے کے لیے زوم کریں۔ ہر خانے کا اسکور اس کی اپنی ڈھلان اور سب سے قریبی موسمی مقام سے نکالا گیا ہے۔"
   },
   "reason": {
     "none": "زون {zone}: اس مدت میں بارش، برف یا پالے کی کوئی وجہ نہیں",
@@ -134,21 +143,21 @@
       "snow_ice": "برف/پالے"
     },
     "places": {
-      "z1_nagrota": "Nagrota",
-      "z1_jakhani": "Udhampur (Jakhani)",
-      "z2_chenani": "Chenani",
-      "z3_nashri": "Nashri",
-      "z3_peerah": "Peerah",
-      "z3_seri": "Seri",
-      "z4_ramban": "Ramban",
-      "z4_digdol": "Digdol",
-      "z4_marog": "Marog",
-      "z5_ramsoo": "Ramsoo",
-      "z5_banihal": "Banihal",
-      "z5_navyug_south": "Navyug tunnel (Banihal side)",
-      "z5_qazigund": "Qazigund",
-      "z6_bijbehara": "Anantnag (Bijbehara)",
-      "z6_srinagar": "Srinagar"
+      "z1_nagrota": "نگروٹا",
+      "z1_jakhani": "ادھم پور (جکھانی)",
+      "z2_chenani": "چنینی",
+      "z3_nashri": "ناشری",
+      "z3_peerah": "پیرا",
+      "z3_seri": "سیری",
+      "z4_ramban": "رام بن",
+      "z4_digdol": "ڈگڈول",
+      "z4_marog": "مروگ",
+      "z5_ramsoo": "رامسو",
+      "z5_banihal": "بانہال",
+      "z5_navyug_south": "نوَیُگ سرنگ (بانہال کی طرف)",
+      "z5_qazigund": "قاضی گنڈ",
+      "z6_bijbehara": "اننت ناگ (بجبہاڑہ)",
+      "z6_srinagar": "سری نگر"
     }
   },
   "reports": {
