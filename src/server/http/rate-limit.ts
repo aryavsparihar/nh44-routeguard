@@ -18,6 +18,7 @@ export const RATE_LIMITS = {
   role: { limit: 5, windowSeconds: 3600, per: "user" }, // 5 role attempts an hour
   verification: { limit: 5, windowSeconds: 3600, per: "user" }, // 5 verification attempts an hour
   push: { limit: 20, windowSeconds: 3600, per: "user" }, // 20 alert on/off changes an hour
+  review: { limit: 120, windowSeconds: 3600, per: "user" }, // 120 TCU approvals or rejections an hour (our own cap)
 } as const satisfies Record<string, { limit: number; windowSeconds: number; per: "ip" | "user" }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

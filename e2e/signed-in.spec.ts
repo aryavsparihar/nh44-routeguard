@@ -13,6 +13,7 @@ const EMAIL = {
   agent: "routeguard.agent+clerk_test@example.com",
   driverVouched: "routeguard.driver1+clerk_test@example.com",
   driverNew: "routeguard.driver2+clerk_test@example.com",
+  waiting: "routeguard.newdriver+clerk_test@example.com",
 };
 
 // On NH-44 at Banihal (zone 5), from data/incidents.csv.
@@ -98,6 +99,33 @@ test("the admin posts an official update and the public sees it with its source"
   }).toPass({ timeout: 90_000 });
   await expect(visitor.getByText("Demo source (e2e test)").first()).toBeVisible();
   await visitor.close();
+});
+
+// TCU approves every new account (20261126040000_tcu_approval.sql). The seed
+// puts the "waiting" demo driver back to pending each time.
+test("a new driver waits for TCU, TCU approves, and the driver's role works", async ({ page, browser }) => {
+  await signIn(page, EMAIL.waiting);
+  await page.goto("/me");
+  await expect(page.getByRole("heading", { name: "Waiting for TCU" })).toBeVisible();
+  await page.goto("/report/new");
+  await expect(page.getByText(/wait for TCU to approve it/)).toBeVisible();
+
+  const tcu = await browser.newPage();
+  await signIn(tcu, EMAIL.admin);
+  await tcu.goto("/admin/approvals");
+  const card = tcu.getByRole("article").filter({ hasText: "Demo driver (waiting for TCU)" });
+  await card.getByRole("button", { name: "Approve" }).click();
+  await expect(card.getByText(/^Approved\./)).toBeVisible();
+  await tcu.close();
+
+  // /me asks Clerk for a fresh session token, so the role works at once.
+  const freshToken = page.waitForResponse((res) => /\/sessions\/[^/]+\/tokens/.test(res.url()) && res.ok());
+  await page.goto("/me");
+  await expect(page.getByRole("link", { name: "Open your board" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Waiting for TCU" })).toHaveCount(0);
+  await freshToken;
+  await page.goto("/report/new");
+  await expect(page.getByRole("heading", { name: "First, get verified" })).toBeVisible();
 });
 
 // Last, because it raises the demo driver to aadhaar_qr (the seed resets it).

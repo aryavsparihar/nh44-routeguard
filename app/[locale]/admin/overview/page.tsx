@@ -18,7 +18,7 @@ export default async function Page() {
       <BackToAdmin />
       <h1 className="text-2xl font-bold">{t("overview.heading")}</h1>
       <Suspense fallback={<p role="status">{t("loading")}</p>}>
-        <AdminGate roles={["police", "admin"]}>
+        <AdminGate roles={["admin"]}>
           {(caller) => <RoadOverview canEditRoad={caller.role === "admin"} />}
         </AdminGate>
       </Suspense>

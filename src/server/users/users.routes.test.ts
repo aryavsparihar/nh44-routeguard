@@ -1,5 +1,6 @@
-// Tests for GET /api/v1/me, POST /api/v1/me/onboarding and
-// PATCH /api/v1/admin/users/{id}/role. Clerk and the database are faked;
+// Tests for GET /api/v1/me, POST /api/v1/me/onboarding,
+// PATCH /api/v1/admin/users/{id}/role and TCU's approvals
+// (GET /api/v1/admin/users, POST /api/v1/admin/users/{id}/review). Clerk and the database are faked;
 // the database rules themselves are tested in supabase/tests/rls.test.sql.
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,6 +19,7 @@ const clerk = vi.hoisted(() => ({
   clerkUserExists: vi.fn<(id: string) => Promise<boolean>>(),
   setClerkRole: vi.fn<(id: string, role: string) => Promise<void>>(),
   deleteClerkUser: vi.fn<(id: string) => Promise<void>>(),
+  clerkEmails: vi.fn<(ids: string[]) => Promise<Record<string, string>>>(),
 }));
 vi.mock("@/src/server/clerk/users", () => clerk);
 
@@ -27,6 +29,8 @@ const repo = vi.hoisted(() => ({
   adminSetRole: vi.fn(),
   updateOwnUser: vi.fn(),
   deleteOwnAccount: vi.fn(),
+  listUsersByApproval: vi.fn(),
+  tcuReviewUser: vi.fn(),
 }));
 vi.mock("@/src/server/users/users.repository", () => repo);
 
@@ -39,6 +43,8 @@ vi.mock("@/src/server/http/rate-limit.store", () => ({
 const { GET: getMe, PATCH: patchMe, DELETE: deleteMe } = await import("@/app/api/v1/me/route");
 const { POST: postOnboarding } = await import("@/app/api/v1/me/onboarding/route");
 const { PATCH: patchRole } = await import("@/app/api/v1/admin/users/[id]/role/route");
+const { GET: listUsers } = await import("@/app/api/v1/admin/users/route");
+const { POST: postReview } = await import("@/app/api/v1/admin/users/[id]/review/route");
 
 const DRIVER_ROW = {
   id: "user_new1",
@@ -49,6 +55,8 @@ const DRIVER_ROW = {
   location_consent: false,
   consent_version: null,
   agent_id: null,
+  approval: "approved",
+  review_note: null,
 };
 
 function jsonRequest(method: string, path: string, body?: unknown) {
@@ -96,6 +104,8 @@ describe("GET /api/v1/me", () => {
       location_consent: false,
       consent_version: null,
       agent_id: null,
+      approval: null,
+      review_note: null,
       onboarded: false,
     });
   });
@@ -144,10 +154,10 @@ describe("POST /api/v1/me/onboarding", () => {
     expect(repo.insertOwnUser).not.toHaveBeenCalled();
   });
 
-  it("creates the row, then sets the Clerk role, and answers 201", async () => {
+  it("saves the request (waiting for TCU), leaves Clerk alone, and answers 201", async () => {
     fakeCaller = { userId: "user_new1", role: null };
     repo.insertOwnUser.mockResolvedValue("created");
-    repo.findUser.mockResolvedValue(DRIVER_ROW);
+    repo.findUser.mockResolvedValue({ ...DRIVER_ROW, approval: "pending" });
 
     const res = await postOnboarding(
       jsonRequest("POST", path, { role: "driver", display_name: "  Test driver ", language: "ur" }),
@@ -162,23 +172,20 @@ describe("POST /api/v1/me/onboarding", () => {
       display_name: "Test driver",
       language: "ur",
     });
-    expect(clerk.setClerkRole).toHaveBeenCalledWith("user_new1", "driver");
-    // Database first, then Clerk.
-    expect(repo.insertOwnUser.mock.invocationCallOrder[0]).toBeLessThan(
-      clerk.setClerkRole.mock.invocationCallOrder[0],
-    );
-    expect((await res.json()).data).toMatchObject({ role: "driver", onboarded: true, token_refresh_needed: true });
+    // No role in the token until TCU approves.
+    expect(clerk.setClerkRole).not.toHaveBeenCalled();
+    expect((await res.json()).data).toMatchObject({ role: "driver", approval: "pending", onboarded: true });
   });
 
-  it("finishes an earlier attempt with the same role and answers 200", async () => {
+  it("answers 200 to the same request again, still without Clerk", async () => {
     fakeCaller = { userId: "user_new1", role: null };
     repo.insertOwnUser.mockResolvedValue("exists");
-    repo.findUser.mockResolvedValue(DRIVER_ROW);
+    repo.findUser.mockResolvedValue({ ...DRIVER_ROW, approval: "pending" });
 
     const res = await postOnboarding(jsonRequest("POST", path, { role: "driver" }), noParams);
 
     expect(res.status).toBe(200);
-    expect(clerk.setClerkRole).toHaveBeenCalledWith("user_new1", "driver");
+    expect(clerk.setClerkRole).not.toHaveBeenCalled();
   });
 
   it("is 409 when a row exists with a different role", async () => {
@@ -192,20 +199,21 @@ describe("POST /api/v1/me/onboarding", () => {
     expect(clerk.setClerkRole).not.toHaveBeenCalled();
   });
 
-  it("is 503 when Clerk can't be reached", async () => {
+  it("works while Clerk is down, since it doesn't call Clerk", async () => {
     fakeCaller = { userId: "user_new1", role: null };
     repo.insertOwnUser.mockResolvedValue("created");
+    repo.findUser.mockResolvedValue({ ...DRIVER_ROW, approval: "pending" });
     clerk.setClerkRole.mockRejectedValue(new ServiceUnavailableError());
 
     const res = await postOnboarding(jsonRequest("POST", path, { role: "driver" }), noParams);
 
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(201);
   });
 });
 
 describe("PATCH /api/v1/admin/users/{id}/role", () => {
   const path = "/api/v1/admin/users/user_target1/role";
-  const goodBody = { role: "police", reason: "Demo police account for the round" };
+  const goodBody = { role: "agent", reason: "Now runs his own trucks" };
 
   beforeEach(() => {
     fakeCaller = { userId: "user_admin1", role: "admin" };
@@ -227,11 +235,18 @@ describe("PATCH /api/v1/admin/users/{id}/role", () => {
   });
 
   it("is 422 without a reason", async () => {
-    const res = await patchRole(jsonRequest("PATCH", path, { role: "police" }), target("user_target1"));
+    const res = await patchRole(jsonRequest("PATCH", path, { role: "agent" }), target("user_target1"));
     const body = await res.json();
 
     expect(res.status).toBe(422);
     expect(body.errors).toEqual([expect.objectContaining({ path: "reason" })]);
+  });
+
+  it.each(["police", "admin"])("refuses to give %s (TCU is the only admin) with 422", async (role) => {
+    const res = await patchRole(jsonRequest("PATCH", path, { role, reason: "x" }), target("user_target1"));
+
+    expect(res.status).toBe(422);
+    expect(repo.adminSetRole).not.toHaveBeenCalled();
   });
 
   it("is 404 for an id that isn't a Clerk id", async () => {
@@ -259,18 +274,18 @@ describe("PATCH /api/v1/admin/users/{id}/role", () => {
     expect(res.status).toBe(200);
     expect(repo.adminSetRole).toHaveBeenCalledWith({}, {
       targetId: "user_target1",
-      role: "police",
-      reason: "Demo police account for the round",
+      role: "agent",
+      reason: "Now runs his own trucks",
       requestId,
     });
-    expect(clerk.setClerkRole).toHaveBeenCalledWith("user_target1", "police");
+    expect(clerk.setClerkRole).toHaveBeenCalledWith("user_target1", "agent");
     expect(repo.adminSetRole.mock.invocationCallOrder[0]).toBeLessThan(
       clerk.setClerkRole.mock.invocationCallOrder[0],
     );
     expect((await res.json()).data).toEqual({
       id: "user_target1",
       old_role: "grower",
-      role: "police",
+      role: "agent",
       token_refresh_needed: true,
     });
   });
@@ -295,6 +310,111 @@ describe("PATCH /api/v1/admin/users/{id}/role", () => {
 
     expect(res.status).toBe(405);
     expect(res.headers.get("Allow")).toBe("PATCH");
+  });
+});
+
+describe("GET /api/v1/admin/users", () => {
+  const path = "/api/v1/admin/users";
+  const ROW = {
+    id: "user_wait1",
+    role: "driver",
+    display_name: "Waiting driver",
+    verification_level: "email",
+    approval: "pending",
+    review_note: null,
+    reviewed_at: null,
+    created_at: new Date("2026-11-26T05:00:00Z"),
+  };
+
+  it("is 403 for anyone but TCU", async () => {
+    fakeCaller = { userId: "user_d1", role: "driver" };
+    const res = await listUsers(jsonRequest("GET", path), noParams);
+    expect(res.status).toBe(403);
+  });
+
+  it("lists waiting accounts with their sign-in email", async () => {
+    fakeCaller = { userId: "user_admin1", role: "admin" };
+    repo.listUsersByApproval.mockResolvedValue([ROW]);
+    clerk.clerkEmails.mockResolvedValue({ user_wait1: "wait@example.com" });
+
+    const res = await listUsers(jsonRequest("GET", path), noParams);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(repo.listUsersByApproval).toHaveBeenCalledWith({}, "pending");
+    expect(body.data[0]).toMatchObject({ id: "user_wait1", email: "wait@example.com", approval: "pending" });
+    expect(body.meta).toEqual({ count: 1, next_cursor: null });
+  });
+
+  it("is 400 for an unknown approval filter", async () => {
+    fakeCaller = { userId: "user_admin1", role: "admin" };
+    const res = await listUsers(jsonRequest("GET", `${path}?approval=approved`), noParams);
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/v1/admin/users/{id}/review", () => {
+  const path = "/api/v1/admin/users/user_wait1/review";
+
+  beforeEach(() => {
+    fakeCaller = { userId: "user_admin1", role: "admin" };
+    repo.tcuReviewUser.mockResolvedValue("driver");
+  });
+
+  it("is 403 for anyone but TCU", async () => {
+    fakeCaller = { userId: "user_d1", role: "driver" };
+    const res = await postReview(jsonRequest("POST", path, { decision: "approved" }), target("user_wait1"));
+
+    expect(res.status).toBe(403);
+    expect(repo.tcuReviewUser).not.toHaveBeenCalled();
+  });
+
+  it("approves in the database first, then puts the role into Clerk", async () => {
+    const res = await postReview(jsonRequest("POST", path, { decision: "approved" }), target("user_wait1"));
+
+    expect(res.status).toBe(200);
+    expect(repo.tcuReviewUser).toHaveBeenCalledWith({}, {
+      targetId: "user_wait1",
+      decision: "approved",
+      note: null,
+      requestId: res.headers.get("X-Request-Id"),
+    });
+    expect(clerk.setClerkRole).toHaveBeenCalledWith("user_wait1", "driver");
+    expect(repo.tcuReviewUser.mock.invocationCallOrder[0]).toBeLessThan(clerk.setClerkRole.mock.invocationCallOrder[0]);
+    expect((await res.json()).data).toEqual({ id: "user_wait1", approval: "approved", role: "driver" });
+  });
+
+  it("needs a reason to turn someone down, and then leaves Clerk alone", async () => {
+    const bad = await postReview(jsonRequest("POST", path, { decision: "rejected" }), target("user_wait1"));
+    expect(bad.status).toBe(422);
+    expect((await bad.json()).errors).toEqual([expect.objectContaining({ path: "note" })]);
+
+    const res = await postReview(
+      jsonRequest("POST", path, { decision: "rejected", note: "Could not confirm the company" }),
+      target("user_wait1"),
+    );
+    expect(res.status).toBe(200);
+    expect(clerk.setClerkRole).not.toHaveBeenCalled();
+  });
+
+  it("is 409 when TCU reviews its own account", async () => {
+    const res = await postReview(jsonRequest("POST", path, { decision: "approved" }), target("user_admin1"));
+    expect(res.status).toBe(409);
+  });
+
+  it("is 503 with 'send it again' when Clerk fails after the approval", async () => {
+    clerk.setClerkRole.mockRejectedValue(new ServiceUnavailableError());
+    const res = await postReview(jsonRequest("POST", path, { decision: "approved" }), target("user_wait1"));
+
+    expect(res.status).toBe(503);
+    expect((await res.json()).detail).toMatch(/again/);
+  });
+
+  it("refuses unknown fields and bad decisions with 422", async () => {
+    for (const body of [{ decision: "maybe" }, { decision: "approved", role: "admin" }]) {
+      const res = await postReview(jsonRequest("POST", path, body), target("user_wait1"));
+      expect(res.status).toBe(422);
+    }
   });
 });
 

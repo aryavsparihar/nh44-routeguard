@@ -83,7 +83,7 @@ SVG icons live in `docs/ux/assets/icons/`. `scripts/ui/gen-icons.mjs` converts t
 | `/report/new` | Road report form |
 | `/me` | Account: role, name, language, location sharing, alerts, optional Aadhaar check |
 | `/sign-in` | Sign in with an email code |
-| `/admin/*` | Police and admin screens |
+| `/admin/*` | TCU screens |
 | `/privacy`, `/status` | Privacy notice and system status |
 
 Every page shows a header with the language switch, a stale-data banner, a bottom navigation bar (Map, 48 h, Advisor, Board, Report) and the disclaimer footer.

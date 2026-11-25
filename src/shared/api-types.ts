@@ -94,7 +94,23 @@ export type MeProfile = {
   location_consent: boolean;
   consent_version: string | null;
   agent_id: string | null;
+  // Every account waits for TCU (null before onboarding).
+  approval: "pending" | "approved" | "rejected" | null;
+  review_note: string | null;
   onboarded: boolean;
+};
+
+// GET /api/v1/admin/users (TCU's approvals list).
+export type ReviewUser = {
+  id: string;
+  role: NonNullable<MeProfile["role"]>;
+  display_name: string | null;
+  email: string | null;
+  verification_level: FleetDriver["verification_level"];
+  approval: "pending" | "approved" | "rejected";
+  review_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
 };
 
 // GET /api/v1/risk/hexes (src/server/risk/hexes.ts).

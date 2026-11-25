@@ -381,8 +381,8 @@ Follow `docs/round3/clerk-setup.md` for anything about installing or linking Cle
 - Pages read `await auth()`. Any server component that reads auth sits inside `<Suspense>` when `cacheComponents` is on.
 - The server Supabase client passes the Clerk token: `createClient(url, publishableKey, { accessToken: async () => (await auth()).getToken() })`.
 - Roles live in Clerk `publicMetadata.role` (users can't change it from the browser). Our `users.role` mirrors it, written only by the server.
-- `POST /api/v1/me/onboarding` lets a user pick grower, trader, agent or driver once. Changing it later needs an admin.
-- **police and admin are never self-service.** Only an admin can grant them, through `PATCH /api/v1/admin/users/{id}/role` with a written reason, and it is audited. For the hackathon, the police account is a clearly labelled demo account.
+- `POST /api/v1/me/onboarding` lets a user ask for grower, trader, agent or driver once. **TCU approves every new account** (`/admin/approvals`, `POST /api/v1/admin/users/{id}/review`, audited) before the role reaches the token (decision 26 Nov 2026, docs/decisions.md).
+- **TCU is the only admin.** The police role was merged into it. The app can't give `admin` or `police`; TCU moves approved users between the self-service roles with a written reason (`PATCH /api/v1/admin/users/{id}/role`), audited. For the hackathon, the TCU account is our own clearly labelled demo account.
 - After a role change, the user's token can be stale for up to about a minute. The UI says "refresh to see your new role".
 - Sign-in screens must work in all three languages. Clerk ships Hindi (`hiIN`) but not Urdu. Build a small custom email-code sign-in with Clerk's hooks so every string comes from our messages files; keep Clerk's prebuilt `<UserButton>`. If the custom flow isn't done in time, use `hiIN` for Hindi, a partial Urdu localisation object for the main strings, and log the gap.
 
@@ -404,7 +404,7 @@ Write this as `docs/verification.md` and show a one-line version in the app wher
 **Reports**
 - New report from a verified driver, police or admin → shown at once with a solid marker.
 - From anyone else → "unconfirmed", dashed marker. *(26 Nov 2026: drivers can't post until verified, so in practice this is an agent's report; see `docs/decisions.md`.)*
-- Confirmed when two other verified users within 2 km confirm it within 3 h, or police/admin confirms it.
+- Confirmed when two other verified users within 2 km confirm it within 3 h, or TCU confirms it.
 - Expiry by type, kept in config: landslide/rockfall 6 h, accident 3 h, snow/ice 12 h, flash flood 6 h. Expired reports leave the map but stay in history.
 - Duplicates: the same hazard within 500 m and 60 min becomes a confirmation of the first report, not a new pin.
 - Three flags from different users hide an unconfirmed report until an admin looks at it.
@@ -429,8 +429,8 @@ Write this as `docs/verification.md` and show a one-line version in the app wher
 We have no partnership with the police. The app must never look like it speaks for them.
 
 1. **Not official.** The footer on every screen and the sign-in page says, in all three languages: "RouteGuard is a student project. It is not an official government or police service. Follow instructions from J&K Traffic Police. In an emergency call 112." Use no police logos, emblems, uniforms or government seals anywhere.
-2. **Official updates are copies with sources.** An admin or a demo police account types in what a public TCU/J&K Traffic Police advisory said, with the link. We don't scrape their sites. We never write our own instructions as if they were official.
-3. **Who can do what.** police/admin roles are granted only by an admin with a written reason. Every privileged action goes into `audit_log` (who, what, when, why, request id). The audit log can't be edited or deleted by anyone, including admins.
+2. **Official updates are copies with sources.** TCU (our demo TCU account in the demo) types in what a public TCU/J&K Traffic Police advisory said, with the link. We don't scrape their sites. We never write our own instructions as if they were official.
+3. **Who can do what.** TCU is the only admin and approves every new account; the app can't make anyone admin. Every privileged action goes into `audit_log` (who, what, when, why, request id). The audit log can't be edited or deleted by anyone, including admins.
 4. **Reports are about the road, not people.**
    - Hazard types only (landslide, rockfall, flash flood, snow/ice, accident, other). No free-text field asks for names or vehicle numbers. Notes are capped at 280 characters, and phone numbers or vehicle numbers in notes are masked before saving.
    - The photo screen says "Photograph the road, not people or number plates".
@@ -654,7 +654,7 @@ Write `docs/scaling.md` with a diagram (client → Container Apps replicas → R
 ## 19. Seed data and demo accounts (P0)
 
 - **`scripts/seed-demo.ts`** (Aryaveer writes and runs it locally because it needs secret keys). It is idempotent: it creates or updates and never duplicates. It creates:
-  - one admin, one demo police account labelled "Demo police account", one agent, two drivers (one vouched, one not), one grower;
+  - one TCU account labelled "TCU (demo account)", one agent, two drivers (one vouched, one not), one grower, and one driver waiting for TCU's approval;
   - each with a Clerk test identity;
   - 6 shipments on the agent's board in different states;
   - 4 reports (one police, one confirmed, one unconfirmed, one expired);

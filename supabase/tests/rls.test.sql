@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(229);
+select plan(243);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -228,20 +228,20 @@ select lives_ok(
   'agent 2: an update of someone else''s shipment runs but changes nothing (checked below)');
 
 -- ===========================================================================
--- Police
+-- TCU (the admin role; the police role was merged into it)
 -- ===========================================================================
-set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+set local request.jwt.claims = '{"sub": "user_testadmin", "role": "authenticated", "metadata": {"role": "admin"}}';
 
 select lives_ok(
   $$ insert into public.official_updates (kind, title, source_url, source_name, issued_at, valid_until, created_by)
-     values ('one_way', 'Test one-way', 'https://example.com/one-way', 'pgTAP', now(), now() + interval '1 day', 'user_testpolice') $$,
-  'police: can post an official update');
+     values ('one_way', 'Test one-way', 'https://example.com/one-way', 'pgTAP', now(), now() + interval '1 day', 'user_testadmin') $$,
+  'TCU: can post an official update');
 select throws_ok(
   $$ insert into public.official_updates (kind, title, source_url, source_name, issued_at, valid_until, created_by)
-     values ('one_way', 'Test one-way', 'https://example.com/one-way', 'pgTAP', now(), now() + interval '1 day', 'user_testadmin') $$,
-  '42501', null::text, 'police: cannot post an official update in someone else''s name');
+     values ('one_way', 'Test one-way', 'https://example.com/one-way', 'pgTAP', now(), now() + interval '1 day', 'user_testagent') $$,
+  '42501', null::text, 'TCU: cannot post an official update in someone else''s name');
 select is((select count(*) from public.official_updates where id = '00000000-0000-4000-8000-0000000000b2'),
-  1::bigint, 'police: sees deleted official updates (history)');
+  1::bigint, 'TCU: sees deleted official updates (history)');
 
 -- An edit, as PATCH /api/v1/admin/official-updates/{id} sends it: close the
 -- old version, add version 2 pointing at it, audit it. Then a soft delete.
@@ -249,29 +249,27 @@ select lives_ok(
   $$ update public.official_updates
      set deleted_at = now(), delete_reason = 'Replaced by version ' || (version + 1)
      where id = '00000000-0000-4000-8000-0000000000b1' and deleted_at is null $$,
-  'police: can close the old version of an update');
+  'TCU: can close the old version of an update');
 select lives_ok(
   $$ insert into public.official_updates (id, zone_id, kind, title, source_url, source_name, issued_at, valid_until,
        version, supersedes_id, created_by)
      values ('00000000-0000-4000-8000-0000000000b3', 1, 'advisory', 'Live test update, edited',
        'https://example.com/live', 'pgTAP', now(), now() + interval '1 day',
-       2, '00000000-0000-4000-8000-0000000000b1', 'user_testpolice') $$,
-  'police: can add the new version');
+       2, '00000000-0000-4000-8000-0000000000b1', 'user_testadmin') $$,
+  'TCU: can add the new version');
 select lives_ok($$ select public.write_audit('official_update.edited', 'official_update',
   '00000000-0000-4000-8000-0000000000b3', null, 'req-pgtap-ou', '{"version": 2}'::jsonb) $$,
-  'police: can audit the edit');
+  'TCU: can audit the edit');
 select lives_ok(
   $$ update public.official_updates set deleted_at = now(), delete_reason = 'pgTAP delete'
      where id = '00000000-0000-4000-8000-0000000000b3' and deleted_at is null $$,
-  'police: can soft delete an update with a reason');
+  'TCU: can soft delete an update with a reason');
 select throws_ok(
   $$ update public.official_updates set deleted_at = now(), delete_reason = null
      where id = '00000000-0000-4000-8000-0000000000b1' $$,
-  '23514', null::text, 'police: cannot delete an update without a reason');
+  '23514', null::text, 'TCU: cannot delete an update without a reason');
 select lives_ok($$ delete from public.official_updates where id = '00000000-0000-4000-8000-0000000000b3' $$,
-  'police: a real delete runs but removes nothing (checked below)');
-select lives_ok($$ update public.road_status set state = 'closed' where item = 'rail_parcel' $$,
-  'police: an update of road_status runs but changes nothing (checked below)');
+  'TCU: a real delete runs but removes nothing (checked below)');
 
 -- ===========================================================================
 -- A new user onboarding
@@ -318,12 +316,16 @@ select throws_ok(
   '23514', null::text, 'admin: road_status refuses an http:// source');
 
 -- Role changes (admin_set_role)
-select lives_ok($$ select public.admin_set_role('user_testgrower', 'police', 'Demo police account for the round', 'req-pgtap-1') $$,
-  'admin: can make someone police with a reason');
-select lives_ok($$ select public.admin_set_role('user_testgrower', 'grower', 'Demo over', 'req-pgtap-2') $$,
-  'admin: can move someone back to grower');
-select lives_ok($$ select public.admin_set_role('user_testghost', 'police', 'Demo police account', 'req-pgtap-3') $$,
-  'admin: can give a role to a user who has no row yet');
+select lives_ok($$ select public.admin_set_role('user_testgrower', 'trader', 'Sells to Azadpur traders now', 'req-pgtap-1') $$,
+  'TCU: can change someone''s role with a reason');
+select lives_ok($$ select public.admin_set_role('user_testgrower', 'grower', 'Back to growing', 'req-pgtap-2') $$,
+  'TCU: can move someone back to grower');
+select lives_ok($$ select public.admin_set_role('user_testghost', 'driver', 'Signed in at the TCU desk', 'req-pgtap-3') $$,
+  'TCU: can give a role to a user who has no row yet');
+select throws_ok($$ select public.admin_set_role('user_testdriver', 'police', 'Make police') $$,
+  '42501', null::text, 'TCU: cannot make anyone police (merged into TCU)');
+select throws_ok($$ select public.admin_set_role('user_testdriver', 'admin', 'Second admin') $$,
+  '42501', null::text, 'TCU: cannot make a second admin');
 select throws_ok($$ select public.admin_set_role('user_testadmin', 'grower', 'Oops') $$,
   '42501', null::text, 'admin: cannot change their own role');
 select throws_ok($$ select public.admin_set_role('user_testdriver', 'agent', '   ') $$,
@@ -357,8 +359,6 @@ select is((select status::text from public.shipments where id = '00000000-0000-4
   'holding', 'agent 2 did not change agent 1''s shipment');
 select is((select state::text || ' ' || source_url from public.road_status where item = 'mughal_road'),
   'open https://example.com/mughal', 'only the admin changed Mughal Road (the grower''s update did nothing)');
-select is((select state::text from public.road_status where item = 'rail_parcel'),
-  'unknown', 'police did not change road_status');
 select is((select delete_reason from public.official_updates where id = '00000000-0000-4000-8000-0000000000b1'),
   'Replaced by version 2', 'the old version is closed, not removed');
 select is((select version || ' ' || supersedes_id || ' ' || delete_reason from public.official_updates
@@ -368,22 +368,67 @@ select is((select display_name from public.users where id = 'user_testdriver'),
   'Renamed driver', 'the driver''s display name changed');
 
 select is((select role || ':' || verification_level from public.users where id = 'user_testgrower'),
-  'grower:email', 'leaving police drops the official level');
-select is((select role || ':' || verification_level from public.users where id = 'user_testghost'),
-  'police:official', 'a new police row is created as official');
+  'grower:email', 'a role change keeps the verification level');
+select is((select role || ':' || verification_level || ':' || approval from public.users where id = 'user_testghost'),
+  'driver:email:approved', 'a role TCU gives to a new user is approved at once');
 select is(
   (select actor_id || ' | ' || actor_role || ' | ' || reason || ' | ' || request_id || ' | '
           || (meta ->> 'from') || ' > ' || (meta ->> 'to')
    from public.audit_log
    where action = 'user.role_changed' and target_id = 'user_testgrower'
    order by id limit 1),
-  'user_testadmin | admin | Demo police account for the round | req-pgtap-1 | grower > police',
+  'user_testadmin | admin | Sells to Azadpur traders now | req-pgtap-1 | grower > trader',
   'a role change is audited with actor, reason, request id and both roles');
 -- Only this test's users: the real log already holds role changes (the first
 -- admin, the demo driver), and those must not change the count.
 select is((select count(*) from public.audit_log
            where action = 'user.role_changed' and target_id like 'user\_test%'),
   3::bigint, 'every role change wrote exactly one audit row');
+
+-- ===========================================================================
+-- TCU approval (20261126040000_tcu_approval.sql)
+-- ===========================================================================
+select is((select approval::text from public.users where id = 'user_testnew'),
+  'pending', 'approval: a self-signup waits for TCU');
+insert into public.users (id, role, display_name, approval) values
+  ('user_testpending',  'driver', 'Pending driver',  'pending'),
+  ('user_testrejectme', 'agent',  'Agent to reject', 'pending');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testpending", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select private.jwt_role()), null::text,
+  'approval: a pending account has no role, even if its token says driver');
+select throws_ok($$ select public.tcu_review_user('user_testrejectme', 'approved') $$,
+  '42501', null::text, 'approval: only TCU can approve');
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "admin"}}';
+select is((select private.jwt_role()), null::text,
+  'approval: a token role that differs from the database counts as none');
+set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+select is((select private.jwt_role()), null::text, 'approval: the police role no longer counts (merged into TCU)');
+
+set local request.jwt.claims = '{"sub": "user_testadmin", "role": "authenticated", "metadata": {"role": "admin"}}';
+select is((select public.tcu_review_user('user_testpending', 'approved', null, 'req-pgtap-approve'))::text,
+  'driver', 'approval: TCU approves a waiting driver');
+select is((select public.tcu_review_user('user_testpending', 'approved'))::text,
+  'driver', 'approval: approving again changes nothing');
+select throws_ok($$ select public.tcu_review_user('user_testrejectme', 'rejected', '  ') $$,
+  '22023', null::text, 'approval: a rejection needs a reason');
+select lives_ok($$ select public.tcu_review_user('user_testrejectme', 'rejected', 'Could not confirm the transport company', 'req-pgtap-reject') $$,
+  'approval: TCU rejects with a reason');
+select throws_ok($$ select public.tcu_review_user('user_testpending', 'rejected', 'Changed my mind') $$,
+  '55000', null::text, 'approval: an approved account cannot be rejected here');
+select throws_ok($$ select public.tcu_review_user('user_testadmin', 'approved') $$,
+  '42501', null::text, 'approval: TCU accounts are not reviewed in the app');
+
+set local request.jwt.claims = '{"sub": "user_testpending", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select private.jwt_role()), 'driver', 'approval: once approved, the driver role counts');
+
+set local role postgres;
+select is((select approval || ' ' || reviewed_by from public.users where id = 'user_testpending'),
+  'approved user_testadmin', 'approval: the reviewer is recorded');
+select is((select string_agg(action || ':' || coalesce(reason, '-'), ',' order by id) from public.audit_log
+           where target_id in ('user_testpending', 'user_testrejectme') and action like 'user.%'),
+  'user.approved:-,user.rejected:Could not confirm the transport company', 'approval: each decision is audited once');
 
 -- Check constraints (the database refuses bad rows even if a route forgets).
 select throws_ok($$ insert into public.shipments (tonnes) values (50) $$,
@@ -561,7 +606,7 @@ select is((select status from private.flag_report(
   (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), 'wrong_place',
   (select j from report_rules))),
   'unconfirmed', 'reports: two flags leave it on the map');
-set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+set local request.jwt.claims = '{"sub": "user_testadmin", "role": "authenticated", "metadata": {"role": "admin"}}';
 select is((select status from private.flag_report(
   (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c3'), 'not_there',
   (select j from report_rules))),
@@ -571,21 +616,21 @@ select throws_ok($$ select * from private.confirm_report(
   (select j from report_rules)) $$,
   'P0002', null::text, 'reports: a hidden report cannot be confirmed');
 
--- Police confirming on their own is a privileged action: it is audited
--- (20261126010000_audit_official_confirm.sql). Still the police caller here.
+-- TCU confirming on its own is a privileged action: it is audited
+-- (20261126010000_audit_official_confirm.sql). Still the TCU caller here.
 select is((select status || ' ' || outcome from private.confirm_report(
   (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4'), null, null,
   (select j from report_rules), 'req-police-confirm')),
-  'confirmed confirmed', 'reports: one police confirmation confirms a report');
+  'confirmed confirmed', 'reports: one TCU confirmation confirms a report');
 select is((select outcome from private.confirm_report(
   (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4'), null, null,
   (select j from report_rules), 'req-police-again')),
-  'repeat', 'reports: a repeat police confirmation counts once');
+  'repeat', 'reports: a repeat TCU confirmation counts once');
 set local role postgres;
 select is((select count(*) || ' ' || min(actor_id) || ' ' || min(actor_role) || ' ' || min(request_id)
            from public.audit_log where action = 'report.official_confirm'
              and target_id = (select id::text from report_ids where client_id = '00000000-0000-4000-8000-0000000000c4')),
-  '1 user_testpolice police req-police-confirm', 'audit: a police confirmation is logged once, with who and the request id');
+  '1 user_testadmin admin req-police-confirm', 'audit: a TCU confirmation is logged once, with who and the request id');
 select is((select count(*) from public.audit_log where action = 'report.official_confirm'
              and target_id = (select id::text from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1')),
   0::bigint, 'audit: confirmations by drivers are not in the audit log');
@@ -839,7 +884,7 @@ select is((select count(*) from public.push_subscriptions where endpoint = 'http
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
 select throws_ok($$ select * from private.record_aadhaar_check('verified', '4821', 'aadhaar-2026-11-25', 'test') $$,
-  '42501', null::text, 'aadhaar: police cannot use the check');
+  '42501', null::text, 'aadhaar: a police token cannot use the check');
 set local request.jwt.claims = '{"sub": "user_testdriver3", "role": "authenticated", "metadata": {"role": "driver"}}';
 select throws_ok($$ select * from private.record_aadhaar_check('verified', '48a1', 'aadhaar-2026-11-25', 'test') $$,
   '22023', null::text, 'aadhaar: last4 must be 4 digits');

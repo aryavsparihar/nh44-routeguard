@@ -101,7 +101,10 @@ The tests also check that every table in `public` has RLS on, and that the datab
 
 ## Roles
 
-- A user picks grower, trader, agent or driver once (`POST /api/v1/me/onboarding`). police and admin are granted only by an admin with a reason (`PATCH /api/v1/admin/users/{id}/role`), and every change is in `audit_log`.
+- A user asks for grower, trader, agent or driver once (`POST /api/v1/me/onboarding`). The row is `pending` (a trigger forces it for self-signups) and nothing goes to Clerk. TCU approves or rejects it (`POST /api/v1/admin/users/{id}/review` → `public.tcu_review_user`, audited); only an approval puts the role into Clerk.
+- TCU (`admin`) is the only staff role. The app can't give `admin` or `police` (zod refuses them, `admin_set_role` refuses them again); the police role was merged into TCU, and a token that still says "police" counts as no role (`roleFromClaims`, `private.jwt_role`).
+- `private.jwt_role()` returns the token's role only when the caller's `users` row has the same role, is approved and isn't deleted. So even a token with a role can't act for a pending, rejected or deleted account.
+- TCU moves approved users between the self-service roles with a reason (`PATCH /api/v1/admin/users/{id}/role`), and every change is in `audit_log`.
 - The role lives in Clerk `publicMetadata.role` (users can't edit it) and is mirrored in `users.role`. The database is written first, then Clerk, so the token never holds a role the database and the audit log don't know about.
 - Pages: `proxy.ts` sends signed-out visitors of `/board`, `/report/new` and `/admin/...` to sign-in; each page then checks the role with `requirePageRole()`. API routes: `withApi()` checks every route, and `app/api/routes.test.ts` fails if a route skips it.
 

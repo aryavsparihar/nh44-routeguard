@@ -22,8 +22,9 @@ const SELF_SERVICE = ["grower", "trader", "agent", "driver"] as const;
 type Message = { kind: "ok" | "error"; text: string } | null;
 const card = "flex flex-col gap-3 rounded-lg border border-border bg-elevated p-4";
 
-// Your account (/me): pick a role the first time, then your name, language,
-// location sharing (drivers), alerts, sign out and delete the account.
+// Your account (/me): ask for a role the first time, wait for TCU to approve
+// it, then your name, language, location sharing (drivers), alerts, sign out
+// and delete the account.
 export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string | null; aadhaar?: boolean }) {
   const t = useTranslations("me");
   const [me, retry, refresh] = useApi<{ data: MeProfile }>("/api/v1/me");
@@ -40,10 +41,13 @@ export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string
     );
   }
   const profile = me.value.data;
+  const approved = profile.approval === "approved";
   return (
     <div className="flex flex-col gap-5">
+      {profile.onboarded && !approved && <ApprovalCard me={profile} />}
+      {profile.onboarded && approved && <ApprovedTokenRefresh />}
       {profile.onboarded ? <Profile me={profile} onSaved={retry} /> : <Onboarding />}
-      {profile.onboarded && aadhaar && (profile.role === "driver" || profile.role === "agent") && (
+      {profile.onboarded && approved && aadhaar && (profile.role === "driver" || profile.role === "agent") && (
         <AadhaarCard me={profile} onVerified={refresh} />
       )}
       {profile.onboarded && <AlertsCard publicKey={pushKey} />}
@@ -55,7 +59,6 @@ export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string
 function Onboarding() {
   const t = useTranslations("me");
   const locale = useLocale() as Locale;
-  const { getToken } = useAuth();
   const [role, setRole] = useState<(typeof SELF_SERVICE)[number] | null>(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -72,8 +75,7 @@ function Onboarding() {
       ...(name.trim() ? { display_name: name.trim() } : {}),
     });
     if (res.status === 200 || res.status === 201) {
-      // The role is in the session token only after it refreshes.
-      await getToken({ skipCache: true }).catch(() => null);
+      // Saved as a request; the page now shows "waiting for TCU".
       window.location.reload();
       return;
     }
@@ -91,6 +93,11 @@ function Onboarding() {
         {t("onboarding.heading")}
       </h2>
       <p>{t("onboarding.intro")}</p>
+      <ol className="flex list-decimal flex-col gap-1 ps-5 text-sm">
+        <li>{t("onboarding.step1")}</li>
+        <li>{t("onboarding.step2")}</li>
+        <li>{t("onboarding.step3")}</li>
+      </ol>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 font-bold">{t("onboarding.role")}</legend>
         {SELF_SERVICE.map((r) => (
@@ -124,6 +131,54 @@ function Onboarding() {
       </button>
     </form>
   );
+}
+
+// Waiting for TCU, or turned down (with TCU's reason). The public map, the
+// 48 h strip and the advisor work for everyone in the meantime.
+function ApprovalCard({ me }: { me: MeProfile }) {
+  const t = useTranslations("me");
+  const rejected = me.approval === "rejected";
+  return (
+    <section
+      className={`flex flex-col gap-2 rounded-lg border-s-4 p-4 ${rejected ? "border-high-fill bg-high-bg text-high-text" : "border-hold-fill bg-hold-bg text-hold-text"}`}
+      aria-labelledby="approval"
+      role="status"
+    >
+      <h2 id="approval" className="text-xl font-bold">
+        {rejected ? t("approval.rejectedHeading") : t("approval.pendingHeading")}
+      </h2>
+      <p>
+        {rejected
+          ? t("approval.rejectedText", { role: me.role ? t(`role.${me.role}`) : "–" })
+          : t("approval.pendingText", { role: me.role ? t(`role.${me.role}`) : "–" })}
+      </p>
+      {rejected && me.review_note && (
+        <p>
+          <span className="font-bold">{t("approval.reason")}</span> <bdi>{me.review_note}</bdi>
+        </p>
+      )}
+      <p className="text-sm">{rejected ? t("approval.rejectedNext") : t("approval.meanwhile")}</p>
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <Link href="/" className="underline">
+          {t("approval.map")}
+        </Link>
+        <Link href="/advisor" className="underline">
+          {t("approval.advisor")}
+        </Link>
+      </p>
+    </section>
+  );
+}
+
+// After TCU approves, the role reaches the session token when it next
+// refreshes (about a minute). Opening /me asks for a fresh token at once, so
+// the board and the report screen open straight away.
+function ApprovedTokenRefresh() {
+  const { getToken } = useAuth();
+  useEffect(() => {
+    void getToken({ skipCache: true }).catch(() => null);
+  }, [getToken]);
+  return null;
 }
 
 function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
@@ -174,7 +229,12 @@ function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
         <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-secondary">{t("roleLabel")}</dt>
-            <dd className="font-bold">{me.role ? t(`role.${me.role}`) : "–"}</dd>
+            <dd className="font-bold">
+              {me.role ? t(`role.${me.role}`) : "–"}
+              {me.approval && me.approval !== "approved" && (
+                <span className="ms-2 text-sm font-normal text-secondary">({t(`approval.short.${me.approval}`)})</span>
+              )}
+            </dd>
           </div>
           <div>
             <dt className="text-sm text-secondary">{t("levelLabel")}</dt>
@@ -185,7 +245,7 @@ function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
           </div>
         </dl>
         <p className="text-sm text-secondary">{t("roleChange")}</p>
-        {(me.role === "agent" || me.role === "driver" || me.role === "grower" || me.role === "trader") && (
+        {me.approval === "approved" && (me.role === "agent" || me.role === "driver" || me.role === "grower" || me.role === "trader") && (
           <SignInLink href="/board" className="underline">
             {t("openBoard")}
           </SignInLink>
@@ -227,7 +287,7 @@ function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
         </button>
       </form>
 
-      {me.role === "driver" && (
+      {me.role === "driver" && me.approval === "approved" && (
         <section className={card} aria-labelledby="location">
           <h2 id="location" className="text-xl font-bold">
             {t("location.heading")}
@@ -261,7 +321,7 @@ function Account({ me }: { me: MeProfile }) {
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message>(null);
-  const official = me.role === "police" || me.role === "admin";
+  const official = me.role === "admin";
   const [waiting, setWaiting] = useState(0);
 
   useEffect(() => {

@@ -318,3 +318,11 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 ## Team change (26 Nov 2026)
 
 - **2026-11-26** · One member left the team, so WP-E is split: Navaya owns the advice engine (`decide.ts`, `POST /api/v1/advice`) and presents demo step 4, Madhusudan owns the OpenAPI document, Swagger and Postman, Aryaveer owns the demo seed, demo script, README and load test · Each piece goes to the member whose area it touches: advice uses Navaya's priority module and risk read path; Postman tests the APIs Madhusudan's reports and updates live in. Issues #69 and #70 went to Madhusudan and Riya.
+
+## TCU approves every account (26 Nov 2026)
+
+- **2026-11-26** · TCU (J&K Traffic Police Traffic Control Unit) is the only admin; the police role is merged into it · One staff role is easier to explain and to audit. The app can't give `admin` or `police`; old police accounts are kept but rejected, with no role.
+- **2026-11-26** · Every new account (grower, trader, agent, driver) waits for TCU's approval · Only people TCU has checked can post reports or run a fleet. The map, the 48 h strip and the advisor stay open to everyone without an account.
+- **2026-11-26** · Approval is a gate in front of the existing checks, not a replacement · A driver still needs an agent's vouch or the Aadhaar check to post reports.
+- **2026-11-26** · The role reaches Clerk only on approval, and `private.jwt_role()` also checks the `users` row · Two locks: a pending account has no role in its token, and even a token with a role counts for nothing in the database unless the row is approved and matches.
+- **2026-11-26** · TCU sees the waiting person's email (from Clerk, not stored by us), name and requested role · TCU needs to know who is asking. The privacy notice says so (version 2026-11-26).
