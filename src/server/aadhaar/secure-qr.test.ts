@@ -237,8 +237,8 @@ describe("POST /api/v1/verify/aadhaar-qr", () => {
 
   it.each([
     ["no consent", { qr: "123", consent: false, consent_version: "x" }],
-    ["letters in the QR", { qr: "12ab", consent: true, consent_version: "aadhaar-2026-11-25" }],
-    ["an extra field", { qr: "123", consent: true, consent_version: "aadhaar-2026-11-25", aadhaar: "1234" }],
+    ["letters in the QR", { qr: "12ab", consent: true, consent_version: "aadhaar-2026-11-26" }],
+    ["an extra field", { qr: "123", consent: true, consent_version: "aadhaar-2026-11-26", aadhaar: "1234" }],
     ["an old consent version", { qr: "123", consent: true, consent_version: "old" }],
   ])("rejects %s with 422", async (_label, b) => {
     const res = await POST(post(b), noParams);
