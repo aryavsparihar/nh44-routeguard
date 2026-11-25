@@ -10,7 +10,9 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
-test_file=supabase/tests/rls.test.sql
+# RLS_TEST_FILE runs another file the same way (a dry run of a new migration
+# with the tests, all rolled back).
+test_file=${RLS_TEST_FILE:-supabase/tests/rls.test.sql}
 run_file=$(mktemp -t rls-run.XXXXXX)
 trap 'rm -f "$run_file"' EXIT
 

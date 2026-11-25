@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(139);
+select plan(170);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -23,7 +23,7 @@ insert into public.users (id, role, display_name, agent_id) values
   ('user_testagent',   'agent',  'Test agent',    null),
   ('user_testagent2',  'agent',  'Test agent 2',  null),
   ('user_testdriver',  'driver', 'Test driver',   'user_testagent'),
-  ('user_testdriver2', 'driver', 'Test driver 2', null),
+  ('user_testdriver2', 'driver', 'Test driver 2', 'user_testagent2'),
   ('user_testgrower',  'grower', 'Test grower',   null),
   ('user_testpolice',  'police', 'Test police',   null),
   ('user_testadmin',   'admin',  'Test admin',    null);
@@ -580,6 +580,115 @@ select is((select distance_m between 150 and 250 from public.report_confirmation
 select is((select count(*) from information_schema.columns
            where table_schema = 'public' and table_name = 'public_reports' and column_name in ('has_photo', 'photo_path', 'user_id')),
   1::bigint, 'public_reports says whether there is a photo, but has no path or user id');
+
+-- ===========================================================================
+-- Fleet: invites, vouching, shipments, location, account deletion
+-- ===========================================================================
+set local role postgres;
+insert into public.users (id, role, display_name, agent_id) values
+  ('user_testdriver3', 'driver', 'Test driver 3', null);
+create temp table invite_codes (who text primary key, code text);
+grant all on invite_codes to public;
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testagent", "role": "authenticated", "metadata": {"role": "agent"}}';
+insert into invite_codes select 'agent1', code from private.create_agent_invite(7);
+select is((select code ~ '^[A-HJ-NP-Z2-9]{8}$' from invite_codes where who = 'agent1'), true,
+  'fleet: an agent gets an 8-character invite code');
+select is((select count(*) from public.agent_invites), 1::bigint, 'fleet: the agent sees their own invite');
+
+set local request.jwt.claims = '{"sub": "user_testgrower", "role": "authenticated", "metadata": {"role": "grower"}}';
+select throws_ok($$ select * from private.create_agent_invite(7) $$, '42501', null::text,
+  'fleet: a grower cannot make invites');
+select is((select count(*) from public.agent_invites), 0::bigint, 'fleet: a grower sees no invites');
+
+set local request.jwt.claims = '{"sub": "user_testdriver2", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select outcome from private.accept_agent_invite(lower((select code from invite_codes where who = 'agent1')))),
+  'joined', 'fleet: a driver joins with the code (any case)');
+select is((select outcome from private.accept_agent_invite((select code from invite_codes where who = 'agent1'))),
+  'repeat', 'fleet: using the same code again is a repeat');
+select throws_ok($$ select * from private.accept_agent_invite('ZZZZZZZZ') $$, 'P0002', null::text,
+  'fleet: an unknown code is not found');
+set local request.jwt.claims = '{"sub": "user_testdriver3", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.accept_agent_invite((select code from invite_codes where who = 'agent1')) $$,
+  '55000', null::text, 'fleet: a used code cannot be used by someone else');
+
+set local role postgres;
+select is((select agent_id from public.users where id = 'user_testdriver2'), 'user_testagent',
+  'fleet: the driver is now in the new agent''s fleet');
+set local role authenticated;
+
+set local request.jwt.claims = '{"sub": "user_testagent2", "role": "authenticated", "metadata": {"role": "agent"}}';
+select throws_ok($$ select * from private.vouch_driver('user_testdriver2') $$, 'P0002', null::text,
+  'fleet: the old agent can no longer vouch for the driver');
+set local request.jwt.claims = '{"sub": "user_testagent", "role": "authenticated", "metadata": {"role": "agent"}}';
+select throws_ok($$ select * from private.vouch_driver('user_testdriver3') $$, 'P0002', null::text,
+  'fleet: an agent cannot vouch for a driver outside their fleet');
+select is((select verification_level || ' ' || outcome from private.vouch_driver('user_testdriver2', 'req-pgtap-vouch')),
+  'agent_vouched vouched', 'fleet: an agent vouches for their driver');
+select is((select outcome from private.vouch_driver('user_testdriver2')), 'repeat',
+  'fleet: vouching twice is a repeat');
+
+-- Shipments
+select lives_ok($$ insert into public.shipments (created_by, agent_id, driver_id, truck_number, tonnes)
+                   values ('user_testagent', 'user_testagent', 'user_testdriver2', 'JK05G7712', 9) $$,
+  'shipments: an agent adds a shipment with a driver from their fleet');
+select throws_ok($$ insert into public.shipments (created_by, agent_id, truck_number, tonnes)
+                    values ('user_testagent', 'user_testagent', 'JK05G7712', 9) $$,
+  '23505', null::text, 'shipments: a second active shipment for the same truck is refused');
+select throws_ok($$ insert into public.shipments (created_by, agent_id, driver_id, tonnes)
+                    values ('user_testagent', 'user_testagent', 'user_testdriver3', 9) $$,
+  '23514', null::text, 'shipments: a driver outside the fleet is refused');
+select throws_ok($$ insert into public.shipments (created_by, agent_id, tonnes)
+                    values ('user_testagent', 'user_testagent2', 9) $$,
+  '42501', null::text, 'shipments: an agent cannot add to another agent''s board');
+select throws_ok($$ update public.shipments set last_seen_at = now() where id = '00000000-0000-4000-8000-0000000000a1' $$,
+  '42501', null::text, 'shipments: an agent cannot write last_seen_at');
+set local request.jwt.claims = '{"sub": "user_testgrower", "role": "authenticated", "metadata": {"role": "grower"}}';
+select throws_ok($$ insert into public.shipments (created_by, agent_id, tonnes)
+                    values ('user_testgrower', 'user_testagent', 9) $$,
+  '42501', null::text, 'shipments: a grower cannot put a lot on an agent''s board');
+
+-- Location (S1: agent 1, driver 1)
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.shipment_location('00000000-0000-4000-8000-0000000000a1', 33.2437, 75.1876) $$,
+  '55000', null::text, 'location: refused while location sharing is off');
+update public.users set location_consent = true where id = 'user_testdriver';
+select lives_ok($$ select * from private.shipment_location('00000000-0000-4000-8000-0000000000a1', 33.2437, 75.1876) $$,
+  'location: the assigned driver sends a position once sharing is on');
+set local request.jwt.claims = '{"sub": "user_testdriver2", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.shipment_location('00000000-0000-4000-8000-0000000000a1', 33.2, 75.1) $$,
+  'P0002', null::text, 'location: a driver not on the shipment cannot send one');
+
+set local role postgres;
+select is((select extensions.st_y(last_location::extensions.geometry) || ',' || extensions.st_x(last_location::extensions.geometry)
+           from public.shipments where id = '00000000-0000-4000-8000-0000000000a1'),
+  '33.24,75.19', 'location: stored rounded to about 1 km');
+select is((select count(*) from public.audit_log where action in ('driver.joined_agent', 'driver.vouched')
+           and target_id = 'user_testdriver2'), 2::bigint, 'fleet: joining and vouching are audited');
+select is((select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
+           and schemaname = 'public' and tablename = 'shipments'), 1::bigint,
+  'shipments changes are published to Realtime');
+
+-- Account deletion
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+select throws_ok($$ select * from private.delete_my_account((select j from report_rules)) $$, '55000', null::text,
+  'delete account: police accounts are removed by an admin');
+set local request.jwt.claims = '{"sub": "user_testvouched1", "role": "authenticated", "metadata": {"role": "driver"}}';
+select lives_ok($$ select * from private.delete_my_account((select j from report_rules), 'req-pgtap-delete') $$,
+  'delete account: a driver deletes their account');
+set local role postgres;
+select is((select count(*) from public.users where id = 'user_testvouched1'), 0::bigint,
+  'delete account: the users row is gone');
+select is((select count(*) from public.reports where client_id = '00000000-0000-4000-8000-0000000000c4' and user_id is null),
+  1::bigint, 'delete account: their report stays, without their id');
+select is((select count(*) from public.audit_log where action = 'user.deleted' and target_id = 'user_testvouched1'),
+  1::bigint, 'delete account: the deletion is audited');
+select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.proname in ('create_agent_invite', 'accept_agent_invite', 'vouch_driver',
+                                                          'shipment_location', 'delete_my_account')),
+  0::bigint, 'fleet functions are not in the public schema (no REST access)');
 
 select * from finish();
 

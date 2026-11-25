@@ -45,6 +45,15 @@ export const verificationLevel = pgEnum("verification_level", ["none", "email", 
 export const verificationMethod = pgEnum("verification_method", ["agent_vouch", "aadhaar_qr", "admin"]);
 export const verificationVerdict = pgEnum("verification_verdict", ["verified", "manual_review", "rejected"]);
 
+export const agentInvites = pgTable("agent_invites", {
+  code: text().primaryKey(),
+  agent_id: text().notNull(),
+  created_at: timestamp({ withTimezone: true, mode: "date" }).default(sql`now()`).notNull(),
+  expires_at: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+  accepted_by: text(),
+  accepted_at: timestamp({ withTimezone: true, mode: "date" }),
+}).enableRLS();
+
 export const auditLog = pgTable("audit_log", {
   id: bigint({ mode: "number" }).primaryKey().default(sql`nextval('audit_log_id_seq'::regclass)`),
   at: timestamp({ withTimezone: true, mode: "date" }).default(sql`now()`).notNull(),
