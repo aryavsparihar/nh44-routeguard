@@ -1,0 +1,99 @@
+# RouteGuard Risk Engine
+
+> The hourly Python job behind NH-44 RouteGuard. It reads weather forecasts, scores landslide and road risk for six highway zones, and writes the scores to the database that the app reads.
+
+**Advisory only.** This is not an official police service. Follow J&K Traffic Police. In an emergency call **112**.
+
+---
+
+## What it does
+
+Every hour the job:
+
+1. Fetches an **Open-Meteo** forecast for a set of points along NH-44 (rain, snowfall, snow depth, temperature).
+2. Scores risk for **6 zones x 4 hazards x 4 time horizons**.
+3. Writes the results into the `risk_scores` table in Supabase Postgres.
+
+The RouteGuard web app (Next.js) then reads those scores and shows them on the map, the 48-hour view and the dispatch advisor.
+
+## Scoring model
+
+| Dimension | Values |
+|---|---|
+| Zones | 6 zones along NH-44 |
+| Hazards | Landslide, rockfall, flash flood, snow/ice |
+| Horizons | 0, 12, 24 and 48 hours |
+
+**Formula:** `score = exposure x weather trigger`
+
+- **Exposure** is how vulnerable a stretch of road is.
+- **Weather trigger** is how strongly the forecast pushes toward that hazard.
+- **The worst point in a zone decides** the zone's score.
+
+All values live in `lib/risk/config.json` and are explained in `docs/risk-model.md`. They are our own starting values, labelled as such, not official figures.
+
+## Backtest
+
+`jobs/backtest.py` compares the model against past road closures and writes `lib/risk/backtest.json`. The web app serves it at `/api/v1/model` so the model's track record is visible. Past incidents are shown to users only after a second person has checked the source.
+
+## Scheduling
+
+| Piece | Detail |
+|---|---|
+| Runtime | Python 3.12 on GitHub Actions (`risk-job.yml`) |
+| Trigger | `pg_cron` in Supabase calls the GitHub API at **:07** past every hour using `pg_net` |
+| Backup | A second run at **:37** that only does work if the :07 run failed |
+| Why not GitHub's own schedule | It skipped hours, so the database triggers the job instead |
+
+## Tech
+
+- **Python 3.12**
+- **httpx** for HTTP calls
+- **python-dotenv** for local keys
+- **h3** for hexagon data, used only if the hexagon data exists
+
+
+## Project layout
+
+```
+jobs/
+  points.json     Weather sample points along NH-44
+  backtest.py     Checks the model against past closures
+  tests/          pytest tests for the job and scoring
+lib/risk/
+  config.json     Model settings
+  backtest.json   Backtest output
+docs/
+  risk-model.md   Explanation of the scoring settings
+  backtest.md     Backtest notes
+```
+
+## Running locally
+
+1. Use Python 3.12 and install the libraries listed above.
+2. Put your Supabase URL and secret key in a local `.env` file. Never commit it.
+3. Run the job, then check new rows in `risk_scores`.
+4. Run `pytest` to test the scoring.
+
+## Security
+
+- The Supabase **secret key** is used only by this job, stored as a **GitHub Actions secret**.
+- The web app never holds that key.
+- The job writes through the Supabase REST API.
+- `.env` files are never committed, and `gitleaks` scans every push in CI.
+
+## Where it fits
+
+```
+Open-Meteo forecast
+        |
+GitHub Actions risk job (this repo)
+        |
+Supabase Postgres: risk_scores -> latest_risk view
+        |
+Next.js app: map, 48-hour strip, advisor
+```
+
+## Disclaimer
+
+Risk scores come from weather forecasts and simple starting values. They are advice, not a guarantee. Always follow J&K Traffic Police, and call 112 in an emergency.
