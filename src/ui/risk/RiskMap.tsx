@@ -57,7 +57,14 @@ export function RiskMap({ segments, bounds, levels, reports, label, failedText }
   useEffect(() => {
     let cancelled = false;
     let instance: MapLibreMap | null = null;
-    import("maplibre-gl")
+    // MapLibre is about 1 MB of script. Start it once the browser is idle, so
+    // the scores and text paint first (Lighthouse "total blocking time").
+    const idle = new Promise<void>((resolve) => {
+      if ("requestIdleCallback" in window) window.requestIdleCallback(() => resolve(), { timeout: 1500 });
+      else setTimeout(resolve, 200);
+    });
+    idle
+      .then(() => import("maplibre-gl"))
       .then((maplibregl) => {
         if (cancelled || !container.current) return;
         maplibregl.setWorkerUrl(WORKER_URL);
