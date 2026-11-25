@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
 import type { OfficialUpdate, PublicReport, RiskHex } from "@/src/shared/api-types";
@@ -20,6 +20,7 @@ import { OfficialUpdates, RoadReports } from "./FeedLists";
 import { RiskMap } from "./RiskMap";
 import { LoadError, Loading } from "./states";
 import { MAP_PLACES } from "@/src/shared/map-places";
+import { useMapSignal } from "./useMapSignal";
 import { useRisk } from "./useRisk";
 import { ZoneList } from "./ZoneList";
 
@@ -40,8 +41,14 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
   const t = useTranslations("risk");
   const locale = useLocale();
   const risk = useRisk();
-  const [reports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
-  const [updates] = useApi<ApiList<OfficialUpdate>>("/api/v1/official-updates");
+  const [reports, , refreshReports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
+  const [updates, , refreshUpdates] = useApi<ApiList<OfficialUpdate>>("/api/v1/official-updates");
+  // New reports and updates appear without a reload (D4b).
+  const refreshFeeds = useCallback(() => {
+    refreshReports();
+    refreshUpdates();
+  }, [refreshReports, refreshUpdates]);
+  useMapSignal(refreshFeeds);
   const [horizon, setHorizon] = useState<Horizon>(0);
   const [hazard, setHazard] = useState<Hazard | null>(null);
 

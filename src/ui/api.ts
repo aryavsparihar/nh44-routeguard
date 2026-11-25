@@ -12,8 +12,14 @@ export class ApiFetchError extends Error {
   }
 }
 
-export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(path, { signal, headers: { Accept: "application/json" } });
+// fresh: ask the server again even if the browser's HTTP cache still has a
+// copy (after a live "changed" signal, a 30 s max-age copy is out of date).
+export async function getJson<T>(path: string, signal?: AbortSignal, opts: { fresh?: boolean } = {}): Promise<T> {
+  const res = await fetch(path, {
+    signal,
+    headers: { Accept: "application/json" },
+    ...(opts.fresh ? { cache: "no-cache" as const } : {}),
+  });
   if (!res.ok) throw new ApiFetchError(res.status);
   reportFreshness(res);
   return (await res.json()) as T;
@@ -37,14 +43,15 @@ export type Loaded<T> =
 // Loads `path` once (and again on retry()). Offline caching is the service
 // worker's job, not this hook's.
 // The second item reloads and shows "loading" meanwhile; the third reloads
-// quietly, keeping what is on screen until the new answer arrives.
+// quietly (past the browser's HTTP cache), keeping what is on screen until
+// the new answer arrives.
 export function useApi<T>(path: string): [Loaded<T>, () => void, () => void] {
   const [result, setResult] = useState<Loaded<T>>({ state: "loading" });
-  const [attempt, setAttempt] = useState(0);
+  const [attempt, setAttempt] = useState({ n: 0, fresh: false });
 
   useEffect(() => {
     const controller = new AbortController();
-    getJson<T>(path, controller.signal).then(
+    getJson<T>(path, controller.signal, { fresh: attempt.fresh }).then(
       (value) => setResult({ state: "ready", value }),
       (error: unknown) => {
         if (controller.signal.aborted) return;
@@ -56,9 +63,9 @@ export function useApi<T>(path: string): [Loaded<T>, () => void, () => void] {
 
   const retry = useCallback(() => {
     setResult({ state: "loading" });
-    setAttempt((n) => n + 1);
+    setAttempt((a) => ({ n: a.n + 1, fresh: false }));
   }, []);
-  const refresh = useCallback(() => setAttempt((n) => n + 1), []);
+  const refresh = useCallback(() => setAttempt((a) => ({ n: a.n + 1, fresh: true })), []);
   return [result, retry, refresh];
 }
 
