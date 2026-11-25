@@ -81,8 +81,12 @@ export function contentSecurityPolicy(env: Env): string {
   const parts = Object.entries(directives).map(
     ([name, values]) => `${name} ${values.filter(Boolean).join(" ")}`,
   );
-  // On plain http://localhost this would break loading, so production only.
-  if (!isDev) parts.push("upgrade-insecure-requests");
+  // On plain http this would break loading (the browser asks for every file
+  // over https), so production only. Browsers skip it for http://localhost,
+  // but not for a phone opening the laptop's address on the same Wi-Fi:
+  // LOCAL_HTTP=1 leaves it out for that test. Deploys never set it, and
+  // Azure serves https only.
+  if (!isDev && env.LOCAL_HTTP !== "1") parts.push("upgrade-insecure-requests");
   return parts.join("; ");
 }
 
