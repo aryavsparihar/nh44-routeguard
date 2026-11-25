@@ -77,7 +77,7 @@ flowchart LR
 
 ## Verification levels
 
-`email` (Clerk code) → `agent_vouched` (your agent vouches for you) → `official` (police/admin, granted by an admin). Reports from vouched drivers and police go live at once; others need two confirmations from verified users within 2 km and 3 h. Details: [docs/verification.md](docs/verification.md).
+`email` (Clerk code) → `agent_vouched` (your agent vouches for you) or `aadhaar_qr` (optional: scan the Secure QR on your Aadhaar card; we check UIDAI's signature and the name, and keep only the result and the last 4 digits) → `official` (police/admin, granted by an admin). Reports from vouched drivers and police go live at once; others need two confirmations from verified users within 2 km and 3 h. Details: [docs/verification.md](docs/verification.md).
 
 ## Languages
 
@@ -208,7 +208,7 @@ Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://
 - Clerk runs as a development instance.
 - No read replicas; one database.
 - Translations are checked by team members, not professional translators, and the safety strings are not reviewed yet.
-- Aadhaar Secure QR (P1) is not built.
+- The Aadhaar check has only been tried with our demo key (`docs/demo/aadhaar-demo-qr.png`); UIDAI's real certificate still has to be pinned by hand ([runbook](docs/runbook.md#aadhaar-qr)). `manual_review` results have no admin screen yet.
 
 ## Setup from a fresh clone
 
@@ -247,6 +247,7 @@ Every name the app reads is in [`.env.example`](.env.example) with a comment; CI
 | `JOBS_SECRET` | **yes** | Password for the queue worker endpoint |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | private key **yes** | Web Push |
 | `FEATURE_REPORTS_WRITE`, `FEATURE_PUSH` | no | Set to `false` to pause reports or alerts |
+| `FEATURE_AADHAAR_QR`, `AADHAAR_ALLOW_TEST_CERT` | no | `true` turns on the Aadhaar QR check / also accepts the demo key |
 | `LOG_LEVEL`, `CSP_REPORT_ONLY`, `DEPLOYMENT_VERSION`, `NEXT_PUBLIC_CLERK_KEYLESS_DISABLED`, `NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED` | no | Server settings |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | **yes** | Python job only, GitHub Actions secrets. The secret key skips RLS; never in the app |
 

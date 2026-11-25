@@ -18,6 +18,7 @@ const COLLECT = [
   "collectShipments",
   "collectLocation",
   "collectAlerts",
+  "collectAadhaar",
   "collectLogs",
 ] as const;
 

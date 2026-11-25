@@ -5,6 +5,7 @@
 //
 // The examples show the shape of each answer. Their values are made up for
 // the example (ids, names, times); they are not readings from the road.
+import { AADHAAR_CONSENT_VERSION, aadhaarQrBody } from "@/src/server/aadhaar/aadhaar.schemas";
 import { z } from "zod";
 import { adviceRequest } from "@/src/server/advice/advice.schemas";
 import { auditLogQuery } from "@/src/server/audit-log/audit-log.schemas";
@@ -676,6 +677,29 @@ export const OPERATIONS: Operation[] = [
     params: { driverId: userId },
     success: { 200: { description: "Vouched.", example: { verification_level: "agent_vouched", outcome: "vouched" } } },
     errors: { 404: "Not a driver in your fleet." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/verify/aadhaar-qr",
+    tag: "Agents",
+    summary: "Optional Aadhaar Secure QR check (raises you to aadhaar_qr)",
+    description:
+      "Behind `FEATURE_AADHAAR_QR` (404 when off). Send the digits your camera read from the Secure QR on an Aadhaar card or e-Aadhaar, with the consent tick. The server checks UIDAI's RSA signature against the pinned certificate (`config/uidai/certs.json`), reads the name and compares it with your profile name, and stores only the verdict, the last 4 digits, the consent version and the certificate version. The QR, name, date of birth, address and photo are never stored or logged. `test_key: true` means the demo key signed it (only when `AADHAAR_ALLOW_TEST_CERT=true`). Never send an Aadhaar number.",
+    access: ["driver", "agent"],
+    rateLimit: "verification",
+    body: aadhaarQrBody,
+    bodyExample: { qr: "48356781203947561029384756", consent: true, consent_version: AADHAAR_CONSENT_VERSION },
+    success: {
+      200: {
+        description: "The check ran. A verdict of rejected is still a 200; `reason` says why.",
+        example: { verdict: "verified", reason: null, verification_level: "aadhaar_qr", test_key: false },
+      },
+    },
+    errors: {
+      404: "The Aadhaar check is not turned on.",
+      409: "Finish onboarding first.",
+      503: "No UIDAI certificate is pinned on this server.",
+    },
   },
 
   // Admin

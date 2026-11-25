@@ -26,6 +26,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `auth.*`, `me.*` (sign-in, account, consent, deletion) | not yet reviewed | not yet reviewed | Consent and deletion text: "we deleted your last position", "this can't be undone" must be exact |
 | `offline.*`, `report.queued`, `board.savedCopy`, `me.signOutWaiting`, and `public/offline.html` | not yet reviewed | not yet reviewed | Tells people a report is saved and will send by itself; must not promise it was sent |
 | `push.*`, `me.alerts.*`, `privacy.collectAlerts` (alerts) | not yet reviewed | not yet reviewed | Alert text arrives on a locked phone: "confirmed" and the advisory line must be exact; the privacy line is consent text |
+| `me.aadhaar.*`, `privacy.collectAadhaar` (Aadhaar QR check) | not yet reviewed | not yet reviewed | Consent text: "we keep only the result and the last 4 digits" and "never type your Aadhaar number" must be exact |
 
 ## Choices for the reviewers
 

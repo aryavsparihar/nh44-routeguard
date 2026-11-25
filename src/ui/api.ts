@@ -36,7 +36,9 @@ export type Loaded<T> =
 
 // Loads `path` once (and again on retry()). Offline caching is the service
 // worker's job, not this hook's.
-export function useApi<T>(path: string): [Loaded<T>, () => void] {
+// The second item reloads and shows "loading" meanwhile; the third reloads
+// quietly, keeping what is on screen until the new answer arrives.
+export function useApi<T>(path: string): [Loaded<T>, () => void, () => void] {
   const [result, setResult] = useState<Loaded<T>>({ state: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -56,7 +58,8 @@ export function useApi<T>(path: string): [Loaded<T>, () => void] {
     setResult({ state: "loading" });
     setAttempt((n) => n + 1);
   }, []);
-  return [result, retry];
+  const refresh = useCallback(() => setAttempt((n) => n + 1), []);
+  return [result, retry, refresh];
 }
 
 // For admin forms: sends JSON and returns the status, the data on success,

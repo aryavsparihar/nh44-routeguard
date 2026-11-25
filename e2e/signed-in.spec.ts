@@ -90,3 +90,19 @@ test("the admin posts an official update and the public sees it with its source"
   await expect(visitor.getByText("Demo source (e2e test)").first()).toBeVisible();
   await visitor.close();
 });
+
+// Last, because it raises the demo driver to aadhaar_qr (the seed resets it).
+// The picture is the demo QR signed with our test key, never a real card; the
+// server needs FEATURE_AADHAAR_QR=true and AADHAAR_ALLOW_TEST_CERT=true.
+test("a driver checks the demo Aadhaar QR from a picture and gets the badge", async ({ page }) => {
+  test.skip(process.env.FEATURE_AADHAAR_QR !== "true", "set FEATURE_AADHAAR_QR=true to run the Aadhaar check");
+  await signIn(page, EMAIL.driverNew);
+  await page.goto("/me");
+  const card = page.getByRole("region", { name: "Aadhaar QR check (optional)" });
+  await expect(card).toBeVisible();
+  await card.getByRole("checkbox").check();
+  await card.getByLabel("Use a picture of the QR").setInputFiles("docs/demo/aadhaar-demo-qr.png");
+  await expect(card.getByText("Demo check (test key)")).toBeVisible({ timeout: 15_000 });
+  await expect(card.getByText(/Checked\. Your level is now/)).toBeVisible();
+  await expect(page.getByText("Aadhaar checked").first()).toBeVisible();
+});

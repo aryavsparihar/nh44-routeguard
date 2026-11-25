@@ -9,3 +9,5 @@
 **A decision and what we rejected:** the language lives in a cookie, not the URL (`localePrefix: "never"`), and Urdu sets `<html dir="rtl">`. Rejected: `/ur/...` URLs, which break the service worker's cached paths and Clerk redirects. We kept the hand-written service worker instead of Serwist so we control exactly what is never cached.
 
 **A limitation and the fix:** the Hindi and Urdu safety text is machine-drafted and not yet reviewed (`messages/REVIEW.md`). Fix: a fluent reader of each language reviews the safety strings and signs the review table with name and date.
+
+**The Aadhaar card on `/me`** (`src/ui/me/AadhaarCard.tsx`): consent first (what we read, what we keep, never type your number), then the camera (`BarcodeDetector`, or `jsQR` where the browser lacks it) or a picture chosen on the phone. Frames are drawn to a hidden canvas, read and cleared; only the digits are sent. Strings are under `me.aadhaar.*` in all three languages and are listed in `messages/REVIEW.md` as not yet reviewed.
