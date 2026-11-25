@@ -7,6 +7,8 @@ import rules from "@/config/report-rules.json";
 import type { PublicReport } from "@/src/shared/api-types";
 import { Field, Notice, buttonClass, inputClass, quietButtonClass } from "@/src/ui/admin/common";
 import { Icon, type IconName } from "@/src/ui/icons";
+import { queueReport } from "@/src/ui/offline/outbox";
+import { compressPhoto } from "@/src/ui/offline/photo";
 
 type Hazard = PublicReport["hazard_type"];
 const HAZARDS: Hazard[] = ["landslide", "rockfall", "flash_flood", "snow_ice", "accident", "other"];
@@ -20,15 +22,17 @@ const MAX_PHOTO_MB = rules.photo.max_bytes / (1024 * 1024);
 
 type Position = { lat: number; lng: number; accuracy: number };
 type Outcome = "created" | "repeat" | "merged";
-type Sent = { outcome: Outcome; status: string };
+type Sent = { outcome: Outcome; status: string } | { outcome: "queued" };
 
 const chip =
   "inline-flex min-h-12 items-center gap-1.5 rounded-full border border-border-strong bg-elevated px-4 text-sm font-bold aria-checked:border-primary aria-checked:bg-primary aria-checked:text-inverse";
 
 // The report screen (B2): what is on the road, where you are, an optional
 // photo and note. The phone makes one Idempotency-Key per report, so pressing
-// Send twice (or a retry on a bad connection) can't post it twice.
-export function ReportForm() {
+// Send twice (or a retry on a bad connection) can't post it twice. With no
+// signal the report waits in the phone's outbox (src/ui/offline/outbox.ts)
+// under the same key and is sent when the signal is back.
+export function ReportForm({ userId }: { userId: string }) {
   const t = useTranslations("report");
   const th = useTranslations("reports.hazard");
   const [key, setKey] = useState(() => crypto.randomUUID());
@@ -81,12 +85,20 @@ export function ReportForm() {
     setError(null);
     setFields([]);
 
+    // About 300 KB, so it goes through on a weak signal.
+    const small = photo ? await compressPhoto(photo) : undefined;
+    const report = {
+      hazard_type: hazard,
+      lat: position.lat.toFixed(6),
+      lng: position.lng.toFixed(6),
+      note: note.trim() || undefined,
+    };
     const form = new FormData();
-    form.set("hazard_type", hazard);
-    form.set("lat", position.lat.toFixed(6));
-    form.set("lng", position.lng.toFixed(6));
-    if (note.trim()) form.set("note", note.trim());
-    if (photo) form.set("photo", photo);
+    form.set("hazard_type", report.hazard_type);
+    form.set("lat", report.lat);
+    form.set("lng", report.lng);
+    if (report.note) form.set("note", report.note);
+    if (small) form.set("photo", small, "photo.jpg");
 
     let res: Response;
     try {
@@ -96,8 +108,15 @@ export function ReportForm() {
         body: form,
       });
     } catch {
-      setSending(false);
-      setError(t("err.offline"));
+      // No signal: keep it in the outbox with the same key.
+      try {
+        await queueReport({ id: key, userId, createdAt: new Date().toISOString(), ...report, photo: small });
+        setSending(false);
+        setSent({ outcome: "queued" });
+      } catch {
+        setSending(false);
+        setError(t("err.offline"));
+      }
       return;
     }
     const json = (await res.json().catch(() => null)) as
@@ -139,7 +158,9 @@ export function ReportForm() {
     return (
       <div className="flex flex-col gap-3">
         <Notice kind="ok">
-          {t(`sent.${sent.outcome}`)} {sent.status === "confirmed" ? t("sent.live") : t("sent.waiting")}
+          {sent.outcome === "queued"
+            ? t("queued")
+            : `${t(`sent.${sent.outcome}`)} ${sent.status === "confirmed" ? t("sent.live") : t("sent.waiting")}`}
         </Notice>
         <div className="flex flex-wrap gap-2">
           <Link href="/" className={`${buttonClass} inline-flex items-center`}>

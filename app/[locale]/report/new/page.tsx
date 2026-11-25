@@ -36,5 +36,5 @@ async function ReportGate() {
   }
   if (!caller.role) return <p className="rounded-md bg-surface p-3">{t("noRole")}</p>;
   if (!CAN_REPORT.includes(caller.role)) return <p className="rounded-md bg-surface p-3">{t("wrongRole")}</p>;
-  return <ReportForm />;
+  return <ReportForm userId={caller.userId} />;
 }

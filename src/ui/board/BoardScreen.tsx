@@ -6,10 +6,12 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import type { Locale } from "@/src/i18n/routing";
 import type { AgentInvite, FleetDriver, Shipment, ShipmentStatus } from "@/src/shared/api-types";
 import type { Decision } from "@/src/shared/decide";
-import { formatDayTime, isolate } from "@/src/shared/format";
+import { formatDayTime, formatTime, isolate } from "@/src/shared/format";
 import { ASSUMPTIONS, DESTINATIONS, VARIETIES, type Destination, type Variety } from "@/src/shared/priority";
 import { Field, Notice, buttonClass, fromIstInput, inputClass, quietButtonClass, toIstInput } from "@/src/ui/admin/common";
 import { useApi, type ApiList } from "@/src/ui/api";
+import { ageText } from "@/src/ui/offline/age";
+import { useNow } from "@/src/ui/offline/useNow";
 import { send, useShipments, type Live } from "./useShipments";
 
 export type BoardRole = "agent" | "driver" | "grower" | "trader" | "admin";
@@ -29,27 +31,48 @@ const card = "flex flex-col gap-2 rounded-lg border border-border bg-elevated p-
 //   grower, trader: the lots they saved;
 //   admin:  every shipment, read only.
 // Changes from other people show up by themselves (useShipments).
-export function BoardScreen({ role }: { role: BoardRole }) {
-  return role === "agent" ? <AgentBoard /> : <BoardBody role={role} fleet={[]} />;
+export function BoardScreen({ role, userId }: { role: BoardRole; userId: string }) {
+  return role === "agent" ? <AgentBoard userId={userId} /> : <BoardBody role={role} userId={userId} fleet={[]} />;
 }
 
-function AgentBoard() {
+function AgentBoard({ userId }: { userId: string }) {
   const [drivers, retryDrivers] = useApi<ApiList<FleetDriver>>("/api/v1/agents/drivers");
   const fleet = drivers.state === "ready" ? drivers.value.data : [];
   return (
-    <BoardBody role="agent" fleet={fleet}>
+    <BoardBody role="agent" userId={userId} fleet={fleet}>
       <Fleet drivers={drivers} onRetry={retryDrivers} onChanged={retryDrivers} />
     </BoardBody>
   );
 }
 
-function BoardBody({ role, fleet, children }: { role: BoardRole; fleet: FleetDriver[]; children?: ReactNode }) {
+function BoardBody({
+  role,
+  userId,
+  fleet,
+  children,
+}: {
+  role: BoardRole;
+  userId: string;
+  fleet: FleetDriver[];
+  children?: ReactNode;
+}) {
   const t = useTranslations("board");
-  const { list, live, reload } = useShipments();
+  const to = useTranslations("offline");
+  const locale = useLocale() as Locale;
+  const { list, live, savedAt, reload } = useShipments(userId);
+  const now = useNow();
 
   return (
     <div className="flex flex-col gap-5">
       <LiveState live={live} onReload={reload} />
+      {savedAt && now > 0 && (
+        <p role="status" className="rounded-md border border-hold-fill bg-hold-bg p-3 text-hold-text">
+          {t("savedCopy", {
+            time: isolate(formatTime(new Date(savedAt), locale)),
+            age: ageText(to, now - Date.parse(savedAt)),
+          })}
+        </p>
+      )}
 
       {role === "driver" && <JoinFleet onJoined={reload} />}
       {(role === "agent" || role === "grower" || role === "trader") && (

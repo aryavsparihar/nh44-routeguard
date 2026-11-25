@@ -3,7 +3,7 @@
 import { useAuth, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { LOCALE_LABELS } from "@/src/i18n/locale";
 import { LOCALES, type Locale } from "@/src/i18n/routing";
 import type { MeProfile } from "@/src/shared/api-types";
@@ -11,6 +11,8 @@ import { Field, Notice, buttonClass, inputClass, quietButtonClass } from "@/src/
 import { useApi } from "@/src/ui/api";
 import { send } from "@/src/ui/board/useShipments";
 import { saveLocaleCookie } from "@/src/ui/locale-cookie";
+import { outboxCount } from "@/src/ui/offline/outbox";
+import { clearOfflineData } from "@/src/ui/offline/private-store";
 import { SignInLink } from "@/src/ui/SignInLink";
 
 const SELF_SERVICE = ["grower", "trader", "agent", "driver"] as const;
@@ -253,6 +255,19 @@ function Account({ me }: { me: MeProfile }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message>(null);
   const official = me.role === "police" || me.role === "admin";
+  const [waiting, setWaiting] = useState(0);
+
+  useEffect(() => {
+    void outboxCount().then(setWaiting);
+  }, []);
+
+  // Signing out (or deleting the account) also wipes what this phone kept
+  // for this person: the board copy, the outbox and the service worker's
+  // caches (src/ui/offline/private-store.ts).
+  async function leave() {
+    await clearOfflineData();
+    await signOut({ redirectUrl: "/" }).catch(() => window.location.assign(new URL("/", window.location.origin)));
+  }
 
   async function remove(e: FormEvent) {
     e.preventDefault();
@@ -262,7 +277,7 @@ function Account({ me }: { me: MeProfile }) {
     if (res.status === 204) {
       // The Clerk account is gone; clear this browser's session as well.
       // A full page load to the start page, signed out.
-      await signOut({ redirectUrl: "/" }).catch(() => window.location.assign(new URL("/", window.location.origin)));
+      await leave();
       return;
     }
     setBusy(false);
@@ -277,7 +292,8 @@ function Account({ me }: { me: MeProfile }) {
       <h2 id="account" className="text-xl font-bold">
         {t("account")}
       </h2>
-      <button type="button" className={quietButtonClass} onClick={() => void signOut({ redirectUrl: "/" })}>
+      {waiting > 0 && <p className="text-sm">{t("signOutWaiting", { count: waiting })}</p>}
+      <button type="button" className={quietButtonClass} onClick={() => void leave()}>
         {t("signOut")}
       </button>
       <details>

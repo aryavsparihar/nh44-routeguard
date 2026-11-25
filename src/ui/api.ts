@@ -15,7 +15,18 @@ export class ApiFetchError extends Error {
 export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(path, { signal, headers: { Accept: "application/json" } });
   if (!res.ok) throw new ApiFetchError(res.status);
+  reportFreshness(res);
   return (await res.json()) as T;
+}
+
+// The service worker marks a copy from its cache with X-RG-Cached-At
+// (public/sw.js). The offline banner listens for these events to say how old
+// the data on screen is.
+export type CachedEvent = CustomEvent<{ savedAt: string }>;
+function reportFreshness(res: Response) {
+  if (typeof window === "undefined") return;
+  const savedAt = res.headers.get("X-RG-Cached-At");
+  window.dispatchEvent(savedAt ? new CustomEvent("rg:cached", { detail: { savedAt } }) : new Event("rg:fresh"));
 }
 
 export type Loaded<T> =
