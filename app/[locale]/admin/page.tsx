@@ -10,6 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const LINKS = [
+  { href: "/admin/control", key: "control", roles: ["police", "admin"] },
   { href: "/admin/updates", key: "updates", roles: ["police", "admin"] },
   { href: "/admin/reports", key: "reports", roles: ["admin"] },
   { href: "/admin/road-status", key: "roadStatus", roles: ["admin"] },
