@@ -114,10 +114,16 @@ Put team CSVs in `data/` with these exact column headers.
 | --- | --- |
 | `corridor_hexes.csv` | `h3_index`, `zone_id` |
 | `hex_slope.csv` | `h3_index`, `slope_deg` |
-| `incidents.csv` | `date`, `zone_id`, `place`, `lat`, `lng`, `hazard_type`, `hours_closed`, `trucks_stranded`, `source_url` |
+| `incidents.csv` | 27 columns, listed in `COLUMNS` in `scripts/validate_incidents.py` (BUILD_PROMPT section 14) |
 
-- `date` is `YYYY-MM-DD`. `zone_id` is 1 to 6.
-- `hazard_type` must be one of: `landslide`, `rockfall`, `flash_flood`, `snow_ice`, `accident`, `other`.
+### Incidents
+
+- `data/incidents.csv` has 27 past closures from 2018 to 2026, each from a news or government source with a quote of 25 words or fewer. Added by Madhusudan, checked by Aryaveer. **It is not a complete list** of closures on NH-44.
+- Rows we couldn't support (no date, no place, or a weak source) are in `data/incidents_unverified.csv` and are never loaded.
+- `hazard_type` is one of `landslide`, `rockfall`, `flash_flood`, `snow_ice`, `accident`, `other`; `zone_id` is 1 to 6 and must match the km along `data/nh44_line.json`.
+- Check: `python3 scripts/validate_incidents.py` (also in CI). Re-check the quotes against the sources: `python3 scripts/check_incident_sources.py`.
+- A row is used only after someone other than `added_by` checks it: `python3 scripts/incidents_checklist.py` writes a checklist, then `--apply <file> --by "Name"` fills `verified_by`.
+- Load into Supabase: `npm run db:seed-incidents -- --dry-run`, then without `--dry-run`. Only verified rows are loaded; rerunning updates rows instead of adding copies.
 
 ## How the risk score works
 
