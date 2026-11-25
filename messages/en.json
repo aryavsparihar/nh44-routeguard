@@ -133,6 +133,8 @@
       "close": "Close"
     },
     "replay": {
+      "lowHint": "When the weather is calm, every zone stays low. To see the map on a real bad day:",
+      "lowShow": "Show a past storm",
       "pick": "Weather on the map",
       "live": "Today (live)",
       "option": "Past storm: {date}, {hazard}, {place}",
