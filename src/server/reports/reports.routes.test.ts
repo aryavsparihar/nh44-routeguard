@@ -19,6 +19,10 @@ vi.mock("@/src/server/http/rate-limit.store", () => ({
   hitBucket: async () => ({ allowed: true, hits: 1, retryAfterSeconds: 0 }),
 }));
 
+// The caller's own users row (only verification_level is read here).
+const users = vi.hoisted(() => ({ findUser: vi.fn() }));
+vi.mock("@/src/server/users/users.repository", () => users);
+
 const repo = vi.hoisted(() => ({
   ACTIVE_STATUSES: ["unconfirmed", "confirmed"],
   listActiveReports: vi.fn(),
@@ -107,6 +111,7 @@ beforeEach(() => {
   fakeCaller = null;
   vi.clearAllMocks();
   repo.submitReport.mockResolvedValue({ id: ID, status: "unconfirmed", outcome: "created" });
+  users.findUser.mockResolvedValue({ verification_level: "agent_vouched" });
   storage.uploadPhoto.mockResolvedValue(undefined);
   storage.removePhoto.mockResolvedValue(undefined);
 });
@@ -121,6 +126,32 @@ describe("POST /api/v1/reports", () => {
     fakeCaller = GROWER;
     expect((await postReport(form({ hazard_type: "rockfall", ...SPOT }))).status).toBe(403);
     expect(repo.submitReport).not.toHaveBeenCalled();
+  });
+
+  it("is 403 for a driver who is not verified, before any photo is read or stored", async () => {
+    fakeCaller = DRIVER;
+    for (const level of ["email", "none"]) {
+      users.findUser.mockResolvedValue({ verification_level: level });
+      const res = await postReport(form({ hazard_type: "rockfall", ...SPOT }));
+      expect(res.status).toBe(403);
+      expect((await res.json()).detail).toContain("vouch");
+    }
+    users.findUser.mockResolvedValue(null); // no users row yet
+    expect((await postReport(form({ hazard_type: "rockfall", ...SPOT }))).status).toBe(403);
+    expect(repo.submitReport).not.toHaveBeenCalled();
+    expect(storage.uploadPhoto).not.toHaveBeenCalled();
+  });
+
+  it("takes reports from drivers verified either way, and from agents without a check", async () => {
+    fakeCaller = DRIVER;
+    for (const level of ["agent_vouched", "aadhaar_qr"]) {
+      users.findUser.mockResolvedValue({ verification_level: level });
+      expect((await postReport(form({ hazard_type: "rockfall", ...SPOT }))).status).toBe(201);
+    }
+    fakeCaller = { userId: "user_agent1", role: "agent" };
+    users.findUser.mockClear();
+    expect((await postReport(form({ hazard_type: "rockfall", ...SPOT }))).status).toBe(201);
+    expect(users.findUser).not.toHaveBeenCalled();
   });
 
   it("needs an Idempotency-Key that is a UUID", async () => {
