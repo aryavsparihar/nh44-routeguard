@@ -3,7 +3,8 @@
 //   node scripts/seed-demo.mts --dry-run   show what it would do (no keys needed)
 //   node scripts/seed-demo.mts             create or update everything
 //   node scripts/seed-demo.mts --reset     remove the demo rows (is_demo) and
-//                                         the demo accounts' official updates
+//                                         the demo accounts' reports and
+//                                         official updates
 //
 // Idempotent: accounts are found by email, rows are replaced, so running it
 // twice never makes copies. Aryaveer runs it on his machine; it needs:
@@ -164,6 +165,7 @@ async function findUserId(email: string): Promise<string | null> {
 if (reset) {
   const ids = (await Promise.all(USERS.map((u) => findUserId(u.email)))).filter((x): x is string => !!x);
   check("reports", await db.from("reports").delete().eq("is_demo", true));
+  if (ids.length) check("demo accounts' reports", await db.from("reports").delete().in("user_id", ids));
   check("shipments", await db.from("shipments").delete().eq("is_demo", true));
   if (ids.length) check("official updates", await db.from("official_updates").delete().in("created_by", ids));
   console.log("Removed demo reports, shipments and the demo accounts' official updates.");
@@ -267,6 +269,8 @@ for (const s of SHIPMENTS) {
 // ---- Reports -----------------------------------------------------------------
 
 check("old demo reports", await db.from("reports").delete().eq("is_demo", true));
+// Reports the signed-in Playwright tests posted as demo users.
+check("demo accounts' reports", await db.from("reports").delete().in("user_id", Object.values(ids)));
 for (const r of REPORTS) {
   const created = now - r.ageHours * HOUR;
   check(
