@@ -302,3 +302,10 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · A demo key made by `scripts/aadhaar/make-demo-qr.mjs`, accepted only with `AADHAAR_ALLOW_TEST_CERT=true`, and shown as "Demo check (test key)" · No real Aadhaar card may be scanned on stage or in tests. The private key was never saved, so nobody can sign more demo codes.
 - **2026-11-25** · QR from the camera or from a picture chosen on the phone, decoded on the phone (`BarcodeDetector`, `jsQR` fallback) · e-Aadhaar is a PDF on many phones; a screenshot of it works. The picture never leaves the phone.
 - **2026-11-25** · Pinned UIDAI's current offline e-KYC / Secure QR certificate (valid to Feb 2029) and the one before it (expired Feb 2026) · UIDAI's page says these validate the Secure QR Code; cards and e-Aadhaar PDFs made before Feb 2026 carry signatures from the older key, which were valid when made. Rejected: checking expiry at scan time, which would turn away every older card. The two certificates in the page's separate "Secure QR Code" table expired in 2020–21 and are not pinned.
+
+## Round 3: live map (D4b)
+
+- **2026-11-25** · New reports and official updates reach open maps through a Realtime broadcast with no data on the public topic `map`, sent by a statement trigger; the map then reloads both lists from our API · Same pattern as the agent board: the API stays the one place that decides what is public (no user ids, no hidden reports). A broadcast needs no sign-in, so signed-out visitors get it too, and it carries nothing to leak.
+- **2026-11-25** · The signal can never fail a write (errors in the trigger are swallowed), and the map also reloads every minute while it is on screen · The signal is a hint. Expired reports leave the map without any write, so the minute reload is still needed.
+- **2026-11-25** · A reload after a signal skips the browser's HTTP cache (`cache: "no-cache"`) · `GET /api/v1/reports` allows a 30 s cached copy, which would hide the report the signal was about.
+

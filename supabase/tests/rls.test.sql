@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(219);
+select plan(223);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -848,6 +848,20 @@ select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.prona
            where n.nspname = 'public' and p.proname in ('create_agent_invite', 'accept_agent_invite', 'vouch_driver',
                                                           'shipment_location', 'delete_my_account')),
   0::bigint, 'fleet functions are not in the public schema (no REST access)');
+
+-- Live map signal (20261125230000_map_live_signal.sql)
+set local role postgres;
+select is((select count(*) from pg_trigger where tgname in ('reports_map_signal', 'official_updates_map_signal')
+           and not tgisinternal), 2::bigint, 'live map: reports and official updates send a signal');
+create temp table map_signals_before on commit drop as
+  select count(*) as n from realtime.messages where topic = 'map' and event = 'changed';
+update public.reports set note = note where client_id = '00000000-0000-4000-8000-0000000000c4';
+select is((select count(*) from realtime.messages where topic = 'map' and event = 'changed') > (select n from map_signals_before),
+  true, 'live map: a report change broadcasts "changed" on the public map topic');
+select is((select payload - 'id' from realtime.messages where topic = 'map' and event = 'changed' order by inserted_at desc limit 1),
+  '{}'::jsonb, 'live map: the signal carries no report data (only Realtime''s own message id)');
+select throws_ok($$ set local role anon; select private.signal_map_changed() $$, '42501', null::text,
+  'live map: nobody can call the signal function directly');
 
 select * from finish();
 
