@@ -14,7 +14,12 @@ export async function AppHeader() {
         {t("skip")}
       </a>
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 px-4 py-2">
-        <Link href="/" className="min-w-0 truncate font-heading text-xl font-bold text-highway">
+        {/* dir="auto": the Latin title stays left-to-right on Urdu pages, so a cut lands at its end. */}
+        <Link
+          href="/"
+          dir="auto"
+          className="min-w-0 truncate font-heading text-base font-bold text-highway sm:text-xl"
+        >
           {t("title")}
         </Link>
         <LanguageSwitch />
