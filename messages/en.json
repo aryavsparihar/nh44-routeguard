@@ -590,7 +590,9 @@
       "reasonLabel": "Reason (they will see it)",
       "reasonHint": "For example: could not confirm the transport company.",
       "confirmReject": "Turn down",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "refresh": "Refresh",
+      "auto": "The list updates by itself every 20 seconds."
     }
   },
   "report": {
@@ -812,8 +814,8 @@
     "saving": "Saving…",
     "save": "Save",
     "saved": "Saved.",
-    "name": "Your name (optional)",
-    "nameHint": "Your agent and drivers see this name. Up to 60 characters.",
+    "name": "Your name",
+    "nameHint": "TCU, your agent and your drivers see this name. Up to 60 characters.",
     "language": "Language",
     "profile": "Profile",
     "roleLabel": "Role",

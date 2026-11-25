@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Locale } from "@/src/i18n/routing";
 import type { ReviewUser } from "@/src/shared/api-types";
 import { formatDate, isolate } from "@/src/shared/format";
@@ -13,23 +13,47 @@ type Tab = "pending" | "rejected";
 // TCU's queue (GET /api/v1/admin/users): every new account waits here until
 // TCU approves it or turns it down with a reason (POST .../review). Both are
 // written to the audit log by the tcu_review_user database function.
+// The list reloads by itself every 20 s while the tab is open and when TCU
+// comes back to the tab, so a request sent meanwhile shows up.
+const REFRESH_MS = 20_000;
 export function ApprovalsAdmin() {
   const t = useTranslations("admin.approvals");
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, retry, refresh] = useApi<ApiList<ReviewUser>>(`/api/v1/admin/users?approval=${tab}`);
+
+  useEffect(() => {
+    const again = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    const timer = window.setInterval(again, REFRESH_MS);
+    document.addEventListener("visibilitychange", again);
+    window.addEventListener("focus", again);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", again);
+      window.removeEventListener("focus", again);
+    };
+  }, [refresh]);
   const chip =
     "min-h-11 rounded-full border border-border-strong px-4 text-sm font-bold aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-inverse";
 
   return (
     <div className="flex flex-col gap-3">
       <p>{t("intro")}</p>
-      <div role="group" aria-label={t("show")} className="flex gap-2">
-        {(["pending", "rejected"] as const).map((k) => (
-          <button key={k} type="button" className={chip} aria-pressed={tab === k} onClick={() => setTab(k)}>
-            {t(`tab.${k}`)}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label={t("show")} className="flex gap-2">
+          {(["pending", "rejected"] as const).map((k) => (
+            <button key={k} type="button" className={chip} aria-pressed={tab === k} onClick={() => setTab(k)}>
+              {t(`tab.${k}`)}
+              {tab === k && rows.state === "ready" ? ` (${rows.value.data.length})` : ""}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="min-h-11 px-2 text-sm underline" onClick={refresh}>
+          {t("refresh")}
+        </button>
       </div>
+      <p className="text-sm text-secondary">{t("auto")}</p>
       {rows.state === "loading" && <p role="status">{t("loading")}</p>}
       {rows.state === "error" && (
         <div className="flex flex-col gap-2">

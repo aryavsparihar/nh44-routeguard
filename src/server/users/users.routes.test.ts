@@ -124,7 +124,7 @@ describe("POST /api/v1/me/onboarding", () => {
   const path = "/api/v1/me/onboarding";
 
   it("is 401 when signed out", async () => {
-    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver" }), noParams);
+    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver", display_name: "Bashir" }), noParams);
     expect(res.status).toBe(401);
   });
 
@@ -146,9 +146,18 @@ describe("POST /api/v1/me/onboarding", () => {
     expect(res.status).toBe(422);
   });
 
+  it.each([{}, { display_name: "" }, { display_name: "   " }])("needs a name (422): %o", async (extra) => {
+    fakeCaller = { userId: "user_new1", role: null };
+    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver", ...extra }), noParams);
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).errors).toEqual([expect.objectContaining({ path: "display_name" })]);
+    expect(repo.insertOwnUser).not.toHaveBeenCalled();
+  });
+
   it("is 409 when the token already has a role", async () => {
     fakeCaller = { userId: "user_new1", role: "grower" };
-    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver" }), noParams);
+    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver", display_name: "Bashir" }), noParams);
 
     expect(res.status).toBe(409);
     expect(repo.insertOwnUser).not.toHaveBeenCalled();
@@ -182,7 +191,7 @@ describe("POST /api/v1/me/onboarding", () => {
     repo.insertOwnUser.mockResolvedValue("exists");
     repo.findUser.mockResolvedValue({ ...DRIVER_ROW, approval: "pending" });
 
-    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver" }), noParams);
+    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver", display_name: "Bashir" }), noParams);
 
     expect(res.status).toBe(200);
     expect(clerk.setClerkRole).not.toHaveBeenCalled();
@@ -193,7 +202,7 @@ describe("POST /api/v1/me/onboarding", () => {
     repo.insertOwnUser.mockResolvedValue("exists");
     repo.findUser.mockResolvedValue(DRIVER_ROW);
 
-    const res = await postOnboarding(jsonRequest("POST", path, { role: "agent" }), noParams);
+    const res = await postOnboarding(jsonRequest("POST", path, { role: "agent", display_name: "Bashir" }), noParams);
 
     expect(res.status).toBe(409);
     expect(clerk.setClerkRole).not.toHaveBeenCalled();
@@ -205,7 +214,7 @@ describe("POST /api/v1/me/onboarding", () => {
     repo.findUser.mockResolvedValue({ ...DRIVER_ROW, approval: "pending" });
     clerk.setClerkRole.mockRejectedValue(new ServiceUnavailableError());
 
-    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver" }), noParams);
+    const res = await postOnboarding(jsonRequest("POST", path, { role: "driver", display_name: "Bashir" }), noParams);
 
     expect(res.status).toBe(201);
   });
@@ -442,12 +451,21 @@ describe("PATCH /api/v1/me", () => {
     expect(change).toEqual({ location_consent: true, consent_version: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), display_name: "Bashir" });
   });
 
-  it("turning sharing off keeps the old version; null clears the name", async () => {
+  it("turning sharing off keeps the old version", async () => {
     fakeCaller = { userId: "user_new1", role: "driver" };
     repo.updateOwnUser.mockResolvedValue(true);
     repo.findUser.mockResolvedValue(DRIVER_ROW);
-    await patch({ location_consent: false, display_name: null });
-    expect(repo.updateOwnUser.mock.calls[0][2]).toEqual({ location_consent: false, display_name: null });
+    await patch({ location_consent: false });
+    expect(repo.updateOwnUser.mock.calls[0][2]).toEqual({ location_consent: false });
+  });
+
+  it("refuses to remove or blank the name (422): TCU and agents need it", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    for (const display_name of [null, "", "   "]) {
+      const res = await patch({ display_name });
+      expect(res.status).toBe(422);
+    }
+    expect(repo.updateOwnUser).not.toHaveBeenCalled();
   });
 
   it("is 409 before onboarding", async () => {

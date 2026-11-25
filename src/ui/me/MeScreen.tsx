@@ -72,7 +72,7 @@ function Onboarding() {
     const res = await send("POST", "/api/v1/me/onboarding", {
       role,
       language: locale,
-      ...(name.trim() ? { display_name: name.trim() } : {}),
+      display_name: name.trim(),
     });
     if (res.status === 200 || res.status === 201) {
       // Saved as a request; the page now shows "waiting for TCU".
@@ -119,6 +119,8 @@ function Onboarding() {
           className={inputClass}
           maxLength={60}
           autoComplete="name"
+          required
+          aria-required="true"
           value={name}
           aria-describedby="onboarding-name-hint"
           onChange={(e) => setName(e.target.value)}
@@ -126,7 +128,7 @@ function Onboarding() {
       </Field>
       <p className="text-sm text-secondary">{t("onboarding.once")}</p>
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
-      <button type="submit" className={buttonClass} disabled={busy || !role}>
+      <button type="submit" className={buttonClass} disabled={busy || !role || !name.trim()}>
         {busy ? t("saving") : t("onboarding.submit")}
       </button>
     </form>
@@ -195,7 +197,7 @@ function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
     e.preventDefault();
     setBusy(true);
     setMessage(null);
-    const res = await send("PATCH", "/api/v1/me", { display_name: name.trim() || null, language });
+    const res = await send("PATCH", "/api/v1/me", { display_name: name.trim(), language });
     setBusy(false);
     if (res.status !== 200) {
       setMessage({ kind: "error", text: res.status === 422 ? t("err.invalid") : t("err.server") });
@@ -262,6 +264,8 @@ function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
             className={inputClass}
             maxLength={60}
             autoComplete="name"
+            required
+            aria-required="true"
             value={name}
             aria-describedby="me-name-hint"
             onChange={(e) => setName(e.target.value)}
@@ -282,7 +286,7 @@ function Profile({ me, onSaved }: { me: MeProfile; onSaved: () => void }) {
           </select>
         </Field>
         {message && <Notice kind={message.kind}>{message.text}</Notice>}
-        <button type="submit" className={buttonClass} disabled={busy}>
+        <button type="submit" className={buttonClass} disabled={busy || !name.trim()}>
           {busy ? t("saving") : t("save")}
         </button>
       </form>
