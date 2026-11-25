@@ -9,6 +9,7 @@ import { Field, Notice, buttonClass, inputClass, quietButtonClass } from "@/src/
 import { Icon, type IconName } from "@/src/ui/icons";
 import { queueReport } from "@/src/ui/offline/outbox";
 import { compressPhoto } from "@/src/ui/offline/photo";
+import { newUuid } from "@/src/shared/uuid";
 
 type Hazard = PublicReport["hazard_type"];
 const HAZARDS: Hazard[] = ["landslide", "rockfall", "flash_flood", "snow_ice", "accident", "other"];
@@ -35,7 +36,7 @@ const chip =
 export function ReportForm({ userId }: { userId: string }) {
   const t = useTranslations("report");
   const th = useTranslations("reports.hazard");
-  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => newUuid());
   const [hazard, setHazard] = useState<Hazard | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
   const [locating, setLocating] = useState(false);
@@ -146,7 +147,7 @@ export function ReportForm({ userId }: { userId: string }) {
   }
 
   function another() {
-    setKey(crypto.randomUUID());
+    setKey(newUuid());
     setHazard(null);
     setPhoto(null);
     setNote("");
