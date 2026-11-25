@@ -1,8 +1,7 @@
 {
-  "status": "not_run",
-  "reason": "incidents.csv has no event_start_date column yet (the verified list comes with B1)",
+  "status": "ok",
   "preview_unverified": false,
-  "generated_at": "2026-11-24T18:33:33+00:00",
+  "generated_at": "2026-11-25T07:09:13+00:00",
   "model_version": "rules-v0.1",
   "method": {
     "event_time": "12:00 IST on the event date",
@@ -26,5 +25,988 @@
     "Archived forecasts start on 1 February 2024; older events only get the weather-on-the-day check.",
     "Every threshold is our own starting value, not a sourced figure.",
     "There are few verified incidents, so one event changes the hit rate a lot."
+  ],
+  "incidents": {
+    "count": 27,
+    "verified": true,
+    "with_forecasts": 16,
+    "from": "2018-02-06",
+    "to": "2026-07-22"
+  },
+  "hit_rate": {
+    "48h": {
+      "hits": 13,
+      "of": 16
+    },
+    "24h": {
+      "hits": 15,
+      "of": 16
+    },
+    "12h": {
+      "hits": 15,
+      "of": 16
+    },
+    "on_the_day": {
+      "hits": 21,
+      "of": 27
+    }
+  },
+  "right_hazard": {
+    "48h": {
+      "hits": 11,
+      "of": 16
+    },
+    "24h": {
+      "hits": 14,
+      "of": 16
+    },
+    "12h": {
+      "hits": 15,
+      "of": 16
+    },
+    "on_the_day": {
+      "hits": 19,
+      "of": 27
+    }
+  },
+  "median_lead_time_h": 48,
+  "false_alarms": {
+    "from": "2024-02-06",
+    "to": "2026-10-31",
+    "lead_h": 24,
+    "per_zone": {
+      "1": {
+        "alarm_days": 0,
+        "days_scored": 999
+      },
+      "2": {
+        "alarm_days": 61,
+        "days_scored": 999
+      },
+      "3": {
+        "alarm_days": 156,
+        "days_scored": 999
+      },
+      "4": {
+        "alarm_days": 135,
+        "days_scored": 999
+      },
+      "5": {
+        "alarm_days": 143,
+        "days_scored": 999
+      },
+      "6": {
+        "alarm_days": 0,
+        "days_scored": 999
+      }
+    },
+    "alarm_days": 495,
+    "zone_days_scored": 5994,
+    "alarm_days_per_zone_per_30_days": 2.5
+  },
+  "per_incident": [
+    {
+      "id": "inc-2018-02-06-z5-landslide",
+      "date": "2018-02-06",
+      "zone_id": 5,
+      "place": "Ramsoo",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.033,
+        "level": "low",
+        "top_hazard": "snow_ice",
+        "hazard_score": 0.0,
+        "hit": false,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2019-05-09-z4-landslide",
+      "date": "2019-05-09",
+      "zone_id": 4,
+      "place": "Digdol",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.0,
+        "level": "low",
+        "top_hazard": null,
+        "hazard_score": 0.0,
+        "hit": false,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2020-03-03-z3-landslide",
+      "date": "2020-03-03",
+      "zone_id": 3,
+      "place": "Peerah (Peeda), Chanderkote",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.15,
+        "level": "low",
+        "top_hazard": "snow_ice",
+        "hazard_score": 0.004,
+        "hit": false,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2020-03-12-z5-snow_ice",
+      "date": "2020-03-12",
+      "zone_id": 5,
+      "place": "Jawahar Tunnel",
+      "hazard": "snow_ice",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "snow_ice",
+        "hazard_score": 1.0,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2021-01-23-z5-snow_ice",
+      "date": "2021-01-23",
+      "zone_id": 5,
+      "place": "Jawahar Tunnel",
+      "hazard": "snow_ice",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "snow_ice",
+        "hazard_score": 1.0,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2021-03-23-z4-landslide",
+      "date": "2021-03-23",
+      "zone_id": 4,
+      "place": "Digdol",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.8,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2021-03-23-z5-snow_ice",
+      "date": "2021-03-23",
+      "zone_id": 5,
+      "place": "Jawahar Tunnel",
+      "hazard": "snow_ice",
+      "on_the_day": {
+        "overall": 0.7,
+        "level": "high",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.133,
+        "hit": true,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2023-04-27-z5-landslide",
+      "date": "2023-04-27",
+      "zone_id": 5,
+      "place": "Shalgari, near Banihal",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.378,
+        "level": "medium",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.254,
+        "hit": true,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2023-06-15-z3-landslide",
+      "date": "2023-06-15",
+      "zone_id": 3,
+      "place": "Cafeteria Morh, Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.0,
+        "level": "low",
+        "top_hazard": null,
+        "hazard_score": 0.0,
+        "hit": false,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2023-06-26-z3-landslide",
+      "date": "2023-06-26",
+      "zone_id": 3,
+      "place": "Mehar, Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.8,
+        "level": "high",
+        "top_hazard": "flash_flood",
+        "hazard_score": 0.741,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2023-09-12-z5-landslide",
+      "date": "2023-09-12",
+      "zone_id": 5,
+      "place": "Kishtwari Pather, Banihal",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.0,
+        "level": "low",
+        "top_hazard": null,
+        "hazard_score": 0.0,
+        "hit": false,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": null,
+        "24": null,
+        "12": null
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2024-02-21-z3-landslide",
+      "date": "2024-02-21",
+      "zone_id": 3,
+      "place": "Mehad-Cafeteria, Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.9,
+        "level": "high",
+        "top_hazard": "landslide",
+        "hazard_score": 0.9,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2024-03-02-z3-landslide",
+      "date": "2024-03-02",
+      "zone_id": 3,
+      "place": "Dalwas",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.9,
+        "level": "high",
+        "top_hazard": "landslide",
+        "hazard_score": 0.9,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2024-04-16-z5-landslide",
+      "date": "2024-04-16",
+      "zone_id": 5,
+      "place": "Kishtwari Pather, Banihal",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.574,
+        "level": "medium",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.393,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.7,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.5,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.7,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.5,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.574,
+          "level": "medium",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.393,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2024-04-29-z3-landslide",
+      "date": "2024-04-29",
+      "zone_id": 3,
+      "place": "Mehar, Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.9,
+        "level": "high",
+        "top_hazard": "landslide",
+        "hazard_score": 0.9,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.692,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.692,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.9,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.9,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2024-04-29-z5-landslide",
+      "date": "2024-04-29",
+      "zone_id": 5,
+      "place": "Kishtwari Pather, Banihal",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.506,
+        "level": "medium",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.31,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.628,
+          "level": "medium",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.281,
+          "hit": true,
+          "right_hazard": false
+        },
+        "24": {
+          "overall": 0.586,
+          "level": "medium",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.364,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.506,
+          "level": "medium",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.31,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2025-03-03-z3-landslide",
+      "date": "2025-03-03",
+      "zone_id": 3,
+      "place": "Mehad, Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.377,
+        "level": "medium",
+        "top_hazard": "landslide",
+        "hazard_score": 0.377,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.233,
+          "level": "low",
+          "top_hazard": "landslide",
+          "hazard_score": 0.233,
+          "hit": false,
+          "right_hazard": false
+        },
+        "24": {
+          "overall": 0.302,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.302,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.377,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.377,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 24
+    },
+    {
+      "id": "inc-2025-04-20-z4-flash_flood",
+      "date": "2025-04-20",
+      "zone_id": 4,
+      "place": "Seri to Maroog, Ramban",
+      "hazard": "flash_flood",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.42,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.265,
+          "hit": true,
+          "right_hazard": false
+        },
+        "24": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.285,
+          "hit": true,
+          "right_hazard": false
+        },
+        "12": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.42,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2025-04-20-z4-landslide",
+      "date": "2025-04-20",
+      "zone_id": 4,
+      "place": "Seri to Maroog, Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.8,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.8,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.677,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.8,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2025-05-08-z4-landslide",
+      "date": "2025-05-08",
+      "zone_id": 4,
+      "place": "Seri (Chamba-Seeri), Ramban",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.035,
+        "level": "low",
+        "top_hazard": "flash_flood",
+        "hazard_score": 0.025,
+        "hit": false,
+        "right_hazard": false
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.041,
+          "level": "low",
+          "top_hazard": "landslide",
+          "hazard_score": 0.041,
+          "hit": false,
+          "right_hazard": false
+        },
+        "24": {
+          "overall": 0.0,
+          "level": "low",
+          "top_hazard": null,
+          "hazard_score": 0.0,
+          "hit": false,
+          "right_hazard": false
+        },
+        "12": {
+          "overall": 0.035,
+          "level": "low",
+          "top_hazard": "flash_flood",
+          "hazard_score": 0.025,
+          "hit": false,
+          "right_hazard": false
+        }
+      },
+      "lead_time_h": null
+    },
+    {
+      "id": "inc-2025-08-26-z2-landslide",
+      "date": "2025-08-26",
+      "zone_id": 2,
+      "place": "Jakheni to Chenani, Udhampur",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.6,
+        "level": "medium",
+        "top_hazard": "landslide",
+        "hazard_score": 0.6,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.6,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.6,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.6,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.6,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.6,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.6,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2026-01-23-z5-snow_ice",
+      "date": "2026-01-23",
+      "zone_id": 5,
+      "place": "Navyug Tunnel, Banihal",
+      "hazard": "snow_ice",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "snow_ice",
+        "hazard_score": 1.0,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "snow_ice",
+          "hazard_score": 1.0,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "snow_ice",
+          "hazard_score": 1.0,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "snow_ice",
+          "hazard_score": 1.0,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2026-01-26-z5-snow_ice",
+      "date": "2026-01-26",
+      "zone_id": 5,
+      "place": "Navyug Tunnel, Banihal",
+      "hazard": "snow_ice",
+      "on_the_day": {
+        "overall": 1.0,
+        "level": "high",
+        "top_hazard": "snow_ice",
+        "hazard_score": 1.0,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "snow_ice",
+          "hazard_score": 1.0,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "snow_ice",
+          "hazard_score": 1.0,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 1.0,
+          "level": "high",
+          "top_hazard": "snow_ice",
+          "hazard_score": 1.0,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2026-04-06-z4-landslide",
+      "date": "2026-04-06",
+      "zone_id": 4,
+      "place": "Digdol",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.665,
+        "level": "high",
+        "top_hazard": "landslide",
+        "hazard_score": 0.665,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.593,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.593,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.67,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.67,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.665,
+          "level": "high",
+          "top_hazard": "landslide",
+          "hazard_score": 0.665,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2026-04-06-z5-landslide",
+      "date": "2026-04-06",
+      "zone_id": 5,
+      "place": "Shalgarhi and Banihal",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.436,
+        "level": "medium",
+        "top_hazard": "landslide",
+        "hazard_score": 0.436,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.278,
+          "level": "low",
+          "top_hazard": "landslide",
+          "hazard_score": 0.278,
+          "hit": false,
+          "right_hazard": false
+        },
+        "24": {
+          "overall": 0.352,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.352,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.436,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.436,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 24
+    },
+    {
+      "id": "inc-2026-07-22-z2-landslide",
+      "date": "2026-07-22",
+      "zone_id": 2,
+      "place": "Jakhani and Samroli, Udhampur",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.6,
+        "level": "medium",
+        "top_hazard": "landslide",
+        "hazard_score": 0.6,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.6,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.6,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.6,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.6,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.6,
+          "level": "medium",
+          "top_hazard": "landslide",
+          "hazard_score": 0.6,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    },
+    {
+      "id": "inc-2026-07-22-z5-landslide",
+      "date": "2026-07-22",
+      "zone_id": 5,
+      "place": "Banihal",
+      "hazard": "landslide",
+      "on_the_day": {
+        "overall": 0.7,
+        "level": "high",
+        "top_hazard": "rockfall",
+        "hazard_score": 0.5,
+        "hit": true,
+        "right_hazard": true
+      },
+      "forecast": {
+        "48": {
+          "overall": 0.7,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.5,
+          "hit": true,
+          "right_hazard": true
+        },
+        "24": {
+          "overall": 0.7,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.5,
+          "hit": true,
+          "right_hazard": true
+        },
+        "12": {
+          "overall": 0.7,
+          "level": "high",
+          "top_hazard": "rockfall",
+          "hazard_score": 0.5,
+          "hit": true,
+          "right_hazard": true
+        }
+      },
+      "lead_time_h": 48
+    }
   ]
 }
