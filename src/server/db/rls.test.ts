@@ -4,7 +4,7 @@ import { DrizzleQueryError } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { DbError } from "@/src/server/http/db-errors";
 import { NotFoundError, ServiceUnavailableError } from "@/src/server/http/errors";
-import { claimsFor, rlsRunner, type Claims } from "./index";
+import { claimsFor, rlsRunner, WORKER_CLAIMS, type Claims } from "./index";
 
 vi.mock("@/src/server/http/caller", () => ({ getCaller: vi.fn() }));
 
@@ -65,7 +65,14 @@ describe("rlsRunner", () => {
     expect(sql).not.toContain("user_2abc"); // values never inside the SQL text
   });
 
-  it("refuses any role other than anon or authenticated", () => {
+  it("runs the queue worker as routeguard_worker, a role no caller ever gets", async () => {
+    const f = fakeDrizzle();
+    await rlsRunner(f.db, WORKER_CLAIMS).rls(async () => null);
+    expect(f.executed[0].params[0]).toBe("routeguard_worker");
+    expect(claimsFor({ userId: "user_2abc", role: "admin" }).role).toBe("authenticated");
+  });
+
+  it("refuses any role other than anon, authenticated or the worker", () => {
     const f = fakeDrizzle();
     expect(() => rlsRunner(f.db, { role: "service_role" } as unknown as Claims)).toThrow(/Refusing/);
     expect(() => rlsRunner(f.db, { role: "postgres" } as unknown as Claims)).toThrow(/Refusing/);
