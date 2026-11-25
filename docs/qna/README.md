@@ -9,7 +9,10 @@ We have 27 verified incidents from 2018 to 2026 (`data/incidents.csv`). That is 
 There is no heavy-truck bypass in the Ramban gorge. Mughal Road takes light trucks in season only, and its status is set by an admin with a source; when nobody has set it, the advisor says "unknown, check with TCU".
 
 **How do we stop fake reports?**
-Verification levels (`docs/verification.md`): unvouched reports start "unconfirmed" with a dashed marker; two verified users within 2 km and 3 h, or police, confirm them. Reports expire by type, three flags hide one, rate limits cap 10 reports an hour per user, and every admin action is in the audit log.
+First, a fake report can't move the risk score: the score comes from weather and slope, and reports only raise its confidence, and only once confirmed (`jobs/risk/scoring.py`). Then: drivers can post only once verified, by their agent's vouch or the optional Aadhaar QR check (`docs/verification.md`). Agents' reports start "unconfirmed" with a dashed marker until two verified users within 2 km and 3 h, or police, confirm them; nobody confirms their own report. Reports expire by type, three flags hide an unconfirmed one, 10 reports an hour per user, duplicates within 500 m and 60 min merge, and every admin and police confirmation is in the audit log.
+
+**Why not make Aadhaar compulsory?**
+The Supreme Court's 2018 Puttaswamy judgment stopped private companies from requiring Aadhaar, and we aren't registered with UIDAI as a verifier. It also wouldn't prove much: the QR doesn't show that the person scanning is the cardholder, so a forwarded photo of someone's card passes. An agent's vouch ties the driver to a real person who knows them. So drivers need one of the two, and Aadhaar is never the only way in.
 
 **What if the hourly job fails?**
 `jobs/check_run.py` fails the workflow run. `/api/v1/health/ready` reports `stale: true`, and the app shows a stale banner with the time of the last good run. Advice still works from the last scores and says how old they are.

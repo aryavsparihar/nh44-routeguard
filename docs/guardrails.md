@@ -50,6 +50,8 @@ We have no partnership with J&K Traffic Police or the TCU. RouteGuard must never
 | Alert on/off changes | 20 an hour per user |
 | Advice | 60 a minute per IP |
 
+Drivers can post reports only once their agent has vouched for them or they have passed the optional Aadhaar QR check; the API and `private.submit_report()` both check it. Aadhaar is never required: the vouch always works.
+
 The client IP is the first `X-Forwarded-For` entry, set by the Container Apps ingress, and stored only as a hash. Admins can pause reporting with `FEATURE_REPORTS_WRITE=false`; the app then shows "reporting paused".
 
 **Why:** one person with a script should not be able to flood the map or guess roles.
