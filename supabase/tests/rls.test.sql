@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(213);
+select plan(219);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -807,6 +807,25 @@ select lives_ok($$ select private.drop_push_subscription('https://fcm.googleapis
 set local role postgres;
 select is((select count(*) from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/pgtap-driver'),
   0::bigint, 'push: the dropped browser is gone');
+
+-- Aadhaar QR check (private.record_aadhaar_check)
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testpolice", "role": "authenticated", "metadata": {"role": "police"}}';
+select throws_ok($$ select * from private.record_aadhaar_check('verified', '4821', 'aadhaar-2026-11-25', 'test') $$,
+  '42501', null::text, 'aadhaar: police cannot use the check');
+set local request.jwt.claims = '{"sub": "user_testdriver3", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.record_aadhaar_check('verified', '48a1', 'aadhaar-2026-11-25', 'test') $$,
+  '22023', null::text, 'aadhaar: last4 must be 4 digits');
+select is((select verification_level from private.record_aadhaar_check('rejected', null, 'aadhaar-2026-11-25', 'test')),
+  'email', 'aadhaar: a rejected check leaves the level as it was');
+select is((select verification_level from private.record_aadhaar_check('verified', '4821', 'aadhaar-2026-11-25', 'test', 'req-pgtap-aadhaar')),
+  'aadhaar_qr', 'aadhaar: a verified check raises the driver to aadhaar_qr');
+set local role postgres;
+select is((select string_agg(verdict::text || ':' || coalesce(last4, '-'), ',' order by created_at) from public.verifications
+           where user_id = 'user_testdriver3' and method = 'aadhaar_qr'),
+  'rejected:-,verified:4821', 'aadhaar: only the verdict and last 4 are stored, none for a rejection');
+select is((select count(*) from public.audit_log where action = 'verification.aadhaar_qr' and request_id = 'req-pgtap-aadhaar'),
+  1::bigint, 'aadhaar: the check is audited');
 
 -- Account deletion
 set local role authenticated;
