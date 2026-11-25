@@ -200,3 +200,17 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · If the counter fails, the request goes through and a warning is logged (fail open) · A broken counter shouldn't take the advisor down. Every write behind a limit needs the same database, so it fails anyway if the database is down.
 - **2026-11-25** · Admin writes (official updates, road status) have no rate limit · Section 10 doesn't list one; they are role-gated and audited.
 - **2026-11-25** · Onboarding and admin role changes share the "5 role attempts an hour per user" bucket · Section 10 names one limit for role attempts.
+
+## Round 3: road reports (B2)
+
+- **2026-11-25** · Trust rules (expiry per hazard, duplicates within 500 m / 60 min, confirmed by 2 verified people within 2 km / 3 h, 3 flags hide an unconfirmed report) live in `config/report-rules.json` and are passed to the database functions as one jsonb argument · One place to change them, versioned, and the SQL that applies them runs inside the same transaction as the write.
+- **2026-11-25** · Expiry for "other" hazards is 3 hours, the same as accidents · Our own starting value; section 7 doesn't give one. It is marked as ours in the config file's note.
+- **2026-11-25** · Dedupe, confirmations and flags run synchronously in SQL (`private.submit_report`, `confirm_report`, `flag_report`, with an advisory lock per hazard), not in a queue job · The answer ("merged into an earlier report") has to reach the driver straight away, and the lock stops two reports of the same rockfall from both being created.
+- **2026-11-25** · The `Idempotency-Key` header becomes the report's `client_id` (unique per user) · A retry from a bad connection finds the same row and answers 200 "repeat", never a second report.
+- **2026-11-25** · Photos are re-encoded at upload with sharp (rotated, at most 1600 px, WebP), which drops EXIF and GPS; no thumbnails · Re-encoding is the only reliable way to strip metadata, and the result is small enough to show as is.
+- **2026-11-25** · Photos go to a private Storage bucket with the user's own Clerk token, and are shown through `/api/v1/reports/{id}/photo` (a 10-minute signed link) · No secret key in app code; Storage policies check the report is visible, as RLS does for the row.
+- **2026-11-25** · The queue (pgmq, worker, dead letters, B4) moves to slice 11 with Web Push · Nothing in B2 needs it now that photo cleaning is synchronous; its first real job is the push fan-out.
+- **2026-11-25** · The corridor check is the section 6 box; the zone is taken from the nearest point on the NH-44 line · The box keeps far-away spam out; the nearest point gives the right zone without a new geometry table.
+- **2026-11-25** · Flags share the confirmations rate-limit bucket (30 an hour per user) · Section 10 lists no limit for flags; both are one tap on a report.
+- **2026-11-25** · The report screen is `/report/new` and needs sign-in; growers and traders see why they can't post · Section 10 roles. Confirm and flag buttons show to everyone on the map and explain a 401 or 403, so the public map doesn't call `/api/v1/me` on every load.
+
