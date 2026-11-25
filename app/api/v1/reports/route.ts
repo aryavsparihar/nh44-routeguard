@@ -9,7 +9,6 @@
 //        200  the same report again, or merged into an earlier one nearby
 //             (same hazard within 500 m and 60 min counts as a confirmation)
 //      Rate limited: 10 an hour per user. FEATURE_REPORTS_WRITE=false → 503.
-import { z } from "zod";
 import { getDb } from "@/src/server/db";
 import { reportsWriteEnabled } from "@/src/server/flags";
 import { readMultipart, readQuery, toFieldErrors } from "@/src/server/http/body";
@@ -19,17 +18,14 @@ import { created, list, ok } from "@/src/server/http/responses";
 import { notAllowed, withApi } from "@/src/server/http/with-api";
 import { maskNote } from "@/src/server/reports/mask";
 import { cleanPhoto, PhotoError } from "@/src/server/reports/photo";
-import { ACTIVE_STATUSES, listActiveReports, submitReport } from "@/src/server/reports/reports.repository";
-import { idempotencyKey, reportFields } from "@/src/server/reports/reports.schemas";
+import { listActiveReports, submitReport } from "@/src/server/reports/reports.repository";
+import { idempotencyKey, publicReportsQuery, reportFields } from "@/src/server/reports/reports.schemas";
 import { REPORT_RULES } from "@/src/server/reports/rules";
 import { photoPath, removePhoto, uploadPhoto } from "@/src/server/reports/storage";
-import { zoneParam } from "@/src/server/schemas/zone-query";
 import { nearestOnRoad } from "@/src/shared/corridor";
 
-const query = z.object({ zone: zoneParam.optional(), status: z.enum(ACTIVE_STATUSES).optional() }).strict();
-
 export const GET = withApi({ access: "public" }, async ({ req }) => {
-  const { zone, status } = readQuery(req, query);
+  const { zone, status } = readQuery(req, publicReportsQuery);
   const rows = await listActiveReports(await getDb(), { zone, status });
   return list(rows, { count: rows.length, next_cursor: null }, {
     headers: { "Cache-Control": "public, max-age=30" },

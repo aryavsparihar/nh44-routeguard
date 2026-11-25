@@ -5,11 +5,10 @@ import type { Db } from "@/src/server/db";
 import { publicReports, reports } from "@/src/server/db/schema";
 import { DbError } from "@/src/server/http/db-errors";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/src/server/http/errors";
-import type { ModerateInput } from "./reports.schemas";
+import { ACTIVE_STATUSES, type ActiveStatus, type ModerateInput } from "./reports.schemas";
 import { REPORT_RULES_JSON } from "./rules";
 
-export const ACTIVE_STATUSES = ["unconfirmed", "confirmed"] as const;
-export type ActiveStatus = (typeof ACTIVE_STATUSES)[number];
+export { ACTIVE_STATUSES, type ActiveStatus };
 
 // Road reports that are on the map right now: not hidden (the public_reports
 // view already drops those), not expired, not resolved. The view has no user
