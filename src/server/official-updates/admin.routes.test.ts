@@ -114,9 +114,11 @@ describe("POST /api/v1/admin/official-updates", () => {
   it("allows a whole-road update with no zone and no body", async () => {
     fakeCaller = ADMIN;
     updates.insertUpdate.mockResolvedValue(ROW);
-    const { zone_id: _z, body: _b, ...rest } = validUpdate();
+    const whole: Record<string, unknown> = validUpdate();
+    delete whole.zone_id;
+    delete whole.body;
 
-    expect((await post(rest)).status).toBe(201);
+    expect((await post(whole)).status).toBe(201);
     expect(updates.insertUpdate.mock.calls[0][2]).toMatchObject({ zone_id: null, body: null });
   });
 
