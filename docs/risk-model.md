@@ -56,7 +56,7 @@ The "Why" column is our reading of the dossier zone notes. Check it against the 
 
 - `overall` = highest of the 4 hazard scores. `top_hazard` = which one (ties go to landslide → rockfall → flash flood → snow/ice). If everything is 0, `top_hazard` is empty.
 - **Range**: `overall ± 0.05 / 0.10 / 0.15 / 0.20` for 0 / 12 / 24 / 48 h, clamped to 0–1 → `risk_low`, `risk_high`.
-- **Level**: `low` below 0.30, `medium` 0.30–0.65, `high` above 0.65 (matches Mayank's advice table).
+- **Level**: `low` below 0.30, `medium` 0.30–0.65, `high` above 0.65 (matches the advice table in `src/shared/decide.ts`).
 - **Confidence**:
   - `high`: a report agrees. That means a confirmed report, or any police update, in the same zone in the last 6 h, for the top hazard.
   - `medium`: history agrees. The `incidents` table has rows for that zone and hazard; if it doesn't, the zone's exposure to that hazard is ≥ 0.6.

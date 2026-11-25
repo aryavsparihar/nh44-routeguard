@@ -55,7 +55,7 @@ You are helping one member of Team 01 build RouteGuard for a judged hackathon ro
 | Bonus | Scaling design implemented and explained | +5 | Caching, load balancing, queues, horizontal scaling, replication |
 | Bonus | 50+ commits | +5 | Commit history |
 | Penalty | Project changed more than 10–15% from the Round 1 PPT | −5 | |
-| Penalty | Absent members | −5 each (−15 once if under half) | All five must be there |
+| Penalty | Absent members | −5 each (−15 once if under half) | All four must be there |
 
 Must submit: GitHub repo with backend and frontend, live link (or local demo), Postman collection or Swagger/OpenAPI page, `.env` sample with no secrets committed. The bottom six teams are eliminated after this round.
 
@@ -89,7 +89,7 @@ Also promised:
 - Supabase migrations for 8 tables, enums, PostGIS, the `latest_risk` view and RLS (public read on zones, hexes, risk_scores, incidents; the rest marked TODO).
 - A small Next.js 16 app (`app/page.tsx`, `app/status/page.tsx`, `lib/supabase/*`), plus `data/incidents.csv`, `seed.js`, `docs/ux/*` and the Round 2 UI/UX files.
 - Leftovers from Vercel, which we no longer use: `vercel.json`, the `nh44-routeguard.vercel.app` links and the Hosting row in `README.md`, the Vercel lines in `.env.example`, and the `bom1` and `vercel.json` entries in `docs/decisions.md`. Step 0 removes them (section 4.1).
-- Commits: Aryaveer 31, Madhusudan 4, Navaya 0, Riya 0, Mayank 0 (35 total). **The judges will see this.** Section 21 fixes it with real work, not padding.
+- Commits: Aryaveer 31, Madhusudan 4, Navaya 0, Riya 0 (35 total). **The judges will see this.** Section 21 fixes it with real work, not padding.
 
 ### 1.4 The live demo app (https://routeguard-web-35g6upilva-el.a.run.app), checked 24 Nov 2026
 
@@ -155,7 +155,7 @@ Also: a stray space before one longitude; "Ramsu" sits on the zone 4/5 boundary;
 - Don't add features outside section 3's change budget. If you think something is needed, write it in `docs/decisions.md` as a proposal and ask.
 
 **Honest contributions**
-- Commit only as the member at the keyboard. No fake authors, no backdating, no empty or trivial commits to pad the count, no splitting one change into ten. 50+ commits must come from real work, and that's easy with five people.
+- Commit only as the member at the keyboard. No fake authors, no backdating, no empty or trivial commits to pad the count, no splitting one change into ten. 50+ commits must come from real work, and that's easy with four people.
 
 **Safety**
 - RouteGuard is advisory. It never tells anyone a road is open, never overrides police instructions, and always shows how old its data is.
@@ -653,7 +653,7 @@ Write `docs/scaling.md` with a diagram (client → Container Apps replicas → R
 
 ## 19. Seed data and demo accounts (P0)
 
-- **`scripts/seed-demo.ts`** (Mayank writes it; Aryaveer runs it locally because it needs secret keys). It is idempotent: it creates or updates and never duplicates. It creates:
+- **`scripts/seed-demo.ts`** (Aryaveer writes and runs it locally because it needs secret keys). It is idempotent: it creates or updates and never duplicates. It creates:
   - one admin, one demo police account labelled "Demo police account", one agent, two drivers (one vouched, one not), one grower;
   - each with a Clerk test identity;
   - 6 shipments on the agent's board in different states;
@@ -731,7 +731,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 
 ### WP-B: Madhusudan (field data, reports, police updates, alerts)
 
-- **P0 B1: `incidents.csv`.** Rebuild with the section 14 columns, fix the 6 rows, add verified rows (the second verifier is Navaya or Mayank), validator + CI, migration, update `seed.js`.
+- **P0 B1: `incidents.csv`.** Rebuild with the section 14 columns, fix the 6 rows, add verified rows (the second verifier is Navaya), validator + CI, migration, update `seed.js`.
 - **P0 B2: reports API.**
   - Create: multipart, magic bytes, EXIF strip, corridor check, idempotency.
   - Confirm, flag and list; dedupe; expiry; trust rules (section 9); rate limits.
@@ -743,9 +743,9 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 ### WP-C: Navaya (map, risk read path, priority score)
 
 - **P0 C1: map fixes.** Overflow at 360/375 px (L1), worst-zone logic (L2), header and heading fixes (L3). Report markers by status (solid for verified/police, dashed for unconfirmed) with a legend. Hazard layer filter wired to real data.
-- **P0 C2: risk read path.** `GET /api/v1/risk`, `/zones`, `/risk/summary` (with Mayank for wording) with query validation, ETag/304, cache headers, in-memory + Redis cache, load test numbers in README, `docs/scaling.md` read-path section.
+- **P0 C2: risk read path.** `GET /api/v1/risk`, `/zones`, `/risk/summary` (with Aryaveer for wording) with query validation, ETag/304, cache headers, in-memory + Redis cache, load test numbers in README, `docs/scaling.md` read-path section.
 - **P0 C3: shared rate-limit store** (Redis, or a Postgres fallback) used by `withApi()`.
-- **P0 C4: priority module** `src/shared/priority.ts` with Mayank:
+- **P0 C4: priority module** `src/shared/priority.ts` (Navaya also owns the advice engine, E1, that uses it):
   - spoilage curve per variety and CA flag; value from a configurable ₹/kg with a source note;
   - output as a band plus the inputs (L13);
   - assumptions in `config/advice-assumptions.json` with `version` and notes.
@@ -760,16 +760,16 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 - **P0 D4: screens.** Agent board (status, last seen, ETA, delay, advice snapshot), report screen (photo, GPS, consent, queued state), admin pages (roles, official updates, reports, road status, audit log, dead letters), all at 360 px.
 - **P0 D4b: live board.** The agent board updates without a refresh through Supabase Realtime (`postgres_changes` on `shipments`). The client passes the Clerk token with `supabase.realtime.setAuth()` so RLS limits each agent to their own trucks. The PPT promised a "live board", and the rubric names real-time features under Innovation. Aryaveer checks the RLS side. P1: the same for new reports on the map.
 - **P0 D5: Playwright.** Mobile tests (section 18) and Lighthouse numbers.
-- **P1 D6:** Aadhaar consent and scanner screens (with Mayank).
+- **P1 D6:** Aadhaar consent and scanner screens (with Aryaveer).
 
-### WP-E: Mayank (advice engine, API docs, tests, demo)
+### WP-E: advice engine, API docs, tests, demo (split 26 Nov 2026: E1 Navaya, E2 Madhusudan, E3–E7 Aryaveer)
 
 - **P0 E1: advice.** `src/shared/decide.ts` used by both `POST /api/v1/advice` (called when online) and the phone (offline fallback), aware of road status for Mughal Road and rail (L12, L14). A test feeds the same inputs to both paths and expects the same answer. Delay estimate for the board. Answers return `reason_code` for translation.
 - **P0 E2: API docs.** OpenAPI from zod + `/api/docs` (self-hosted Swagger UI) + spec coverage check. Postman collection with tests for every error case; newman in CI.
 - **P0 E3: Vitest setup and suites** (section 18), coverage report in CI, error-path API tests.
 - **P0 E4: performance.** Load script and Lighthouse runs (with Navaya and Riya); numbers in README.
 - **P0 E5: demo.** `scripts/seed-demo.ts`, the "Try it" table, `docs/demo-script.md`, `docs/qna/README.md` (shared Q&A bank), `docs/runbook.md` (with Aryaveer), rehearsal checklist.
-- **P0 E6: README assembly.** Each owner writes the README section for their own work. Mayank puts them together in the section 20 order, checks every number has a source or a "measured on" date, and removes anything that sounds like marketing.
+- **P0 E6: README assembly.** Each owner writes the README section for their own work. Aryaveer puts them together in the section 20 order, checks every number has a source or a "measured on" date, and removes anything that sounds like marketing.
 - **P1 E7:** Aadhaar Secure QR verifier (section 11): pure functions, synthetic test vectors, endpoint behind the flag. Aryaveer reviews it line by line.
 
 **Hand-offs:**
@@ -792,7 +792,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 | **Wed 25 Nov, 20:00** | P0 cut-off. Anything unfinished is cut and listed as a limitation; don't half-merge. P1 only if all P0 is green. |
 | **Wed 25 Nov, 23:00** | Feature freeze. Seed demo data. Data backup. README numbers filled in. |
 | **Thu 26 Nov, morning** | Two full rehearsals on a real Android phone (once in airplane mode). Q&A drill: each member answers the six live-evaluation questions about their own code. Only bug-fix PRs after this. |
-| **Round** | All five present. App warmed up (open it and call `/api/v1/health/ready`) a few minutes before we present. Phone hotspot and the screen recording ready. |
+| **Round** | All four present. App warmed up (open it and call `/api/v1/health/ready`) a few minutes before we present. Phone hotspot and the screen recording ready. |
 
 ---
 
@@ -802,7 +802,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 1. **Aryaveer, 20 s.** The problem in one line: apples, one road, the warning comes too late.
 2. **Riya.** Open the app in Urdu, switch to Hindi, then English. Point out RTL and the "not official" footer.
 3. **Navaya.** Map and 48 h strip: reason and confidence, how risk is computed once an hour, the 304 response in DevTools.
-4. **Mayank.** The advisor gives HOLD. Run the same request in Swagger and get the same answer. Turn on airplane mode; the same answer comes from cache.
+4. **Navaya.** The advisor gives HOLD. Run the same request in Swagger and get the same answer. Turn on airplane mode; the same answer comes from cache.
 5. **Madhusudan.** The demo driver files a landslide report offline (queued) → back online → it syncs as "unconfirmed" → a vouched driver confirms → "confirmed" → it shows on the agent's board. The admin posts an official update with its source; show the audit log.
 6. **Aryaveer.** In Postman: 401 signed out, 403 for a grower posting an official update, 422 for a bad truck number, 429 on rapid reports. Then the RLS test output.
 7. **Navaya/Madhusudan.** Scaling numbers and the queue.
@@ -843,7 +843,7 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 - [ ] **Contributions:** every member has merged PRs from their own account, issues assigned, `docs/qna/<name>.md` written, commit count above 50 from real work, no squash merges. *(S9 + bonus)*
 - [ ] **Scaling:** cache + ETag + queue + autoscaling settings, with numbers, explained in `docs/scaling.md`. *(bonus)*
 - [ ] **Change budget:** "Changes since Round 1" table in README and decisions log; nothing outside section 3. *(penalty)*
-- [ ] **All five members present.** *(penalty)*
+- [ ] **All four members present.** *(penalty)*
 
 ---
 
@@ -860,9 +860,6 @@ Each package lists P0 then P1. Each ends with `docs/qna/<name>.md` and the five-
 
 **Riya:**
 > Read docs/round3/BUILD_PROMPT.md sections 0–3, then 8, 10, 12, 13 and WP-D. I'm Riya. Start with D1 in plan mode. List every user-facing string in the app first, then set up next-intl with a cookie, no locale routing.
-
-**Mayank:**
-> Read docs/round3/BUILD_PROMPT.md sections 0–3, then 6, 18, 19, 23 and WP-E. I'm Mayank. Start with E1 in plan mode. Move the advisor logic into src/shared/decide.ts with table-driven tests before adding the API route.
 
 ---
 

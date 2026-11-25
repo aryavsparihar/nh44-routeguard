@@ -52,7 +52,7 @@
   "range_half_width": { "0": 0.05, "12": 0.10, "24": 0.15, "48": 0.20 },
 
   "levels": {
-    "_note": "low < medium_from <= medium <= high_above < high. Matches Mayank's advice table.",
+    "_note": "low < medium_from <= medium <= high_above < high. Matches the advice table in src/shared/decide.ts.",
     "medium_from": 0.30,
     "high_above": 0.65
   },

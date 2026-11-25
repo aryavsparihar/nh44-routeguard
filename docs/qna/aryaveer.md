@@ -9,3 +9,5 @@
 **A decision and what we rejected:** RLS on every table, with the app logging in as `routeguard_app`, which can read nothing until each request switches to `anon` or `authenticated` with the caller's verified Clerk claims. Rejected: the Supabase service key in the app, which skips RLS; one forgotten check would leak everything.
 
 **A limitation and the fix:** Clerk runs as a development instance (the "Development mode" label, test emails). Fix: a production Clerk instance on our own domain once we have one, which needs DNS records.
+
+**Demo and README (mine since 26 Nov):** the demo seed (`scripts/seed-demo.mts`; `--reset` removes the demo rows; accounts sign in with code 424242), `docs/demo-script.md`, `docs/qna/README.md`, the README and the load script (`scripts/load/risk.mjs`). The Aadhaar QR on the laptop in the demo (`docs/demo/aadhaar-demo-qr.png`) is signed with our own demo key, never a real card; it works only while `AADHAAR_ALLOW_TEST_CERT=true`, and the seed resets the demo driver so it can be scanned again.

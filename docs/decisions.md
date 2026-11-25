@@ -22,7 +22,7 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-10** · Flash flood uses the heaviest 3 h within the last 24 h; black ice counts the road as wet after any rain/snow in the last 24 h · The brief didn't fix these windows; 24 h matches the other short windows.
 - **2026-11-10** · Weather points checked against an OSRM Jammu→Srinagar route on OpenStreetMap roads · Overpass was down (502/504 from every mirror). The route follows NH-44, and ~80% of it is tagged `ref=NH44`.
 - **2026-11-10** · 7 places left for picking by hand (Dewal, Kheri, Samroli, Dalwas, Mehar/Cafeteria Morh, Battery Chashma, Khooni Nallah) · They aren't in OpenStreetMap, and we don't guess coordinates.
-- **2026-11-10** · Store `level` (low/medium/high) in `risk_scores` · Mayank's advice table reads it directly, so the app doesn't need its own copy of the cut-offs.
+- **2026-11-10** · Store `level` (low/medium/high) in `risk_scores` · The advice table reads it directly, so the app doesn't need its own copy of the cut-offs.
 - **2026-11-10** · `latest_risk` view with `security_invoker = true` · The view follows the caller's RLS instead of bypassing it.
 - **2026-11-10** · `--dry-run` reads nothing from the database · Teammates can run it with no key at all. Confidence then falls back to exposure.
 - **2026-11-10** · After each hourly run, `check_run.py` checks for 24 fresh zone rows · A run that "succeeds" but writes nothing still turns red.
@@ -314,3 +314,7 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 
 - **2026-11-26** · Drivers post road reports only once verified: vouched by their agent or through the optional Aadhaar QR check · A driver's report goes on the map at once, so it must come from someone accountable; judges asked how we stop fake reports. Checked in the API (403 before the photo is read) and again in `private.submit_report()`. Rejected: compulsory Aadhaar (the 2018 Puttaswamy judgment; we aren't a UIDAI-registered verifier; a photo of someone else's card passes), and leaving drivers open with only confirmations (spam still reaches the map as dashed pins).
 - **2026-11-26** · Agents can still post without being verified, and their reports wait for confirmation · An agent signs up a fleet and is known to their drivers; blocking them too would leave no one to report before the first vouch.
+
+## Team change (26 Nov 2026)
+
+- **2026-11-26** · One member left the team, so WP-E is split: Navaya owns the advice engine (`decide.ts`, `POST /api/v1/advice`) and presents demo step 4, Madhusudan owns the OpenAPI document, Swagger and Postman, Aryaveer owns the demo seed, demo script, README and load test · Each piece goes to the member whose area it touches: advice uses Navaya's priority module and risk read path; Postman tests the APIs Madhusudan's reports and updates live in. Issues #69 and #70 went to Madhusudan and Riya.

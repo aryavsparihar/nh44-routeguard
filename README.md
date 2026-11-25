@@ -197,11 +197,10 @@ The full table with the 10–15% budget is in [the plan](docs/round3/BUILD_PROMP
 
 | Member | Owns |
 | --- | --- |
-| Aryaveer | Backend lead, data, security, reviews (Step 0, WP-A) |
-| Madhusudan | Field data, reports, police updates, alerts (WP-B) |
-| Navaya | Map, risk read path, priority score (WP-C) |
+| Aryaveer | Backend lead, data, security, reviews (Step 0, WP-A); demo seed, demo script, README, load test |
+| Madhusudan | Field data, reports, police updates, alerts (WP-B); OpenAPI, Swagger and Postman |
+| Navaya | Map, risk read path, priority score (WP-C); the advice engine |
 | Riya | UI/UX, languages, offline, frontend tests (WP-D) |
-| Mayank | Advice engine, API docs, tests, demo (WP-E) |
 
 Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://github.com/aryavsparihar/nh44-routeguard/pulls?q=is%3Apr). Each member's notes: `docs/qna/<name>.md`.
 

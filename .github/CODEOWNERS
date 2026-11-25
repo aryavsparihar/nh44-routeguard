@@ -24,10 +24,10 @@
 /e2e/                               @riyanotcooked
 
 # WP-E: advice, API docs, tests, demo
-/src/shared/decide.ts               @mayankupadhayay40-source
-/src/server/advice/                 @mayankupadhayay40-source
-/src/server/openapi/                @mayankupadhayay40-source
-/postman/                           @mayankupadhayay40-source
+/src/shared/decide.ts               @navayasharma
+/src/server/advice/                 @navayasharma
+/src/server/openapi/                @se7en-6xt9
+/postman/                           @se7en-6xt9
 
 # Security-sensitive: Aryaveer reviews
 /supabase/migrations/               @aryavsparihar
