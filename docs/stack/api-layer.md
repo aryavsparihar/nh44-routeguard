@@ -50,7 +50,7 @@ export const POST = withApi(
 }
 ```
 
-Status codes we use: 400 bad JSON or bad query, 401, 403, 404, 405, 409 conflict, 413 too big, 415 wrong content type, 422 bad body fields, 429 too many requests, 503 a service is down.
+Status codes we use (full list with examples in [status-codes.md](status-codes.md)): 400 bad JSON or bad query, 401, 403, 404, 405, 409 conflict, 413 too big, 415 wrong content type, 422 bad body fields, 429 too many requests, 503 a service is down.
 
 **4. Request id.** Every answer has an `X-Request-Id` header, also in the log line and in the error body, so one id finds the matching log.
 
