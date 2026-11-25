@@ -27,6 +27,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `offline.*`, `report.queued`, `board.savedCopy`, `me.signOutWaiting`, and `public/offline.html` | not yet reviewed | not yet reviewed | Tells people a report is saved and will send by itself; must not promise it was sent |
 | `push.*`, `me.alerts.*`, `privacy.collectAlerts` (alerts) | not yet reviewed | not yet reviewed | Alert text arrives on a locked phone: "confirmed" and the advisory line must be exact; the privacy line is consent text |
 | `me.aadhaar.*`, `privacy.collectAadhaar` (Aadhaar QR check) | not yet reviewed | not yet reviewed | Consent text: "we keep only the result and the last 4 digits" and "never type your Aadhaar number" must be exact |
+| `risk.replay.*` (past-storm replay) | not yet reviewed | not yet reviewed | Safety text: must say clearly the map is a past storm, not today, and that later times are the weather that came, not a forecast |
 
 ## Choices for the reviewers
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTime, isolate } from "./format";
+import { formatDate, formatTime, isolate } from "./format";
 
 describe("formatTime", () => {
   const at = new Date("2026-11-25T10:37:00Z"); // 16:07 in India
@@ -8,6 +8,15 @@ describe("formatTime", () => {
     expect(formatTime(at, "en")).toBe("16:07");
     expect(formatTime(at, "hi")).toBe("16:07");
     expect(formatTime(at, "ur")).toBe("16:07");
+  });
+});
+
+describe("formatDate", () => {
+  it("shows the India date: 23 Jan 2026 even at 20:00 UTC on the 22nd", () => {
+    const at = new Date("2026-01-22T20:00:00Z"); // 01:30 on the 23rd in India
+    expect(formatDate(at, "en")).toBe("23 Jan 2026");
+    expect(formatDate(at, "hi")).toContain("2026");
+    expect(formatDate(at, "hi")).toContain("23");
   });
 });
 

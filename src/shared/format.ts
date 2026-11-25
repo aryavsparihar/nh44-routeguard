@@ -26,6 +26,16 @@ export function formatDayTime(date: Date, locale: Locale): string {
   }).format(date);
 }
 
+// "23 Jan 2026" (the month name in the page's language), the IST date.
+export function formatDate(date: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    timeZone: TIME_ZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 // Wraps a number, time or code in Unicode "first strong isolate" marks, the
 // plain-text version of <bdi>. Use it for values placed inside a translated
 // sentence, so "16:07" or "+48 h" can't be reordered inside Urdu text.
