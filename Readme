@@ -1,0 +1,210 @@
+# NH-44 RouteGuard
+
+> Advance landslide and road-risk warnings for the NH-44 highway in Kashmir, built for apple growers, traders, agents and drivers.
+
+**Advisory only.** RouteGuard is not an official police service. Follow J&K Traffic Police. In an emergency call **112**.
+
+---
+
+## The problem
+
+Last year, growers and traders in Kashmir lost an estimated Rs 200 crore worth of apples because they had no advance information about landslides on NH-44. RouteGuard turns hourly weather forecasts into a clear risk picture for the highway and tells a trader what to do with a lot of apples before it is on the road.
+
+## What it does
+
+- **Risk map**: NH-44 is split into six zones, coloured by risk level, with hazard and time filters, a worst-zone card and a zone list.
+- **48-hour view**: every zone at 0, 12, 24 and 48 hours.
+- **Dispatch advisor**: gives SEND, HOLD, RAIL or DIVERT advice for a lot of apples, with the reason and the assumptions behind it. It is aware of Mughal Road and parcel-train status.
+- **Road reports**: drivers, agents and police post reports with hazard, location, optional photo and note. Others confirm with "I see it too" or flag a report.
+- **Official updates**: police and admin publish updates that show on the map.
+- **Admin area**: moderation of reports, road and rail status, audit log and role management.
+- **Three languages**: English, Hindi and Urdu (right-to-left). Built to work on a 360 px phone.
+- **Stale-data banner**: every page shows how old the data is.
+
+## User roles
+
+| Role | How it is assigned | Purpose |
+|---|---|---|
+| Grower | Chosen by the user once | Check risk and plan dispatch |
+| Trader | Chosen by the user once | Use the advisor for lots of apples |
+| Agent | Chosen by the user once | Coordinate shipments |
+| Driver | Chosen by the user once | Post and confirm road reports |
+| Police | Granted by an admin only, with a reason | Publish official updates |
+| Admin | Granted by an admin only, with a reason | Moderate, manage roles, read the audit log |
+
+## Tech stack
+
+| Layer | Technology | Why |
+|---|---|---|
+| Framework | Next.js 16 (App Router) | Pages and API in one app, server rendering, single deploy |
+| UI | React 19 | Component-based interface |
+| Styling | Tailwind CSS 4 | Utility-first, mobile-first, small output |
+| Language | TypeScript | Shared types from database to screen |
+| i18n | next-intl | English, Hindi and Urdu from a language cookie |
+| Fonts | Noto Sans, Noto Devanagari, Noto Nastaliq Urdu | Self-hosted, loaded per language |
+| Map | MapLibre GL with OpenFreeMap | Free vector map tiles |
+| Authentication | Clerk | Email-code sign-in and roles |
+| Database | Supabase Postgres (Mumbai) with PostGIS and RLS | Relational data, location maths, row-level security |
+| Storage | Supabase Storage | Private bucket for report photos |
+| ORM | Drizzle and postgres.js | Typed queries with bound values |
+| Validation | zod | Strict request schemas |
+| Images | sharp | Photo resize, WebP, EXIF removal |
+| Logging | pino | JSON logs with sensitive data redacted |
+| Risk engine | Python 3.12 on GitHub Actions | Hourly risk scoring |
+| Weather data | Open-Meteo | Rain, snow and temperature forecasts |
+| Testing | Vitest, pgTAP, pytest | App, database and risk-job tests |
+| CI | GitHub Actions | Lint, typecheck, tests, build, security scans |
+| Hosting | Docker, Azure Container Apps | Container deploy (not deployed yet) |
+
+## Architecture
+
+```
+Phone browser (EN / HI / UR)
+        |
+Next.js 16 app (one container)
+   |-- proxy.ts: Clerk session check, sign-in redirect, language cookie
+   |-- Pages: React 19, Tailwind 4, MapLibre
+   |-- API /api/v1/*: withApi(), zod, Drizzle
+        |
+Supabase Postgres (RLS on every table) + Storage (private photos)
+        ^
+GitHub Actions risk job (Python, hourly) reads Open-Meteo, writes risk_scores
+```
+
+Every API request follows the same path:
+
+`proxy.ts` -> `withApi()` (request id, CSRF, role, rate limit) -> zod schema (`.strict()`) -> repository (Drizzle, bound values) -> `db.rls()` -> Postgres RLS
+
+Any error becomes `application/problem+json` with the request id. No SQL or stack trace is ever exposed.
+
+### Risk engine
+
+An hourly Python job fetches Open-Meteo forecasts and scores **6 zones x 4 hazards (landslide, rockfall, flash flood, snow/ice) x 4 horizons (0, 12, 24, 48 h)**. The score is exposure multiplied by a weather trigger, and the worst point in a zone decides. pg_cron starts the job at :07 past each hour, with a backup run at :37 that only works if the first one failed. A backtest against past closures is served at `/api/v1/model`. All model values are our own starting values and are labelled as such.
+
+### Pages
+
+| Route | Screen |
+|---|---|
+| `/` | Map with worst-zone card, filters, zone list, updates and road reports |
+| `/strip` | 48-hour view |
+| `/advisor` | SEND / HOLD / RAIL / DIVERT advice |
+| `/report/new` | Post a road report (sign-in required) |
+| `/admin/*` | Updates, moderation, road status, audit log, roles |
+| `/privacy`, `/status` | Privacy notice and system status |
+
+## Project structure
+
+```
+app/[locale]/     Pages
+app/api/v1/       API route handlers (thin files that call withApi)
+src/ui/           Client components: map, strip, advisor, report form, admin, nav
+src/shared/       Code that runs on server and phone: advice, priority, risk, corridor, formatting
+src/server/       Schemas, repositories, services, http helpers, db, auth
+src/i18n/         Language routing
+messages/         en.json, hi.json, ur.json (396 keys each)
+lib/              Generated database types, risk config and backtest, env helpers
+config/           report-rules.json, advice-assumptions.json
+data/             NH-44 road line and corridor data
+supabase/         Migrations (21 files) and pgTAP tests
+jobs/             Python risk job, backtest and tests
+scripts/          CI checks, database helpers, icon and smoke-test scripts
+docs/             decisions, security, risk model, backtest, runbook
+proxy.ts          Authentication and language gate
+Dockerfile        3-stage container build
+```
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 24 and npm
+- A Supabase project
+- A Clerk application
+
+### Run locally
+
+1. Clone the repository and open its folder.
+2. Install dependencies with `npm install`.
+3. Copy the sample environment file to `.env.local` and fill in your own Clerk and Supabase values.
+4. Start the app with `npm run dev` and open http://localhost:3000.
+
+### Environment variables
+
+Secrets are kept outside the code in environment variables, with a sample file in the repository. Nothing secret is committed. You will need:
+
+- Clerk publishable and secret keys
+- Supabase project URL and public key
+- A database connection for the app login (`routeguard_app`)
+- Optional switch `FEATURE_REPORTS_WRITE=false` to pause reports, confirmations and flags
+
+The Supabase secret key is used only by the Python risk job as a GitHub Actions secret. The Next.js app never holds it.
+
+### Scripts
+
+```bash
+npm run dev        # development server
+npm run build      # production build
+npm test           # Vitest tests
+npm run db:push    # apply migrations with the Supabase CLI
+npm run db:types   # regenerate TypeScript types from the database
+npm run db:schema  # regenerate the Drizzle schema
+npm run db:test    # run pgTAP checks (rolled back after running)
+```
+
+## API
+
+Base path `/api/v1`, REST-style and versioned.
+
+| Access | Endpoints |
+|---|---|
+| Public | `GET` zones, risk, risk/summary, incidents, official-updates, road-status, reports, reports/{id}/photo, model, health, health/ready; `POST` advice |
+| Signed in | `GET` me; `POST` me/onboarding, reports, reports/{id}/confirm, reports/{id}/flag |
+| Police and admin | admin/official-updates (`GET`, `POST`, `PATCH`, `DELETE`) |
+| Admin only | admin/road-status, admin/reports (`GET`, `PATCH`), admin/audit-log, admin/users/{id}/role |
+
+**Status codes:** 200 and 201 for success, 401 signed out, 403 wrong role, 422 invalid body (unknown fields rejected), 429 rate limited with `Retry-After`.
+
+**Rate limits:** advice 60 per minute per IP (stored only as a keyed hash), reports 10 per hour per user, confirmations and flags 30 per hour per user, role attempts 5 per hour per user. Limits are counted in Postgres, so they hold across several servers.
+
+## Database
+
+Supabase Postgres with PostGIS, pg_cron, pg_net and pgTAP.
+
+- **Risk:** zones, weather_readings, risk_scores, hexes
+- **History:** incidents (shown only after a second person checks the source)
+- **Reports:** reports, report_confirmations, report_flags
+- **Official info:** official_updates (versioned, soft delete), road_status
+- **People and trucks:** users, verifications, shipments
+- **Audit and retries:** audit_log (append-only), idempotency_keys
+- **Views:** latest_risk, public_reports (no user ids)
+- **Storage:** private `report-photos` bucket, WebP only, one folder per user, 10-minute signed links
+
+## Security
+
+- **Three locks** on every protected route: `proxy.ts`, `withApi()` / `requirePageRole()`, and Postgres RLS.
+- **Roles:** police and admin can only be granted by an admin, with a reason, and it is audited.
+- **Validation:** strict zod schemas on every body and query string.
+- **Injection and XSS:** Drizzle with bound values, no raw SQL, no `dangerouslySetInnerHTML` (both enforced in CI), report notes tested for XSS.
+- **Photos:** magic-byte check, 5 MB limit, re-encoded to WebP so EXIF and GPS data are removed.
+- **Headers:** Content Security Policy, HSTS (2 years), `nosniff`, `X-Frame-Options: DENY`, strict referrer policy and a restricted Permissions-Policy.
+- **Audit log:** append-only, database triggers refuse update, delete and truncate.
+- **Logs:** tokens, cookies and phone numbers redacted, query strings never logged.
+- **Secrets:** environment variables only, with gitleaks scanning in CI.
+
+
+
+## Roadmap
+
+- [x] Risk map, 48-hour view, dispatch advisor, road reports, admin screens
+- [x] Clerk roles, Supabase RLS, hourly risk job, security headers, CI
+- [ ] Shipments API, driver invites, agent vouching and live agent board (Supabase Realtime)
+- [ ] Own sign-in screens, Me page and onboarding role picker
+- [ ] Offline mode with service worker and IndexedDB outbox for reports
+- [ ] OpenAPI / Swagger docs and Postman collection run with newman in CI
+- [ ] Web Push notifications, hexagon map, Hindi and Urdu map labels
+- [ ] Playwright phone tests, load tests and Lighthouse results
+- [ ] Azure Container Apps deployment
+
+## Disclaimer
+
+RouteGuard provides advisory information based on weather forecasts and community reports. It is not an official police or government service. Always follow J&K Traffic Police, and call 112 in an emergency.
