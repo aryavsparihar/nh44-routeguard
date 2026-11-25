@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Don't advertise the framework in an X-Powered-By header.
   poweredByHeader: false,
+  // `next dev` only: a phone on the same Wi-Fi opens the laptop's private
+  // address (the "Network" line npm run dev prints). Next blocks its dev
+  // scripts for any address but localhost unless it is listed here, and
+  // the page arrives without its map or working buttons. Private ranges
+  // only (10/8, 172.16/12, 192.168/16) and .local names; ignored by builds.
+  allowedDevOrigins: [
+    "10.*.*.*",
+    ...Array.from({ length: 16 }, (_, i) => `172.${16 + i}.*.*`),
+    "192.168.*.*",
+    "*.local",
+  ],
   turbopack: {
     rules: {
       "*.css": {
