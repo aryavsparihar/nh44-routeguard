@@ -16,6 +16,7 @@ import {
 } from "@/src/shared/risk";
 import { useApi, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
+import { HexCard, type PickedHex } from "./HexCard";
 import { OfficialUpdates, RoadReports } from "./FeedLists";
 import { RiskMap } from "./RiskMap";
 import { LoadError, Loading } from "./states";
@@ -65,10 +66,32 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
   const hexes = useMemo(
     () =>
       hexRows.state === "ready"
-        ? hexRows.value.data.map((h) => ({ boundary: h.boundary, level: hazard ? levelFor(h.hazards[hazard]) : h.level }))
+        ? hexRows.value.data.map((h) => ({
+            id: h.h3_index,
+            boundary: h.boundary,
+            level: hazard ? levelFor(h.hazards[hazard]) : h.level,
+          }))
         : [],
     [hexRows, hazard],
   );
+  // The cell tapped on the map. Its numbers follow the time and hazard
+  // picked above, like the map's colours.
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const picked = useMemo((): PickedHex | null => {
+    if (!pickedId || hexRows.state !== "ready" || risk.state !== "ready") return null;
+    const h = hexRows.value.data.find((x) => x.h3_index === pickedId);
+    if (!h) return null;
+    const score = hazard ? h.hazards[hazard] : (h.overall ?? 0);
+    return {
+      id: h.h3_index,
+      zone: h.zone_id,
+      zoneName: h.zone_id === null ? "" : (risk.names[h.zone_id] ?? ""),
+      level: hazard ? levelFor(score) : h.level,
+      score,
+      topHazard: h.top_hazard,
+      slope: h.slope_deg,
+    };
+  }, [pickedId, hexRows, risk, hazard]);
   const shownReports = useMemo(() => {
     const list = reports.state === "ready" ? reports.value.data : [];
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;
@@ -121,7 +144,10 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             hexes={hexes}
             places={places}
             baseLabels={locale === "en"}
+            pickedHex={picked ? picked.id : null}
+            onPickHex={setPickedId}
           />
+          {picked && <HexCard cell={picked} when={when} onClose={() => setPickedId(null)} />}
           <Legend />
 
           <section aria-labelledby="zones-heading" className="flex flex-col gap-2">

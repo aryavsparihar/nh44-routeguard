@@ -30,7 +30,11 @@ export type MapProps = {
   places: { name: string; lng: number; lat: number }[];
   baseLabels: boolean;
   // H3 cells along the road, each with the level to draw.
-  hexes?: { boundary: [number, number][]; level: Level }[];
+  hexes?: { id: string; boundary: [number, number][]; level: Level }[];
+  // Tapping the road picks the cell under the finger (null: tapped off the
+  // road); the picked cell gets an outline.
+  pickedHex?: string | null;
+  onPickHex?: (id: string | null) => void;
 };
 
 function hexData(hexes: MapProps["hexes"]) {
@@ -38,7 +42,7 @@ function hexData(hexes: MapProps["hexes"]) {
     type: "FeatureCollection" as const,
     features: (hexes ?? []).map((h) => ({
       type: "Feature" as const,
-      properties: { level: h.level },
+      properties: { level: h.level, id: h.id },
       geometry: { type: "Polygon" as const, coordinates: [h.boundary] },
     })),
   };
@@ -73,16 +77,28 @@ function corridorData(segments: CorridorSegment[], levels: Record<number, Level>
 // screen readers except for one label (role="img"). When the full map can't
 // run (no WebGL, or the base map's host blocked by Brave Shields or an ad
 // blocker) it falls back to the simple SVG map (SimpleMap.tsx).
-export function RiskMap({ segments, bounds, levels, reports, label, simpleText, places, baseLabels, hexes }: MapProps) {
+export function RiskMap({
+  segments,
+  bounds,
+  levels,
+  reports,
+  label,
+  simpleText,
+  places,
+  baseLabels,
+  hexes,
+  pickedHex = null,
+  onPickHex,
+}: MapProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const markers = useRef<Marker[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   // The newest props, for the map's load handler (which runs later).
-  const latest = useRef({ segments, levels, places, baseLabels, hexes });
+  const latest = useRef({ segments, levels, places, baseLabels, hexes, pickedHex, onPickHex });
   useEffect(() => {
-    latest.current = { segments, levels, places, baseLabels, hexes };
+    latest.current = { segments, levels, places, baseLabels, hexes, pickedHex, onPickHex };
   });
 
   useEffect(() => {
@@ -178,6 +194,30 @@ export function RiskMap({ segments, bounds, levels, reports, label, simpleText, 
             layout: { "line-cap": "round", "line-join": "round" },
             paint: { "line-color": color as never, "line-width": width as never },
           });
+          // The picked cell's outline, on top of the road line.
+          m.addLayer({
+            id: "hex-picked",
+            type: "line",
+            source: "hexes",
+            filter: ["==", ["get", "id"], latest.current.pickedHex ?? ""],
+            paint: { "line-color": cssColor("--color-primary"), "line-width": 3 },
+          });
+          // A tap picks the cell under it. A finger is wide, so look in a
+          // small box around the point.
+          m.on("click", (e) => {
+            const { x, y } = e.point;
+            const hit = m.queryRenderedFeatures(
+              [
+                [x - 6, y - 6],
+                [x + 6, y + 6],
+              ],
+              { layers: ["hexes"] },
+            )[0];
+            const id = hit?.properties?.id;
+            latest.current.onPickHex?.(typeof id === "string" ? id : null);
+          });
+          m.on("mouseenter", "hexes", () => (m.getCanvas().style.cursor = "pointer"));
+          m.on("mouseleave", "hexes", () => (m.getCanvas().style.cursor = ""));
           setLoaded(true);
           // The page can still shift (scores, fonts) after the map is made;
           // without a resize the canvas keeps a blank band until the next
@@ -219,6 +259,12 @@ export function RiskMap({ segments, bounds, levels, reports, label, simpleText, 
     const source = map.current.getSource("hexes") as GeoJSONSource | undefined;
     source?.setData(hexData(hexes));
   }, [loaded, hexes]);
+
+  // Outline the picked cell.
+  useEffect(() => {
+    if (!loaded || !map.current) return;
+    map.current.setFilter("hex-picked", ["==", ["get", "id"], pickedHex ?? ""]);
+  }, [loaded, pickedHex]);
 
   // Report markers: solid outline when confirmed or from police/admin,
   // dashed when unconfirmed (the legend below says so).
