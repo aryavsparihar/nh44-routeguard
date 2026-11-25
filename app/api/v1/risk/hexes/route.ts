@@ -1,12 +1,13 @@
 // GET /api/v1/risk/hexes?horizon=0|12|24|48: the newest risk score for every
 // H3 cell (resolution 8) along NH-44, with each cell's outline. Public.
-// Cached like /risk: ETag from the run time and horizon, 304 on a match.
+// Cached like /risk: ETag from the run time, horizon and response format
+// (hexEtag), 304 on a match.
 import { getDb } from "@/src/server/db";
 import { readQuery } from "@/src/server/http/body";
 import { ServiceUnavailableError } from "@/src/server/http/errors";
 import { list } from "@/src/server/http/responses";
 import { notAllowed, withApi } from "@/src/server/http/with-api";
-import { cachedHexes, withBoundaries } from "@/src/server/risk/hexes";
+import { cachedHexes, hexEtag, withBoundaries } from "@/src/server/risk/hexes";
 import { latestHexRows } from "@/src/server/risk/risk.repository";
 import { hexQuery } from "@/src/server/risk/risk.schemas";
 import { RISK_CACHE_CONTROL, etagMatches, getLatestRun } from "@/src/server/risk/risk.service";
@@ -22,7 +23,7 @@ export const GET = withApi({ access: "public" }, async ({ req }) => {
     return list([], { count: 0, next_cursor: null, run_at: null }, { headers: { "Cache-Control": "public, max-age=60" } });
   }
   const runAt = run.runAt.toISOString();
-  const etag = `"hex-${run.runAt.getTime()}-${horizon}"`;
+  const etag = hexEtag(run.runAt, horizon);
   const headers = { "Cache-Control": RISK_CACHE_CONTROL, ETag: etag };
   if (etagMatches(req.headers.get("if-none-match"), etag)) {
     return new Response(null, { status: 304, headers });

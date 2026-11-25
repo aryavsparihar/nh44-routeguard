@@ -40,7 +40,7 @@ describe("GET /api/v1/risk/hexes", () => {
   it("returns each cell with a closed outline and cache headers", async () => {
     const res = await GET(get("/api/v1/risk/hexes?horizon=24"), noParams);
     expect(res.status).toBe(200);
-    expect(res.headers.get("etag")).toBe(`"hex-${RUN_AT.getTime()}-24"`);
+    expect(res.headers.get("etag")).toBe(`"hex2-${RUN_AT.getTime()}-24"`);
     expect(res.headers.get("cache-control")).toContain("max-age=60");
     const body = await res.json();
     expect(repo.latestHexRows).toHaveBeenCalledWith({}, 24);
@@ -55,8 +55,16 @@ describe("GET /api/v1/risk/hexes", () => {
     expect(ring[0][1]).toBeGreaterThan(32);
   });
 
+  it("sends the full list again to a phone holding a copy in the older format", async () => {
+    // Before slope_deg and the reason fields: same run, old ETag.
+    const old = `"hex-${RUN_AT.getTime()}-0"`;
+    const res = await GET(get("/api/v1/risk/hexes", { "if-none-match": old }), noParams);
+    expect(res.status).toBe(200);
+    expect((await res.json()).data[0].slope_deg).toBe(16.6);
+  });
+
   it("answers 304 when the client has this run and horizon", async () => {
-    const etag = `"hex-${RUN_AT.getTime()}-0"`;
+    const etag = `"hex2-${RUN_AT.getTime()}-0"`;
     const res = await GET(get("/api/v1/risk/hexes", { "if-none-match": etag }), noParams);
     expect(res.status).toBe(304);
     expect(repo.latestHexRows).not.toHaveBeenCalled();
