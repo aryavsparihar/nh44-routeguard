@@ -6,7 +6,8 @@
   "header": {
     "title": "NH-44 RouteGuard",
     "skip": "Skip to content",
-    "language": "Language"
+    "language": "Language",
+    "account": "Account"
   },
   "nav": {
     "label": "Main",
@@ -634,6 +635,106 @@
       "consent": "Turn on location sharing in your account first.",
       "outside": "Your position looks outside India. Try again outdoors.",
       "noGps": "Could not get your position. Allow location for this site and try again."
+    }
+  },
+  "auth": {
+    "heading": "Sign in",
+    "intro": "Sign in or create an account with your email. We send you a one-time code; there is no password.",
+    "email": "Email address",
+    "emailHint": "We only use it to sign you in.",
+    "sendCode": "Send me a code",
+    "working": "Please wait…",
+    "codeSent": "We sent a code to",
+    "code": "Code from the email",
+    "codeHint": "6 digits. Check your spam folder if it doesn't arrive in a minute.",
+    "signIn": "Sign in",
+    "createAccount": "Create my account",
+    "resend": "Send a new code",
+    "resent": "We sent a new code.",
+    "otherEmail": "Use another email",
+    "privacyNote": "By signing in you agree to how we handle your data.",
+    "privacyLink": "Privacy",
+    "err": {
+      "noAccount": "No account with this email.",
+      "email": "That doesn't look like an email address.",
+      "code": "That code is wrong. Check it and try again.",
+      "expired": "That code has expired. Ask for a new one.",
+      "tooMany": "Too many tries. Wait a few minutes and try again.",
+      "captcha": "The bot check didn't load. Reload the page and try again.",
+      "other": "Could not sign in. Try again, or use another email."
+    }
+  },
+  "me": {
+    "heading": "Your account",
+    "loading": "Loading your account…",
+    "retry": "Try again",
+    "saving": "Saving…",
+    "save": "Save",
+    "saved": "Saved.",
+    "name": "Your name (optional)",
+    "nameHint": "Your agent and drivers see this name. Up to 60 characters.",
+    "language": "Language",
+    "profile": "Profile",
+    "roleLabel": "Role",
+    "levelLabel": "Verification",
+    "levelMeans": {
+      "none": "Not verified yet.",
+      "email": "Your email is checked. You can save lots and flag reports.",
+      "agent_vouched": "Your transport agent vouched for you. Your road reports count as from a verified driver.",
+      "aadhaar_qr": "Your Aadhaar QR was checked. Your road reports count as from a verified driver.",
+      "official": "An official account."
+    },
+    "roleChange": "To change your role, ask an admin. After a role change, reload the page to see it.",
+    "openBoard": "Open your board",
+    "role": {
+      "grower": "Grower",
+      "trader": "Trader",
+      "agent": "Transport agent",
+      "driver": "Driver",
+      "police": "Police",
+      "admin": "Admin"
+    },
+    "onboarding": {
+      "heading": "Who are you?",
+      "intro": "Pick the role that fits you. It decides what you can do in RouteGuard.",
+      "role": "Your role",
+      "what": {
+        "grower": "You grow apples and want to know when to send a lot.",
+        "trader": "You buy and sell apples and want to follow your lots.",
+        "agent": "You run trucks and drivers and follow them on the board.",
+        "driver": "You drive on NH-44 and can report what you see on the road."
+      },
+      "once": "You pick this once. Police and admin accounts are given by an admin.",
+      "submit": "Continue"
+    },
+    "location": {
+      "heading": "Location sharing",
+      "what": "When it is on, you can send where your truck is from the board. Your agent sees the stretch of road (about 1 km), not your exact spot. We keep only the latest point.",
+      "isOn": "Location sharing is on.",
+      "isOff": "Location sharing is off.",
+      "turnOn": "Turn location sharing on",
+      "turnOff": "Turn location sharing off",
+      "onDone": "Location sharing is on. We recorded that you agreed.",
+      "offDone": "Location sharing is off. We deleted your last position.",
+      "consentNote": "You can turn it off at any time."
+    },
+    "privacyLink": "Privacy",
+    "account": "Sign out or delete",
+    "signOut": "Sign out",
+    "delete": {
+      "heading": "Delete my account",
+      "what": "This deletes your profile, your shipments, your invite codes and your report photos, and your sign-in. Your road reports stay in the history without your name or user id. This can't be undone.",
+      "type": "Type DELETE to confirm",
+      "submit": "Delete my account for good",
+      "official": "Police and admin accounts are removed by an admin.",
+      "partly": "Your data was deleted, but the sign-in account wasn't. Try again."
+    },
+    "err": {
+      "load": "Could not load your account. Check your connection and try again.",
+      "roleTaken": "You already picked a role. Reload the page.",
+      "tooMany": "Too many tries. Wait a while and try again.",
+      "invalid": "Some fields are not valid.",
+      "server": "Could not save. Try again."
     }
   }
 }

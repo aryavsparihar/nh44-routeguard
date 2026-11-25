@@ -44,3 +44,14 @@ export async function setClerkRole(userId: string, role: Role): Promise<void> {
     throw clerkUnavailable(error);
   }
 }
+
+// Deletes the sign-in account (email and sessions). Already gone counts as done.
+export async function deleteClerkUser(userId: string): Promise<void> {
+  try {
+    const clerk = await clerkClient();
+    await clerk.users.deleteUser(userId);
+  } catch (error) {
+    if (isClerkNotFound(error)) return;
+    throw clerkUnavailable(error);
+  }
+}

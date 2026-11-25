@@ -3,7 +3,6 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { requirePageSignIn } from "@/src/server/auth/page";
 import { BoardScreen, type BoardRole } from "@/src/ui/board/BoardScreen";
-import { NotOfficial } from "@/src/ui/NotOfficial";
 import { SignInLink } from "@/src/ui/SignInLink";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,7 +17,6 @@ export default async function BoardPage() {
   return (
     <section className="flex flex-col gap-3">
       <h1 className="text-2xl font-bold">{t("heading")}</h1>
-      <NotOfficial />
       <Suspense fallback={<p role="status">{t("loading")}</p>}>
         <BoardGate />
       </Suspense>

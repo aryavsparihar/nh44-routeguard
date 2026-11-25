@@ -5,7 +5,7 @@ import type { Db } from "@/src/server/db";
 import { userRole, users } from "@/src/server/db/schema";
 import type { Role } from "@/src/server/http/caller";
 import { DbError } from "@/src/server/http/db-errors";
-import { ForbiddenError, ValidationError } from "@/src/server/http/errors";
+import { ConflictError, ForbiddenError, ValidationError } from "@/src/server/http/errors";
 
 // Database calls for users. Every call runs as the caller (getDb().rls()),
 // so RLS decides what each one may read or write (docs/security.md).
@@ -16,6 +16,9 @@ const profileColumns = {
   display_name: users.display_name,
   language: users.language,
   verification_level: users.verification_level,
+  location_consent: users.location_consent,
+  consent_version: users.consent_version,
+  agent_id: users.agent_id,
 };
 export type UserProfile = {
   id: string;
@@ -23,6 +26,9 @@ export type UserProfile = {
   display_name: string | null;
   language: string;
   verification_level: (typeof users.$inferSelect)["verification_level"];
+  location_consent: boolean;
+  consent_version: string | null;
+  agent_id: string | null;
 };
 
 // RLS lets you read your own row (and admins read all), so this returns null
@@ -91,6 +97,40 @@ export async function adminSetRole(
     }
     if (err instanceof DbError && err.code === "22023") {
       throw new ValidationError([{ path: "reason", message: "A reason of 1 to 500 characters is required." }]);
+    }
+    throw err;
+  }
+}
+
+
+// Your own name, language and location sharing (column grants allow only
+// display_name, language, location_consent and consent_version). Returns
+// false when you have no row yet.
+export async function updateOwnUser(
+  db: Db,
+  id: string,
+  patch: { display_name?: string | null; language?: string; location_consent?: boolean; consent_version?: string },
+): Promise<boolean> {
+  const rows = await db.rls((tx) =>
+    tx.update(users).set(patch).where(eq(users.id, id)).returning({ id: users.id }),
+  );
+  return rows.length > 0;
+}
+
+// private.delete_my_account: removes your row (shipments, invites and
+// confirmations go with it; reports stay without your id), writes the audit
+// row, and returns the storage paths of your report photos for us to remove.
+export async function deleteOwnAccount(db: Db, rulesJson: string, requestId: string): Promise<string[]> {
+  try {
+    const rows = await db.rls((tx) =>
+      tx.execute<{ photo_path: string }>(
+        sql`select * from private.delete_my_account(${rulesJson}::jsonb, ${requestId}::text)`,
+      ),
+    );
+    return rows.map((r) => r.photo_path);
+  } catch (err) {
+    if (err instanceof DbError && err.code === "55000") {
+      throw new ConflictError("Police and admin accounts are removed by an admin.");
     }
     throw err;
   }

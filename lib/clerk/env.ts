@@ -1,3 +1,5 @@
+import "server-only";
+
 // Is Clerk set up on this machine or server?
 //
 // CI builds with no keys, and so does a teammate who hasn't added them yet.

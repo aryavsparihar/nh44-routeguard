@@ -17,6 +17,7 @@ vi.mock("@/src/server/db", () => ({ getDb: async () => ({}) }));
 const clerk = vi.hoisted(() => ({
   clerkUserExists: vi.fn<(id: string) => Promise<boolean>>(),
   setClerkRole: vi.fn<(id: string, role: string) => Promise<void>>(),
+  deleteClerkUser: vi.fn<(id: string) => Promise<void>>(),
 }));
 vi.mock("@/src/server/clerk/users", () => clerk);
 
@@ -24,10 +25,18 @@ const repo = vi.hoisted(() => ({
   findUser: vi.fn(),
   insertOwnUser: vi.fn(),
   adminSetRole: vi.fn(),
+  updateOwnUser: vi.fn(),
+  deleteOwnAccount: vi.fn(),
 }));
 vi.mock("@/src/server/users/users.repository", () => repo);
 
-const { GET: getMe } = await import("@/app/api/v1/me/route");
+const storage = vi.hoisted(() => ({ removePhoto: vi.fn<(path: string) => Promise<void>>() }));
+vi.mock("@/src/server/reports/storage", () => storage);
+vi.mock("@/src/server/http/rate-limit.store", () => ({
+  hitBucket: async () => ({ allowed: true, hits: 1, retryAfterSeconds: 0 }),
+}));
+
+const { GET: getMe, PATCH: patchMe, DELETE: deleteMe } = await import("@/app/api/v1/me/route");
 const { POST: postOnboarding } = await import("@/app/api/v1/me/onboarding/route");
 const { PATCH: patchRole } = await import("@/app/api/v1/admin/users/[id]/role/route");
 
@@ -37,6 +46,9 @@ const DRIVER_ROW = {
   display_name: "Test driver",
   language: "en",
   verification_level: "email",
+  location_consent: false,
+  consent_version: null,
+  agent_id: null,
 };
 
 function jsonRequest(method: string, path: string, body?: unknown) {
@@ -81,6 +93,9 @@ describe("GET /api/v1/me", () => {
       display_name: null,
       language: null,
       verification_level: null,
+      location_consent: false,
+      consent_version: null,
+      agent_id: null,
       onboarded: false,
     });
   });
@@ -282,3 +297,88 @@ describe("PATCH /api/v1/admin/users/{id}/role", () => {
     expect(res.headers.get("Allow")).toBe("PATCH");
   });
 });
+
+describe("PATCH /api/v1/me", () => {
+  const patch = (body: unknown) => patchMe(jsonRequest("PATCH", "/api/v1/me", body), noParams);
+
+  it("is 401 signed out and 422 for an empty or unknown change", async () => {
+    expect((await patch({ language: "hi" })).status).toBe(401);
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    expect((await patch({})).status).toBe(422);
+    expect((await patch({ role: "admin" })).status).toBe(422);
+    expect((await patch({ consent_version: "1999-01-01" })).status).toBe(422);
+    expect((await patch({ language: "fr" })).status).toBe(422);
+    expect(repo.updateOwnUser).not.toHaveBeenCalled();
+  });
+
+  it("records the privacy notice version when location sharing goes on", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    repo.updateOwnUser.mockResolvedValue(true);
+    repo.findUser.mockResolvedValue({ ...DRIVER_ROW, location_consent: true });
+    const res = await patch({ location_consent: true, display_name: "  Bashir  " });
+    expect(res.status).toBe(200);
+    const [, id, change] = repo.updateOwnUser.mock.calls[0];
+    expect(id).toBe("user_new1");
+    expect(change).toEqual({ location_consent: true, consent_version: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), display_name: "Bashir" });
+  });
+
+  it("turning sharing off keeps the old version; null clears the name", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    repo.updateOwnUser.mockResolvedValue(true);
+    repo.findUser.mockResolvedValue(DRIVER_ROW);
+    await patch({ location_consent: false, display_name: null });
+    expect(repo.updateOwnUser.mock.calls[0][2]).toEqual({ location_consent: false, display_name: null });
+  });
+
+  it("is 409 before onboarding", async () => {
+    fakeCaller = { userId: "user_new1", role: null };
+    repo.updateOwnUser.mockResolvedValue(false);
+    expect((await patch({ language: "ur" })).status).toBe(409);
+  });
+});
+
+describe("DELETE /api/v1/me", () => {
+  const del = (body: unknown) => deleteMe(jsonRequest("DELETE", "/api/v1/me", body), noParams);
+
+  it("needs the confirm word", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    expect((await del({})).status).toBe(422);
+    expect((await del({ confirm: "yes" })).status).toBe(422);
+    expect(repo.deleteOwnAccount).not.toHaveBeenCalled();
+  });
+
+  it("deletes the data, then the photos, then the Clerk account", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    const order: string[] = [];
+    repo.deleteOwnAccount.mockImplementation(async () => {
+      order.push("db");
+      return ["user_new1/a.webp", "user_new1/b.webp"];
+    });
+    storage.removePhoto.mockImplementation(async (p) => void order.push(`photo ${p}`));
+    clerk.deleteClerkUser.mockImplementation(async () => void order.push("clerk"));
+    const res = await del({ confirm: "DELETE" });
+    expect(res.status).toBe(204);
+    expect(order).toEqual(["db", "photo user_new1/a.webp", "photo user_new1/b.webp", "clerk"]);
+    expect(clerk.deleteClerkUser).toHaveBeenCalledWith("user_new1");
+    expect(repo.deleteOwnAccount.mock.calls[0][2]).toBe(res.headers.get("X-Request-Id"));
+  });
+
+  it("still deletes the account when a photo can't be removed", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    repo.deleteOwnAccount.mockResolvedValue(["user_new1/a.webp"]);
+    storage.removePhoto.mockRejectedValue(new Error("storage down"));
+    clerk.deleteClerkUser.mockResolvedValue(undefined);
+    expect((await del({ confirm: "DELETE" })).status).toBe(204);
+    expect(clerk.deleteClerkUser).toHaveBeenCalled();
+  });
+
+  it("says so when Clerk fails after the data is gone (503, safe to retry)", async () => {
+    fakeCaller = { userId: "user_new1", role: "driver" };
+    repo.deleteOwnAccount.mockResolvedValue([]);
+    clerk.deleteClerkUser.mockRejectedValue(new ServiceUnavailableError());
+    const res = await del({ confirm: "DELETE" });
+    expect(res.status).toBe(503);
+    expect((await res.json()).detail).toContain("Try again");
+  });
+});
+

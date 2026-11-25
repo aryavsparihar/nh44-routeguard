@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(170);
+select plan(176);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -669,6 +669,27 @@ select is((select count(*) from public.audit_log where action in ('driver.joined
 select is((select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
            and schemaname = 'public' and tablename = 'shipments'), 1::bigint,
   'shipments changes are published to Realtime');
+
+-- Location retention (20261125190000_location_retention.sql)
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+update public.users set location_consent = false where id = 'user_testdriver';
+set local role postgres;
+select is((select count(*) from public.shipments where id = '00000000-0000-4000-8000-0000000000a1'
+           and last_location is null and last_seen_at is null), 1::bigint,
+  'location: turning sharing off clears the last position');
+update public.shipments
+set last_location = extensions.st_setsrid(extensions.st_makepoint(75.19, 33.24), 4326)::extensions.geography
+where id in ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000a2');
+update public.shipments set status = 'delivered' where id = '00000000-0000-4000-8000-0000000000a1';
+select lives_ok($$ select private.clear_old_locations(interval '0') $$, 'location: the cleanup runs');
+select is((select count(*) from public.shipments where id = '00000000-0000-4000-8000-0000000000a1'
+           and last_location is null), 1::bigint, 'location: cleanup clears a delivered shipment');
+select is((select count(*) from public.shipments where id = '00000000-0000-4000-8000-0000000000a2'
+           and last_location is not null), 1::bigint, 'location: a shipment on the road keeps its position');
+select is(private.clear_old_locations(), 0, 'location: the 7-day rule leaves a fresh delivery alone');
+select is((select count(*) from cron.job where jobname = 'shipment-location-cleanup'), 1::bigint,
+  'location: the daily cleanup job is scheduled');
 
 -- Account deletion
 set local role authenticated;

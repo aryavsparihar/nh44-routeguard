@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { requirePageSignIn } from "@/src/server/auth/page";
 import { reportsWriteEnabled } from "@/src/server/flags";
 import type { Role } from "@/src/server/http/caller";
-import { NotOfficial } from "@/src/ui/NotOfficial";
 import { ReportForm } from "@/src/ui/report/ReportForm";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,7 +19,6 @@ export default async function ReportPage() {
     <section className="flex flex-col gap-3">
       <h1 className="text-2xl font-bold">{t("heading")}</h1>
       <p>{t("intro")}</p>
-      <NotOfficial />
       <Suspense fallback={<p role="status">{t("loading")}</p>}>
         <ReportGate />
       </Suspense>

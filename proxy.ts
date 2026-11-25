@@ -3,7 +3,7 @@
 // 1. Clerk (when keys are set): clerkMiddleware() reads the session cookie or
 //    the "Authorization: Bearer <token>" header so that auth() works
 //    everywhere, and sends signed-out visitors of protected pages (/board,
-//    /report/new, /admin/...) to sign-in.
+//    /report/new, /me, /admin/...) to our /sign-in page.
 // 2. Language: for pages (not /api), next-intl picks the language from the
 //    rg_lang cookie (or the phone's language on a first visit) and rewrites
 //    /board to /ur/board inside the server. The URL in the browser stays
@@ -36,12 +36,16 @@ function routeRequest(req: NextRequest) {
 }
 
 export default isClerkConfigured()
-  ? clerkMiddleware(async (auth, req) => {
-      if (isProtectedPage(req.nextUrl.pathname)) {
-        await auth.protect();
-      }
-      return routeRequest(req);
-    })
+  ? clerkMiddleware(
+      async (auth, req) => {
+        if (isProtectedPage(req.nextUrl.pathname)) {
+          await auth.protect();
+        }
+        return routeRequest(req);
+      },
+      // Our own email-code page (app/[locale]/sign-in), in all three languages.
+      { signInUrl: "/sign-in", signUpUrl: "/sign-in" },
+    )
   : routeRequest;
 
 // From Clerk's Next.js quickstart: skip Next internals and static files,
