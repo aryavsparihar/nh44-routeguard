@@ -3,7 +3,7 @@
   jobs/.venv/bin/python jobs/tools/build_hexes.py            # write both CSVs
   jobs/.venv/bin/python jobs/tools/build_hexes.py --dry-run  # print counts only
 
-Corridor: every H3 cell (resolution 8, about 0.7 km2) that the NH-44 driving
+Corridor: every H3 cell (resolution 8, about 0.8 km2 at this latitude) that the NH-44 driving
 line in data/nh44_line.json passes through (OpenStreetMap via OSRM, ~100 m
 between points; we fill the gaps every 50 m so no cell is skipped). Each cell
 takes the zone of the km where the line first enters it (zone_starts_km).

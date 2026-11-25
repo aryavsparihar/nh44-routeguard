@@ -269,7 +269,7 @@ export const OPERATIONS: Operation[] = [
     tag: "Risk",
     summary: "The newest scores for every H3 cell along NH-44, with outlines",
     description:
-      "Resolution-8 H3 cells (about 0.7 km²) the highway passes through, built by `jobs/tools/build_hexes.py`. Each cell is scored with its slope (Copernicus DEM via Open-Meteo) and nearest weather point. `boundary` is a closed ring of [lng, lat]. The ETag is the run time and horizon.",
+      "Resolution-8 H3 cells (about 0.8 km² each here) the highway passes through, built by `jobs/tools/build_hexes.py`. Each cell is scored with its slope (Copernicus DEM via Open-Meteo) and nearest weather point. `boundary` is a closed ring of [lng, lat]. The ETag is the run time and horizon.",
     access: "public",
     query: hexQuery,
     success: {
