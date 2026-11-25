@@ -7,7 +7,7 @@ answer the API gives. The same API is described in OpenAPI at `/api/docs`
 | Folder | Needs | What it checks |
 |---|---|---|
 | 1 Public | nothing (the database is optional) | Every public read and the advice; 200 with the right shape, or 503 problem+json when there is no database |
-| 2 Errors without signing in | nothing | 401 on signed-in endpoints, 403 for a write without our Origin header, 400, 404, 405, 415 and 422 with problem+json |
+| 2 Errors without signing in | nothing | 401 on signed-in endpoints, 401/503 for the queue worker without its secret, 403 for a write without our Origin header, 400, 404, 405, 415 and 422 with problem+json |
 | 3 Signed in (local, needs tokens) | the database and two Clerk session tokens | A grower's profile, 403 for a grower posting an official update, 422 for a bad truck number, a driver's board, and 429 after 5 wrong invite codes in an hour |
 | 4 Rate limit (local, needs the database) | the database | 429 with `Retry-After` after 60 advice requests in a minute from one address |
 
