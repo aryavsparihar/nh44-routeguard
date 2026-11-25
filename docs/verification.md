@@ -27,7 +27,7 @@ If a driver moves to a different agent, an `agent_vouched` level drops back to `
 
 Never stored or logged: the QR, the name, date of birth, gender, address, photo, email or mobile hash. Nobody is asked to type an Aadhaar number and no card picture is uploaded.
 
-**Demo key.** No real Aadhaar card is used on stage or in screenshots. `scripts/aadhaar/make-demo-qr.mjs` made a key pair, pinned its public half as a `test: true` entry, made `docs/demo/aadhaar-demo-qr.png` for "Demo driver (not vouched)", and threw the private key away. Test entries count only with `AADHAAR_ALLOW_TEST_CERT=true`, and the result then says "Demo check (test key)". Pinning UIDAI's real certificate: [runbook](runbook.md#aadhaar-qr).
+**Demo key.** No real Aadhaar card is used on stage or in screenshots. `scripts/aadhaar/make-demo-qr.mjs` made a key pair, pinned its public half as a `test: true` entry, made `docs/demo/aadhaar-demo-qr.png` for "Demo driver (not vouched)", and threw the private key away. Test entries count only with `AADHAAR_ALLOW_TEST_CERT=true`, and the result then says "Demo check (test key)". UIDAI's pinned certificates and how to add a new one: [runbook](runbook.md#aadhaar-qr).
 
 `manual_review` is stored but no admin screen lists it yet; the person sees why and can fix their profile name and scan again.
 

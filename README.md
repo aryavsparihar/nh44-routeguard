@@ -208,7 +208,7 @@ Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://
 - Clerk runs as a development instance.
 - No read replicas; one database.
 - Translations are checked by team members, not professional translators, and the safety strings are not reviewed yet.
-- The Aadhaar check has only been tried with our demo key (`docs/demo/aadhaar-demo-qr.png`); UIDAI's real certificate still has to be pinned by hand ([runbook](docs/runbook.md#aadhaar-qr)). `manual_review` results have no admin screen yet.
+- The Aadhaar check has UIDAI's current certificates pinned but has only been tried with our demo key (`docs/demo/aadhaar-demo-qr.png`), not a real card ([runbook](docs/runbook.md#aadhaar-qr)). `manual_review` results have no admin screen yet.
 
 ## Setup from a fresh clone
 

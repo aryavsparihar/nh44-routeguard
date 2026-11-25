@@ -141,6 +141,10 @@ describe("pinnedKeys", () => {
     expect(pinnedKeys(entries, true).some((k) => k.test)).toBe(true);
   });
 
+  it("loads UIDAI's pinned certificates without the test flag", () => {
+    expect(pinnedKeys(entries, false).map((k) => k.version)).toEqual(expect.arrayContaining(["uidai-2026", "uidai-2024"]));
+  });
+
   it("refuses a certificate whose fingerprint does not match", () => {
     const bad = entries.map((e) => ({ ...e, sha256: "0".repeat(64) }));
     expect(() => pinnedKeys(bad, true)).toThrow(/fingerprint/);
