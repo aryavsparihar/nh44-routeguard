@@ -30,7 +30,12 @@
   "home": {
     "heading": "Road risk on NH-44",
     "intro": "Closure risk for the next 48 hours in each of the six NH-44 zones between Jammu and Srinagar, worked out every hour from weather forecasts. It is advice, not a road status.",
-    "lastRun": "Scores from {time} ({minutes, plural, =0 {just now} one {# minute ago} other {# minutes ago}})"
+    "lastRun": "Scores from {time} ({minutes, plural, =0 {just now} one {# minute ago} other {# minutes ago}})",
+    "join": {
+      "heading": "Driver, transport agent, grower or trader?",
+      "text": "Create an account with your email, pick your role, and TCU approves it. The map, the 48 h strip and the advisor need no account.",
+      "button": "Create an account or sign in"
+    }
   },
   "notFound": {
     "title": "Page not found",
@@ -42,7 +47,7 @@
     "version": "Version {version}",
     "intro": "RouteGuard is a student project for the NH-44 Jammu–Srinagar road. This page says what we collect, why, how long we keep it and how to delete it, following India's Digital Personal Data Protection Act, 2023.",
     "collectTitle": "What we collect",
-    "collectAccount": "Your email address, to sign in with a one-time code. Our sign-in provider, Clerk, stores it; our database doesn't.",
+    "collectAccount": "Your email address, to sign in with a one-time code. Our sign-in provider, Clerk, stores it; our database doesn't. TCU sees your email, name and the role you asked for while it decides whether to approve your account.",
     "collectProfile": "Your display name, your role (grower, trader, agent or driver) and your language.",
     "collectReports": "Road reports you send: the hazard, the place on the road, an optional note and an optional photo. We remove the photo's hidden data (EXIF), including where it was taken, before we store it.",
     "collectShipments": "Shipments you add: truck number, load, destination and status.",
@@ -53,7 +58,7 @@
     "whyTitle": "Why",
     "why": "To show the risk on the road, to let drivers report and confirm hazards, and to let agents follow their own trucks. We don't sell data and we don't show ads.",
     "keepTitle": "How long we keep it",
-    "keep": "Reports leave the map when they expire (3 to 12 hours, by type of hazard) and stay in the road history. For a driver's location we keep only the latest point, and we clear it 7 days after the delivery. The record of admin and police actions (the audit log) is kept for the length of the project and can't be changed.",
+    "keep": "Reports leave the map when they expire (3 to 12 hours, by type of hazard) and stay in the road history. For a driver's location we keep only the latest point, and we clear it 7 days after the delivery. The record of TCU actions (the audit log) is kept for the length of the project and can't be changed.",
     "consentTitle": "Your consent",
     "consent": "We ask you before turning on location sharing and before any identity check, and we record which version of this notice you agreed to. You can turn location sharing off at any time.",
     "deleteTitle": "Deleting your data",
@@ -201,7 +206,7 @@
   "reports": {
     "heading": "Road reports",
     "none": "No road reports on the map right now.",
-    "legendConfirmed": "Confirmed, or from police",
+    "legendConfirmed": "Confirmed, or from TCU",
     "legendUnconfirmed": "Unconfirmed (dashed outline)",
     "status": {
       "unconfirmed": "Unconfirmed",
@@ -210,7 +215,7 @@
     "source": {
       "driver": "Driver",
       "police": "Police",
-      "admin": "Admin"
+      "admin": "TCU"
     },
     "item": "{hazard} in zone {zone}, reported {time}",
     "confirmations": "{count, plural, =0 {No confirmations} one {# confirmation} other {# confirmations}}",
@@ -238,7 +243,7 @@
       },
       "signIn": "Sign in to confirm or flag reports.",
       "signInLink": "Sign in",
-      "forbidden": "You can't do this: it's your own report, or confirming needs a verified driver, agent or police account.",
+      "forbidden": "You can't do this: it's your own report, or confirming needs a verified driver, agent or TCU account.",
       "gone": "This report is no longer on the map.",
       "inactive": "This report has expired or been cleared.",
       "tooMany": "You have done this a lot this hour. Wait a while, then try again.",
@@ -247,7 +252,7 @@
       "confirmed": "Thank you. Your confirmation is counted.",
       "confirmedBefore": "You confirmed this report before.",
       "confirmedNoPlace": "Saved. Without your location it doesn't count towards confirming it.",
-      "flagged": "Thank you. An admin will look at it; three flags hide an unconfirmed report.",
+      "flagged": "Thank you. TCU will look at it; three flags hide an unconfirmed report.",
       "flaggedBefore": "You flagged this report before."
     }
   },
@@ -312,7 +317,7 @@
     "reason": {
       "send_low": "{zones, plural, one {The zone on your route stays low for the next 24 h.} other {All # zones on your route stay low for the next 24 h.}} Leave in the next 12 h.",
       "hold_medium": "Zone {zone} is medium {when}. Wait {hours} h and check again before loading.",
-      "divert_mughal": "Zone {zone} is medium {when}. A light truck can take Mughal Road (Shopian to Bufliaz) instead; an admin has marked it open.",
+      "divert_mughal": "Zone {zone} is medium {when}. A light truck can take Mughal Road (Shopian to Bufliaz) instead; TCU has marked it open.",
       "rail_high": "The road stays high in zone {zones} in 24 h and in 48 h, and this fruit has used {pct}% of its shelf life. Book a Budgam–Delhi parcel train slot.",
       "divert_store_valley": "Zone {zone} is high {when}. Keep the lot in a cold store in the valley until it clears.",
       "divert_store": "Zone {zone} is high {when}. The fruit can wait: send it to a cold store in the valley or sell at Parimpora."
@@ -355,8 +360,8 @@
     }
   },
   "admin": {
-    "heading": "Admin",
-    "intro": "Tools for admins and the demo police account. Every change here goes into the audit log with who made it and why.",
+    "heading": "TCU desk",
+    "intro": "Tools for TCU, the only admin. Every change here goes into the audit log with who made it and why.",
     "links": {
       "updates": "Official updates",
       "roadStatus": "Road and rail status",
@@ -364,18 +369,20 @@
       "users": "Roles",
       "reports": "Road reports",
       "jobs": "Failed jobs",
-      "overview": "Road overview"
+      "overview": "Road overview",
+      "approvals": "New accounts"
     },
     "hints": {
-      "updates": "Post, edit or remove police and TCU updates",
+      "updates": "Post, edit or remove TCU updates",
       "roadStatus": "Mughal Road and the parcel train",
       "audit": "Who changed what, when and why",
-      "users": "Give someone a role, including police or admin",
+      "users": "Move an approved user to another role",
       "reports": "Hide, clear or restore reports, and see the flags",
       "jobs": "Background jobs that failed 5 times",
-      "overview": "Risk, reports waiting for confirmation, police and TCU updates, and road status on one screen"
+      "overview": "Risk, reports waiting for confirmation, TCU updates and road status on one screen",
+      "approvals": "Approve or turn down people who asked to join"
     },
-    "back": "Back to admin",
+    "back": "Back to the TCU desk",
     "saving": "Saving…",
     "cancel": "Cancel",
     "loadMore": "Show older",
@@ -448,7 +455,7 @@
     },
     "audit": {
       "heading": "Audit log",
-      "intro": "Every privileged action, newest first. Nobody can change or delete these rows, not even an admin.",
+      "intro": "Every privileged action, newest first. Nobody can change or delete these rows, not even TCU.",
       "filter": "Show",
       "all": "All actions",
       "action": {
@@ -460,7 +467,7 @@
         "reportHidden": "Report hidden",
         "reportResolved": "Report cleared",
         "reportRestored": "Report restored",
-        "reportOfficialConfirm": "Report confirmed by police or admin"
+        "reportOfficialConfirm": "Report confirmed by TCU"
       },
       "by": "By {role} {id}",
       "target": "On {target}",
@@ -470,7 +477,7 @@
     },
     "users": {
       "heading": "Roles",
-      "intro": "Give someone a role, including police or admin. A written reason is required and goes into the audit log. You can't change your own role.",
+      "intro": "Move an approved user to another role (grower, trader, transport agent or driver). A written reason is required and goes into the audit log. TCU can't be given in the app.",
       "userId": "Clerk user id (starts with user_)",
       "role": "New role",
       "roles": {
@@ -479,14 +486,14 @@
         "agent": "Agent",
         "driver": "Driver",
         "police": "Police (demo account)",
-        "admin": "Admin"
+        "admin": "TCU"
       },
       "reason": "Reason",
       "save": "Change role",
       "done": "Role changed from {from} to {to}. They get it within about a minute, or when they sign in again.",
       "noRole": "no role",
       "notFound": "No user with this id.",
-      "self": "You can't change your own role. Ask another admin."
+      "self": "TCU can't change its own role."
     },
     "reports": {
       "heading": "Road reports",
@@ -554,15 +561,45 @@
       "roadSet": "set {time}",
       "source": "Source",
       "changeRoad": "Change road and rail status"
+    },
+    "approvals": {
+      "heading": "New accounts",
+      "intro": "Everyone who asks to join waits here. Approve to switch their role on; turn down with a reason they will see. Both go into the audit log.",
+      "show": "Show",
+      "tab": {
+        "pending": "Waiting",
+        "rejected": "Turned down"
+      },
+      "loading": "Loading…",
+      "loadError": "Could not load the list.",
+      "retry": "Try again",
+      "emptyPending": "Nobody is waiting.",
+      "emptyRejected": "No account has been turned down.",
+      "noName": "(no name given)",
+      "email": "Email",
+      "asked": "Asked on",
+      "level": "Checks",
+      "userId": "User id",
+      "reason": "Reason",
+      "already": "Someone already approved this account.",
+      "approvedDone": "Approved. They get their role within about a minute.",
+      "rejectedDone": "Turned down. They see your reason on their account page.",
+      "saving": "Saving…",
+      "approve": "Approve",
+      "reject": "Turn down",
+      "reasonLabel": "Reason (they will see it)",
+      "reasonHint": "For example: could not confirm the transport company.",
+      "confirmReject": "Turn down",
+      "cancel": "Cancel"
     }
   },
   "report": {
     "heading": "Report a road hazard",
-    "intro": "Tell other drivers what is on NH-44 right where you are. A report from a verified driver or the police goes on the map straight away; others wait for two verified people nearby to confirm it.",
+    "intro": "Tell other drivers what is on NH-44 right where you are. A report from a verified driver or TCU goes on the map straight away; others wait for two verified people nearby to confirm it.",
     "loading": "Loading…",
     "paused": "Reporting is paused for now. The map and advice still work.",
-    "noRole": "Finish setting up your account (pick your role) before you post a report.",
-    "wrongRole": "Road reports come from drivers, transport agents and police. Your account has a different role.",
+    "noRole": "Your account isn't ready yet: pick your role on your account page, then wait for TCU to approve it.",
+    "wrongRole": "Road reports come from drivers, transport agents and TCU. Your account has a different role.",
     "what": "What is on the road?",
     "where": "Where are you?",
     "whereHint": "We use your phone's location to put the report on the map. You must be on or near NH-44.",
@@ -619,7 +656,7 @@
   "board": {
     "heading": "Board",
     "loading": "Loading the board…",
-    "noRole": "Pick your role first.",
+    "noRole": "Your account isn't ready yet: pick your role, then wait for TCU to approve it.",
     "pickRole": "Go to your account",
     "wrongRole": "The board is for agents, drivers, growers and traders.",
     "intro": {
@@ -741,8 +778,8 @@
     "savedCopy": "No signal. This is the copy saved at {time} ({age})."
   },
   "auth": {
-    "heading": "Sign in",
-    "intro": "Sign in or create an account with your email. We send you a one-time code; there is no password.",
+    "heading": "Sign in or create an account",
+    "intro": "Use your email. We send you a one-time code; there is no password. New here? The same code creates your account, then you pick your role and TCU approves it.",
     "email": "Email address",
     "emailHint": "We only use it to sign you in.",
     "sendCode": "Send me a code",
@@ -788,7 +825,7 @@
       "aadhaar_qr": "Your Aadhaar QR was checked. Your road reports count as from a verified driver.",
       "official": "An official account."
     },
-    "roleChange": "To change your role, ask an admin. After a role change, reload the page to see it.",
+    "roleChange": "To change your role, ask TCU. After a change, reload the page to see it.",
     "openBoard": "Open your board",
     "role": {
       "grower": "Grower",
@@ -796,11 +833,11 @@
       "agent": "Transport agent",
       "driver": "Driver",
       "police": "Police",
-      "admin": "Admin"
+      "admin": "TCU"
     },
     "onboarding": {
       "heading": "Who are you?",
-      "intro": "Pick the role that fits you. It decides what you can do in RouteGuard.",
+      "intro": "Ask for the role that fits you. TCU (J&K Traffic Police Traffic Control Unit) checks every new account before the role works.",
       "role": "Your role",
       "what": {
         "grower": "You grow apples and want to know when to send a lot.",
@@ -808,8 +845,11 @@
         "agent": "You run trucks and drivers and follow them on the board.",
         "driver": "You drive on NH-44 and can report what you see on the road."
       },
-      "once": "You pick this once. Police and admin accounts are given by an admin.",
-      "submit": "Continue"
+      "once": "You ask once. TCU can change your role later.",
+      "submit": "Send to TCU",
+      "step1": "You signed in with your email. Done.",
+      "step2": "Pick your role below and send the request.",
+      "step3": "TCU approves it. Until then the map, the 48 h strip and the advisor work as for everyone."
     },
     "location": {
       "heading": "Location sharing",
@@ -830,7 +870,7 @@
       "what": "This deletes your profile, your shipments, your invite codes and your report photos, and your sign-in. Your road reports stay in the history without your name or user id. This can't be undone.",
       "type": "Type DELETE to confirm",
       "submit": "Delete my account for good",
-      "official": "Police and admin accounts are removed by an admin.",
+      "official": "TCU accounts are removed by the operator.",
       "partly": "Your data was deleted, but the sign-in account wasn't. Try again."
     },
     "err": {
@@ -895,6 +935,21 @@
       "tooMany": "Too many tries. Wait an hour and try again.",
       "off": "The Aadhaar check isn't available right now.",
       "error": "Something went wrong. Try again."
+    },
+    "approval": {
+      "pendingHeading": "Waiting for TCU",
+      "pendingText": "You asked to join as: {role}. TCU checks every new account before the role works.",
+      "meanwhile": "Meanwhile the map, the 48 h strip and the advisor work as for everyone. Come back here to see TCU's answer.",
+      "rejectedHeading": "TCU did not approve this account",
+      "rejectedText": "You asked to join as: {role}.",
+      "reason": "TCU's reason:",
+      "rejectedNext": "You can still use the map, the 48 h strip and the advisor. If this is a mistake, contact J&K Traffic Police, or delete this account below and ask again.",
+      "map": "Open the map",
+      "advisor": "Open the advisor",
+      "short": {
+        "pending": "waiting for TCU",
+        "rejected": "not approved"
+      }
     }
   },
   "offline": {

@@ -17,7 +17,7 @@ export default async function Page() {
       <BackToAdmin />
       <h1 className="text-2xl font-bold">{t("updates.heading")}</h1>
       <Suspense fallback={<p role="status">{t("loading")}</p>}>
-        <AdminGate roles={["police", "admin"]}>{() => <UpdatesAdmin />}</AdminGate>
+        <AdminGate roles={["admin"]}>{() => <UpdatesAdmin />}</AdminGate>
       </Suspense>
     </section>
   );

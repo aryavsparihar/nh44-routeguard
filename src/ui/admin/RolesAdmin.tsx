@@ -5,7 +5,9 @@ import { useState, type FormEvent } from "react";
 import { sendJson } from "@/src/ui/api";
 import { Field, Notice, buttonClass, inputClass, useErrorText } from "./common";
 
-const ROLES = ["grower", "trader", "agent", "driver", "police", "admin"] as const;
+// TCU moves approved users between these. TCU is the only admin, and the
+// police role was merged into it, so neither can be given here.
+const ROLES = ["grower", "trader", "agent", "driver"] as const;
 type Role = (typeof ROLES)[number];
 
 // PATCH /api/v1/admin/users/{id}/role with a written reason (audited by the
@@ -15,7 +17,7 @@ export function RolesAdmin() {
   const ta = useTranslations("admin");
   const errorText = useErrorText();
   const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<Role>("police");
+  const [role, setRole] = useState<Role>("driver");
   const [reason, setReason] = useState("");
   const [bad, setBad] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);

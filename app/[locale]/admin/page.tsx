@@ -9,9 +9,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("heading"), robots: { index: false } };
 }
 
+// TCU (the admin role) is the only staff role; police was merged into it.
 const LINKS = [
-  { href: "/admin/overview", key: "overview", roles: ["police", "admin"] },
-  { href: "/admin/updates", key: "updates", roles: ["police", "admin"] },
+  { href: "/admin/approvals", key: "approvals", roles: ["admin"] },
+  { href: "/admin/overview", key: "overview", roles: ["admin"] },
+  { href: "/admin/updates", key: "updates", roles: ["admin"] },
   { href: "/admin/reports", key: "reports", roles: ["admin"] },
   { href: "/admin/road-status", key: "roadStatus", roles: ["admin"] },
   { href: "/admin/audit", key: "audit", roles: ["admin"] },
@@ -26,7 +28,7 @@ export default async function AdminPage() {
       <h1 className="text-2xl font-bold">{t("heading")}</h1>
       <p>{t("intro")}</p>
       <Suspense fallback={<p role="status">{t("loading")}</p>}>
-        <AdminGate roles={["police", "admin"]}>
+        <AdminGate roles={["admin"]}>
           {(caller) => (
             <ul className="flex flex-col gap-2">
               {LINKS.filter((l) => (l.roles as readonly string[]).includes(caller.role ?? "")).map((l) => (
