@@ -1,0 +1,17 @@
+{
+  "name": "RouteGuard NH-44",
+  "short_name": "RouteGuard",
+  "description": "Closure risk for NH-44 between Jammu and Srinagar, and when to send an apple truck. Advice, not an official road status.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f2ee",
+  "theme_color": "#005f3f",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
