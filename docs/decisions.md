@@ -214,3 +214,15 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Flags share the confirmations rate-limit bucket (30 an hour per user) · Section 10 lists no limit for flags; both are one tap on a report.
 - **2026-11-25** · The report screen is `/report/new` and needs sign-in; growers and traders see why they can't post · Section 10 roles. Confirm and flag buttons show to everyone on the map and explain a 401 or 403, so the public map doesn't call `/api/v1/me` on every load.
 
+## Round 3: shipments and the agent board (D4)
+
+- **2026-11-25** · Drivers join an agent with an 8-character invite code (no I, O, 0 or 1) that works once, for 1 to 30 days (7 by default) · A driver can't be added to a fleet without saying yes, and agents never see a list of all drivers. Codes are made in the database (`private.create_agent_invite`), at most 20 open per agent.
+- **2026-11-25** · Joining, vouching, sharing a location and deleting an account are `private` SECURITY DEFINER functions that read the caller from the token · The REST API can't reach them, and each one checks the role and writes the audit row in the same transaction.
+- **2026-11-25** · A database trigger refuses a `driver_id` that isn't one of the shipment agent's drivers · Column grants alone would let an agent assign any user id.
+- **2026-11-25** · One active shipment per truck number (a partial unique index on rows that aren't delivered) · Two boards can't both claim the same truck on the road.
+- **2026-11-25** · Saving a lot stores the advice of that moment (`decide()` output with `rules_version` and `risk_run_at`) · The board shows what we said then; asking again gives today's answer.
+- **2026-11-25** · The driver's position is stored rounded to 2 decimals (about 1 km), only with `location_consent` on, and only for a shipment they are assigned to that isn't delivered · The agent needs the stretch of road, not the exact spot (DPDP data minimisation).
+- **2026-11-25** · Live updates: Supabase Realtime on `shipments` with the user's own Clerk token, only as a "something changed" signal; the rows always come from `GET /api/v1/shipments` · RLS decides who gets which change, and the API stays the one place that shapes the data. Without Realtime the board reloads every minute.
+- **2026-11-25** · The board gets its Realtime token from `GET /api/v1/me/realtime-token` and uses `@supabase/realtime-js` alone, not Clerk's browser library or the full supabase-js · It is the same short-lived token the browser already has in Clerk's cookie; the bundle stays small, and the bundle secret check stays strict (both libraries carry secret-key names in their code). `@supabase/realtime-js` is pinned to the version supabase-js uses.
+- **2026-11-25** · Links to sign-in pages (`/board`, `/report/new`, `/me`) are plain `<a>` links (`SignInLink`) · Signed out, the server redirects to Clerk; an in-app fetch can't follow that under our CSP and logs an error.
+
