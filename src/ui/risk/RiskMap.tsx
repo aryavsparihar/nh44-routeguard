@@ -7,6 +7,7 @@ import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
 import type { PublicReport } from "@/src/shared/api-types";
 import type { Level } from "@/src/shared/risk";
 import { SimpleMap } from "./SimpleMap";
+import { centre, metresPerPixel, pickHex } from "./hex-pick";
 
 // The base map: OpenFreeMap (free, no key, OpenStreetMap data). Allowed in
 // the CSP (src/server/security-headers.ts).
@@ -16,6 +17,16 @@ const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 // (scripts/ui/copy-maplibre-worker.mjs). Keep the version in step with
 // package.json; the name changes with it, so browsers never mix versions.
 const WORKER_URL = "/vendor/maplibre-gl-worker-6.17.0.mjs";
+
+// Room around the corridor when the whole road is shown (bottom: the
+// attribution button).
+const FIT_PADDING = { top: 24, right: 24, bottom: 64, left: 24 };
+// A tap counts for the nearest cell within this many screen pixels.
+const TAP_PX = 16;
+// Zoom that a picked cell is shown at: cells are about 40 px across.
+const PICK_ZOOM = 12;
+
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export type MapProps = {
   segments: CorridorSegment[];
@@ -95,6 +106,8 @@ export function RiskMap({
   const markers = useRef<Marker[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  // True after a pick zoomed the map in; clearing the pick zooms back out.
+  const zoomedIn = useRef(false);
   // The newest props, for the map's load handler (which runs later).
   const latest = useRef({ segments, levels, places, baseLabels, hexes, pickedHex, onPickHex });
   useEffect(() => {
@@ -138,7 +151,7 @@ export function RiskMap({
           container: container.current,
           style: STYLE_URL,
           bounds,
-          fitBoundsOptions: { padding: { top: 24, right: 24, bottom: 64, left: 24 } },
+          fitBoundsOptions: { padding: FIT_PADDING },
           attributionControl: { compact: true },
           cooperativeGestures: true, // one finger scrolls the page, two move the map
           dragRotate: false,
@@ -202,19 +215,19 @@ export function RiskMap({
             filter: ["==", ["get", "id"], latest.current.pickedHex ?? ""],
             paint: { "line-color": cssColor("--color-primary"), "line-width": 3 },
           });
-          // A tap picks the cell under it. A finger is wide, so look in a
-          // small box around the point.
+          // A tap picks the cell it lands in, or the nearest one within a
+          // finger's width (hex-pick.ts). With the whole road showing, the
+          // cells are a pixel or two wide, so the map also zooms in to the
+          // picked cell; clearing the pick zooms back out (effect below).
           m.on("click", (e) => {
-            const { x, y } = e.point;
-            const hit = m.queryRenderedFeatures(
-              [
-                [x - 6, y - 6],
-                [x + 6, y + 6],
-              ],
-              { layers: ["hexes"] },
-            )[0];
-            const id = hit?.properties?.id;
-            latest.current.onPickHex?.(typeof id === "string" ? id : null);
+            const { lng, lat } = e.lngLat;
+            const tolKm = (TAP_PX * metresPerPixel(lat, m.getZoom())) / 1000;
+            const cell = pickHex(latest.current.hexes ?? [], [lng, lat], tolKm);
+            latest.current.onPickHex?.(cell ? cell.id : null);
+            if (cell && m.getZoom() < PICK_ZOOM) {
+              zoomedIn.current = true;
+              m.easeTo({ center: centre(cell.boundary), zoom: PICK_ZOOM, duration: reducedMotion() ? 0 : 600 });
+            }
           });
           m.on("mouseenter", "hexes", () => (m.getCanvas().style.cursor = "pointer"));
           m.on("mouseleave", "hexes", () => (m.getCanvas().style.cursor = ""));
@@ -260,11 +273,16 @@ export function RiskMap({
     source?.setData(hexData(hexes));
   }, [loaded, hexes]);
 
-  // Outline the picked cell.
+  // Outline the picked cell. With nothing picked any more, go back to the
+  // whole road if a pick had zoomed in.
   useEffect(() => {
     if (!loaded || !map.current) return;
     map.current.setFilter("hex-picked", ["==", ["get", "id"], pickedHex ?? ""]);
-  }, [loaded, pickedHex]);
+    if (!pickedHex && zoomedIn.current) {
+      zoomedIn.current = false;
+      map.current.fitBounds(bounds, { padding: FIT_PADDING, duration: reducedMotion() ? 0 : 600 });
+    }
+  }, [loaded, pickedHex, bounds]);
 
   // Report markers: solid outline when confirmed or from police/admin,
   // dashed when unconfirmed (the legend below says so).
