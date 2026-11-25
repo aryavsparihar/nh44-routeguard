@@ -37,6 +37,8 @@ Pixel 5 size, taken with `node scripts/ui/screenshots.mjs` on 25 Nov 2026 with t
 
 ## How it works
 
+Every tool in the stack, explained in plain words with practice questions: [docs/stack/](docs/stack/README.md).
+
 ```mermaid
 flowchart LR
   phone[Phone browser<br/>service worker, offline outbox] -->|/api/v1| app[Next.js 16 on Azure Container Apps<br/>withApi: auth, zod, rate limits, problem+json]
