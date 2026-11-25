@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { requirePageSignIn } from "@/src/server/auth/page";
+import { aadhaarQrEnabled } from "@/src/server/flags";
 import { pushPublicKey } from "@/src/server/push/config";
 import { MeScreen } from "@/src/ui/me/MeScreen";
 
@@ -26,12 +27,12 @@ export default async function MePage() {
 // Reads the session at request time, so it sits inside <Suspense>
 // (cacheComponents). Clerk's browser library is needed here to refresh the
 // token after picking a role and to sign out. The VAPID public key for
-// alerts is read here at request time (it is public by design).
+// alerts and the Aadhaar flag are read here at request time.
 async function MeGate() {
   await requirePageSignIn();
   return (
     <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-in" afterSignOutUrl="/">
-      <MeScreen pushKey={pushPublicKey()} />
+      <MeScreen pushKey={pushPublicKey()} aadhaar={aadhaarQrEnabled()} />
     </ClerkProvider>
   );
 }
