@@ -40,7 +40,11 @@ export default async function LocaleLayout({ children }: LayoutProps<"/[locale]"
   const locale = (await getLocale()) as Locale;
   return (
     <html lang={locale} dir={dirFor(locale)} className={`${fontVariables} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+      {/* Some phone browsers add attributes here before React starts
+          (Chrome on iPhone: style="-webkit-text-size-adjust:100%"). This
+          only stops the warning for <body>'s own attributes; text and
+          children are still checked. */}
+      <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <NextIntlClientProvider>
           <AppHeader />
           <Suspense fallback={null}>
