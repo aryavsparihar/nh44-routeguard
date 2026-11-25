@@ -21,3 +21,7 @@ export const hexQuery = z
     horizon: z.enum(["0", "12", "24", "48"]).default("0").transform(Number),
   })
   .strict();
+
+// A storm replay is named by its incident id, like inc-2026-01-23-z5-snow_ice
+// (data/incidents.csv). Anything else is a 404 before it is looked up.
+export const replayId = z.string().regex(/^inc-\d{4}-\d{2}-\d{2}-z[1-6]-[a-z_]{4,12}$/);

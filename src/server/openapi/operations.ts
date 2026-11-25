@@ -36,7 +36,7 @@ import {
   reportFields,
   reportId,
 } from "@/src/server/reports/reports.schemas";
-import { hexQuery, riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
+import { hexQuery, replayId, riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
 import { roadStatusBody } from "@/src/server/road-status/road-status.schemas";
 import {
   createShipmentBody,
@@ -110,6 +110,18 @@ const exampleRisk: RiskRow = {
 
 // The advice example is what our own rules (src/shared/decide.ts) answer for
 // the example lot and the example score above, so it always has the real shape.
+// A real replay (lib/risk/replays.json): snow at the Navyug Tunnel.
+const exampleReplay = {
+  id: "inc-2026-01-23-z5-snow_ice",
+  date: "2026-01-23",
+  scored_at: "2026-01-23T06:00:00Z",
+  zone_id: 5,
+  place: "Navyug Tunnel, Banihal",
+  hazard: "snow_ice",
+  source_publisher: "ETV Bharat (PTI)",
+  source_url:
+    "https://www.etvbharat.com/en/bharat/snow-shuts-srinagar-jammu-highway-other-key-kashmir-roads-vande-bharat-train-remains-operational-enn26012401721",
+};
 const exampleLot: Lot = { variety: "delicious", days_since_picking: 12, tonnes: 10, destination: "azadpur", truck_type: "heavy" };
 const exampleAdvice = decide(
   exampleLot,
@@ -298,6 +310,74 @@ export const OPERATIONS: Operation[] = [
       304: { description: "Not modified: you already have this run.", envelope: "none" },
     },
     errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/risk/replays",
+    tag: "Risk",
+    summary: "Past storms the map can replay",
+    description:
+      "Verified incidents from `data/incidents.csv`, scored by `jobs/replay.py` with the same rules as the hourly job, on the weather that actually happened (ERA5 reanalysis via the Open-Meteo archive), at 12:00 IST on the incident date. For showing the map in bad weather on a dry day. Not today's conditions, and never written to the live scores.",
+    access: "public",
+    success: {
+      200: {
+        description: "The storms.",
+        envelope: "list",
+        meta: { count: 1, next_cursor: null, model_version: "rules-v0.1", weather_source: "ERA5 reanalysis via the Open-Meteo archive API" },
+        example: [exampleReplay],
+      },
+    },
+  },
+  {
+    method: "get",
+    path: "/api/v1/risk/replays/{id}",
+    tag: "Risk",
+    summary: "One past storm, scored like the live map",
+    description:
+      "`rows` are the zone scores for every horizon, in the shape of `GET /api/v1/risk`; `hexes` are the H3 cells at the asked horizon, in the shape of `GET /api/v1/risk/hexes`. The +12, +24 and +48 h scores use the weather that actually came, not a forecast. Confidence uses exposure only (no past incidents or reports are counted).",
+    access: "public",
+    params: { id: replayId },
+    query: hexQuery,
+    success: {
+      200: {
+        description: "The storm's scores.",
+        example: {
+          ...exampleReplay,
+          rows: [
+            {
+              zone_id: 5,
+              horizon_hours: 0,
+              overall: 1,
+              risk_low: 0.95,
+              risk_high: 1,
+              level: "high",
+              top_hazard: "snow_ice",
+              confidence: "medium",
+              hazards: { landslide: 0.5, rockfall: 0.7, flash_flood: 0.264, snow_ice: 1 },
+              reason: "Snow/ice: 0.32 m on the ground near Ramsoo; zone 5 is very exposed to snow/ice",
+              reason_code: "snow_ice",
+              reason_params: { snow_cm: 0, depth_m: 0.32, black_ice: "no", place: "z5_ramsoo", zone: 5, exposure: "very_high" },
+            },
+          ],
+          hexes: [
+            {
+              h3_index: "883d309525fffff",
+              zone_id: 5,
+              overall: 1,
+              hazards: { landslide: 0.45, rockfall: 0.63, flash_flood: 0.264, snow_ice: 1 },
+              level: "high",
+              top_hazard: "snow_ice",
+              confidence: "medium",
+              reason: "Snow/ice: 0.43 m on the ground near Banihal; zone 5 is very exposed to snow/ice",
+              reason_code: "snow_ice",
+              reason_params: { snow_cm: 0, depth_m: 0.43, black_ice: "no", place: "z5_banihal", zone: 5, exposure: "very_high" },
+              slope_deg: 31.5,
+              boundary: [[75.1889, 33.4351], [75.1895, 33.4301], [75.195, 33.4281], [75.2, 33.431], [75.1995, 33.436], [75.1939, 33.4381], [75.1889, 33.4351]],
+            },
+          ],
+        },
+      },
+    },
   },
   {
     method: "get",
