@@ -17,8 +17,8 @@ Demo accounts (made by `node scripts/seed-demo.mts`). They are Clerk test emails
 | Admin | `routeguard.admin+clerk_test@example.com` | `/admin`: roles, official updates, reports, road status, audit log, failed jobs |
 | Police (demo) | `routeguard.police+clerk_test@example.com` | Post an official update with its source; confirm a report |
 | Agent | `routeguard.agent+clerk_test@example.com` | `/board`: six demo trucks in different states, live updates |
-| Driver, vouched | `routeguard.driver1+clerk_test@example.com` | `/report/new`: the report goes live at once (solid marker) |
-| Driver, not vouched | `routeguard.driver2+clerk_test@example.com` | `/report/new`: the report starts "unconfirmed" (dashed); try it offline |
+| Driver, vouched | `routeguard.driver1+clerk_test@example.com` | `/report/new`: the report goes live at once (solid marker); try it offline |
+| Driver, not vouched | `routeguard.driver2+clerk_test@example.com` | `/report/new` asks you to get verified first; `/me`: scan the demo Aadhaar QR (`docs/demo/aadhaar-demo-qr.png`), then you can report |
 | Grower | `routeguard.grower+clerk_test@example.com` | `/advisor`: advice for a lot; save it |
 
 No sign-in is needed for the map, the 48 h strip and the advisor.

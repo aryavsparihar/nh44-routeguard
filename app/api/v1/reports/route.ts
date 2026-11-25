@@ -8,11 +8,19 @@
 //        201  a new report (Location: /api/v1/reports/{id})
 //        200  the same report again, or merged into an earlier one nearby
 //             (same hazard within 500 m and 60 min counts as a confirmation)
+//      Drivers must be verified (vouched by their agent, or the optional
+//      Aadhaar QR check); others get 403. The database checks it again.
 //      Rate limited: 10 an hour per user. FEATURE_REPORTS_WRITE=false → 503.
 import { getDb } from "@/src/server/db";
 import { reportsWriteEnabled } from "@/src/server/flags";
 import { readMultipart, readQuery, toFieldErrors } from "@/src/server/http/body";
-import { BadRequestError, PayloadTooLargeError, ServiceUnavailableError, ValidationError } from "@/src/server/http/errors";
+import {
+  BadRequestError,
+  ForbiddenError,
+  PayloadTooLargeError,
+  ServiceUnavailableError,
+  ValidationError,
+} from "@/src/server/http/errors";
 import { requireCaller } from "@/src/server/http/guards";
 import { created, list, ok } from "@/src/server/http/responses";
 import { notAllowed, withApi } from "@/src/server/http/with-api";
@@ -22,6 +30,8 @@ import { listActiveReports, submitReport } from "@/src/server/reports/reports.re
 import { idempotencyKey, publicReportsQuery, reportFields } from "@/src/server/reports/reports.schemas";
 import { REPORT_RULES } from "@/src/server/reports/rules";
 import { photoPath, removePhoto, uploadPhoto } from "@/src/server/reports/storage";
+import { findUser } from "@/src/server/users/users.repository";
+import { isVerifiedLevel } from "@/src/shared/verification";
 import { nearestOnRoad } from "@/src/shared/corridor";
 
 export const GET = withApi({ access: "public" }, async ({ req }) => {
@@ -39,7 +49,13 @@ export const POST = withApi(
   { access: ["driver", "agent", "police", "admin"], rateLimit: "report" },
   async ({ req, caller, log }) => {
     if (!reportsWriteEnabled()) throw new ServiceUnavailableError("Reporting is paused for now.");
-    const { userId } = requireCaller(caller);
+    const { userId, role } = requireCaller(caller);
+    // Before reading the photo: a driver who isn't verified can't post.
+    if (role === "driver" && !isVerifiedLevel((await findUser(await getDb(), userId))?.verification_level)) {
+      throw new ForbiddenError(
+        "Only verified drivers can post road reports. Ask your agent to vouch for you, or do the Aadhaar QR check on your account page.",
+      );
+    }
 
     const key = idempotencyKey.safeParse(req.headers.get("idempotency-key"));
     if (!key.success) {

@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(227);
+select plan(229);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -478,15 +478,22 @@ insert into report_rules values ('{"expiry_hours": {"landslide": 6, "rockfall": 
   "duplicate": {"within_m": 500, "within_minutes": 60}, "confirm": {"needed": 2, "within_m": 2000, "within_hours": 3},
   "hide_after_flags": 3}');
 
--- An email-level driver: unconfirmed; the same client id again is a repeat.
+-- An email-level driver can't post at all (20261126020000_verified_drivers_report.sql).
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select throws_ok($$ select * from private.submit_report('00000000-0000-4000-8000-0000000000c0',
+  'landslide', 33.2000, 75.1500, 3::smallint, null, null, (select j from report_rules)) $$,
+  '42501', null::text, 'reports: a driver who is not verified cannot post a report');
+
+-- An agent (email level): unconfirmed; the same client id again is a repeat.
+set local request.jwt.claims = '{"sub": "user_testagent", "role": "authenticated", "metadata": {"role": "agent"}}';
 select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c1',
   'landslide', 33.2000, 75.1500, 3::smallint, 'pgTAP report', null, (select j from report_rules))),
-  'unconfirmed created', 'reports: an email-level driver''s report starts unconfirmed');
+  'unconfirmed created', 'reports: an email-level agent''s report starts unconfirmed');
 select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c1',
   'landslide', 33.2000, 75.1500, 3::smallint, 'pgTAP report', null, (select j from report_rules))),
   'unconfirmed repeat', 'reports: the same client id again returns the first report');
+set local request.jwt.claims = '{"sub": "user_testagent2", "role": "authenticated", "metadata": {"role": "agent"}}';
 select lives_ok($$ select * from private.submit_report('00000000-0000-4000-8000-0000000000c3',
   'other', 33.3000, 75.2500, 4::smallint, null, null, (select j from report_rules)) $$,
   'reports: a second, separate report for the flag tests');
@@ -527,7 +534,7 @@ select is((select outcome from private.confirm_report(
   (select j from report_rules))),
   'repeat', 'reports: a second confirmation by the same person counts once');
 
-set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+set local request.jwt.claims = '{"sub": "user_testagent", "role": "authenticated", "metadata": {"role": "agent"}}';
 select throws_ok($$ select * from private.confirm_report(
   (select id from report_ids where client_id = '00000000-0000-4000-8000-0000000000c1'), null, null,
   (select j from report_rules)) $$,
@@ -840,6 +847,9 @@ select is((select verification_level from private.record_aadhaar_check('rejected
   'email', 'aadhaar: a rejected check leaves the level as it was');
 select is((select verification_level from private.record_aadhaar_check('verified', '4821', 'aadhaar-2026-11-25', 'test', 'req-pgtap-aadhaar')),
   'aadhaar_qr', 'aadhaar: a verified check raises the driver to aadhaar_qr');
+select is((select status || ' ' || outcome from private.submit_report('00000000-0000-4000-8000-0000000000c8',
+  'snow_ice', 33.4000, 75.1900, 5::smallint, null, null, (select j from report_rules))),
+  'confirmed created', 'reports: after the Aadhaar check the same driver can post, confirmed at once');
 set local role postgres;
 select is((select string_agg(verdict::text || ':' || coalesce(last4, '-'), ',' order by created_at) from public.verifications
            where user_id = 'user_testdriver3' and method = 'aadhaar_qr'),

@@ -82,7 +82,7 @@ const HOUR = 3600_000;
 const now = Date.now();
 
 type DemoReport = {
-  by: "police" | "driverVouched" | "driverNew";
+  by: "police" | "driverVouched" | "agent";
   source: "police" | "driver";
   hazard: "landslide" | "rockfall" | "snow_ice";
   zone: number;
@@ -97,7 +97,7 @@ type DemoReport = {
 const REPORTS: DemoReport[] = [
   { by: "police", source: "police", hazard: "rockfall", zone: 4, at: [33.3028, 75.1798], status: "confirmed", confirmations: 0, ageHours: 1, lifeHours: 6, note: "Demo report: stones on the road near Digdol, one lane open." },
   { by: "driverVouched", source: "driver", hazard: "landslide", zone: 5, at: [33.3365, 75.1924], status: "confirmed", confirmations: 2, ageHours: 2, lifeHours: 6, note: "Demo report: debris near Ramsoo, traffic stopped." },
-  { by: "driverNew", source: "driver", hazard: "landslide", zone: 3, at: [33.1775, 75.3003], status: "unconfirmed", confirmations: 0, ageHours: 0.5, lifeHours: 6, note: "Demo report: small slide near Peerah." },
+  { by: "agent", source: "driver", hazard: "landslide", zone: 3, at: [33.1775, 75.3003], status: "unconfirmed", confirmations: 0, ageHours: 0.5, lifeHours: 6, note: "Demo report: small slide near Peerah." },
   { by: "driverVouched", source: "driver", hazard: "snow_ice", zone: 5, at: [33.4379, 75.1955], status: "expired", confirmations: 1, ageHours: 20, lifeHours: 12, note: "Demo report: ice on the road at Banihal (old)." },
 ];
 

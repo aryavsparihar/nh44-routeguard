@@ -309,3 +309,8 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · The signal can never fail a write (errors in the trigger are swallowed), and the map also reloads every minute while it is on screen · The signal is a hint. Expired reports leave the map without any write, so the minute reload is still needed.
 - **2026-11-25** · A reload after a signal skips the browser's HTTP cache (`cache: "no-cache"`) · `GET /api/v1/reports` allows a 30 s cached copy, which would hide the report the signal was about.
 
+
+## Round 3: who can post reports (slice 14)
+
+- **2026-11-26** · Drivers post road reports only once verified: vouched by their agent or through the optional Aadhaar QR check · A driver's report goes on the map at once, so it must come from someone accountable; judges asked how we stop fake reports. Checked in the API (403 before the photo is read) and again in `private.submit_report()`. Rejected: compulsory Aadhaar (the 2018 Puttaswamy judgment; we aren't a UIDAI-registered verifier; a photo of someone else's card passes), and leaving drivers open with only confirmations (spam still reaches the map as dashed pins).
+- **2026-11-26** · Agents can still post without being verified, and their reports wait for confirmation · An agent signs up a fleet and is known to their drivers; blocking them too would leave no one to report before the first vouch.

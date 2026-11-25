@@ -11,6 +11,7 @@ test.describe.configure({ mode: "serial" });
 const EMAIL = {
   admin: "routeguard.admin+clerk_test@example.com",
   agent: "routeguard.agent+clerk_test@example.com",
+  driverVouched: "routeguard.driver1+clerk_test@example.com",
   driverNew: "routeguard.driver2+clerk_test@example.com",
 };
 
@@ -40,8 +41,16 @@ test.beforeEach(async ({ context }) => {
   await context.setGeolocation(ON_ROAD);
 });
 
-test("a driver who isn't vouched yet posts a report and it waits for confirmation", async ({ page }) => {
+test("a driver who isn't verified yet is asked to get verified before reporting", async ({ page }) => {
   await signIn(page, EMAIL.driverNew);
+  await page.goto("/report/new");
+  await expect(page.getByRole("heading", { name: "First, get verified" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open my Board" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send report" })).toHaveCount(0);
+});
+
+test("a vouched driver posts a report", async ({ page }) => {
+  await signIn(page, EMAIL.driverVouched);
   await fillReport(page, "Other hazard");
   await page.getByRole("button", { name: "Send report" }).click();
   // A report of the same hazard nearby within the hour is merged into it.
@@ -51,7 +60,7 @@ test("a driver who isn't vouched yet posts a report and it waits for confirmatio
 });
 
 test("a report written with no signal waits on the phone and sends itself", async ({ page, context }) => {
-  await signIn(page, EMAIL.driverNew);
+  await signIn(page, EMAIL.driverVouched);
   await fillReport(page, "Accident");
   await context.setOffline(true);
   await page.getByRole("button", { name: "Send report" }).click();
@@ -105,4 +114,7 @@ test("a driver checks the demo Aadhaar QR from a picture and gets the badge", as
   await expect(card.getByText("Demo check (test key)")).toBeVisible({ timeout: 15_000 });
   await expect(card.getByText(/Checked\. Your level is now/)).toBeVisible();
   await expect(page.getByText("Aadhaar checked").first()).toBeVisible();
+  // Now verified, the same driver gets the report form.
+  await page.goto("/report/new");
+  await expect(page.getByRole("button", { name: "Send report" })).toBeVisible();
 });
