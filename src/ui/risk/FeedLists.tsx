@@ -1,10 +1,12 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
 import type { Locale } from "@/src/i18n/routing";
 import type { OfficialUpdate, PublicReport } from "@/src/shared/api-types";
 import { formatDayTime, isolate } from "@/src/shared/format";
 import { NotOfficial } from "@/src/ui/NotOfficial";
+import { ReportActions } from "./ReportActions";
 
 // Police/TCU updates in force. Each one links to where it was published.
 export function OfficialUpdates({ updates }: { updates: OfficialUpdate[] }) {
@@ -52,7 +54,6 @@ export function OfficialUpdates({ updates }: { updates: OfficialUpdate[] }) {
 // Road reports on the map now, with the legend for their markers.
 export function RoadReports({ reports }: { reports: PublicReport[] }) {
   const t = useTranslations("reports");
-  const locale = useLocale() as Locale;
   return (
     <section aria-labelledby="reports-heading" className="flex flex-col gap-2">
       <h2 id="reports-heading" className="text-lg font-bold">
@@ -73,27 +74,39 @@ export function RoadReports({ reports }: { reports: PublicReport[] }) {
       ) : (
         <ul className="flex flex-col gap-2">
           {reports.map((r) => (
-            <li key={r.id} className="rounded-lg border border-border bg-elevated p-3 text-sm">
-              <p className="font-bold">
-                {t("item", {
-                  hazard: t(`hazard.${r.hazard_type}`),
-                  zone: r.zone_id ?? "-",
-                  time: formatDayTime(new Date(r.created_at), locale),
-                })}
-              </p>
-              <p className="text-secondary">
-                {t(`status.${r.status}`)} · {t(`source.${r.source}`)} · {t("confirmations", { count: r.confirmations })}
-                {r.is_demo && ` · ${t("demo")}`}
-              </p>
-              {r.note && (
-                <p>
-                  <bdi>{r.note}</bdi>
-                </p>
-              )}
-            </li>
+            <ReportItem key={r.id} report={r} />
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+// One report, with the counts it got back after a confirmation.
+function ReportItem({ report }: { report: PublicReport }) {
+  const t = useTranslations("reports");
+  const locale = useLocale() as Locale;
+  const [changes, setChanges] = useState<Partial<PublicReport>>({});
+  const r = { ...report, ...changes };
+  return (
+    <li className="rounded-lg border border-border bg-elevated p-3 text-sm">
+      <p className="font-bold">
+        {t("item", {
+          hazard: t(`hazard.${r.hazard_type}`),
+          zone: r.zone_id ?? "-",
+          time: formatDayTime(new Date(r.created_at), locale),
+        })}
+      </p>
+      <p className="text-secondary">
+        {t(`status.${r.status}`)} · {t(`source.${r.source}`)} · {t("confirmations", { count: r.confirmations })}
+        {r.is_demo && ` · ${t("demo")}`}
+      </p>
+      {r.note && (
+        <p>
+          <bdi>{r.note}</bdi>
+        </p>
+      )}
+      <ReportActions report={r} onChange={(next) => setChanges((c) => ({ ...c, ...next }))} />
+    </li>
   );
 }

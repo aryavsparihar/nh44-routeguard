@@ -26,3 +26,13 @@ export async function requirePageRole(roles: Role[]): Promise<Caller> {
 
   return { userId, role };
 }
+
+// For pages any signed-in user may open (the report screen): signed out goes
+// to sign-in; the role (null before onboarding) comes back for the page to
+// decide what to show.
+export async function requirePageSignIn(): Promise<Caller> {
+  if (!isClerkConfigured()) notFound();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
+  if (!userId) return redirectToSignIn();
+  return { userId, role: roleFromClaims(sessionClaims) };
+}

@@ -1,0 +1,24 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
+import { AdminGate } from "@/src/ui/admin/AdminGate";
+import { BackToAdmin } from "@/src/ui/admin/common";
+import { ReportsAdmin } from "@/src/ui/admin/ReportsAdmin";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("admin.reports");
+  return { title: t("heading"), robots: { index: false } };
+}
+
+export default async function Page() {
+  const t = await getTranslations("admin");
+  return (
+    <section className="flex flex-col gap-3">
+      <BackToAdmin />
+      <h1 className="text-2xl font-bold">{t("reports.heading")}</h1>
+      <Suspense fallback={<p role="status">{t("loading")}</p>}>
+        <AdminGate roles={["admin"]}>{() => <ReportsAdmin />}</AdminGate>
+      </Suspense>
+    </section>
+  );
+}

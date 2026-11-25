@@ -18,6 +18,7 @@ export function BottomNav() {
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
+                prefetch={item.signIn ? false : undefined}
                 aria-current={active ? "page" : undefined}
                 className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs text-secondary aria-[current=page]:font-bold aria-[current=page]:text-highway"
               >
