@@ -4,8 +4,7 @@
 // admin_set_role database function; then Clerk is updated so the role
 // reaches the user's session token (within about a minute).
 //
-// TODO(rate-limit): 5 role attempts per user per hour (section 10) once the
-// shared rate limiter exists (section 17).
+// Rate limited: 5 role attempts an hour per admin (section 10).
 import { getDb } from "@/src/server/db";
 import { readJson } from "@/src/server/http/body";
 import { NotFoundError } from "@/src/server/http/errors";
@@ -16,7 +15,7 @@ import { clerkUserId, roleChangeBody } from "@/src/server/users/users.schemas";
 import { changeRole } from "@/src/server/users/users.service";
 
 export const PATCH = withApi<{ id: string }>(
-  { access: ["admin"] },
+  { access: ["admin"], rateLimit: "role" },
   async ({ req, params, caller, requestId }) => {
     // A malformed id can't belong to any user.
     if (!clerkUserId.safeParse(params.id).success) {

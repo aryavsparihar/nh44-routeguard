@@ -4,8 +4,6 @@
 // DELETE /api/v1/admin/official-updates/{id}: soft delete with a reason in
 //        the JSON body. The row stays for the history.
 // Admin and police only. Both are audited in the same transaction.
-//
-// TODO(rate-limit): admin writes (section 10) once the shared limiter exists.
 import { getDb } from "@/src/server/db";
 import { readJson } from "@/src/server/http/body";
 import { NotFoundError } from "@/src/server/http/errors";
