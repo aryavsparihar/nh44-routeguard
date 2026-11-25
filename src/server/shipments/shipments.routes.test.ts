@@ -27,6 +27,9 @@ vi.mock("@/src/server/road-status/road-status.service", () => ({
   getRoadStatus: async () => ({ mughal_road: "unknown", rail_parcel: "unknown" }),
 }));
 
+const clerk = vi.hoisted(() => ({ token: "header.payload.signature" as string | null }));
+vi.mock("@clerk/nextjs/server", () => ({ auth: async () => ({ getToken: async () => clerk.token }) }));
+
 const shipRepo = vi.hoisted(() => ({
   listShipments: vi.fn(),
   getShipment: vi.fn(),
@@ -51,6 +54,7 @@ const locationRoute = await import("@/app/api/v1/shipments/[id]/location/route")
 const invitesRoute = await import("@/app/api/v1/agents/invites/route");
 const acceptRoute = await import("@/app/api/v1/agents/invites/accept/route");
 const driversRoute = await import("@/app/api/v1/agents/drivers/route");
+const tokenRoute = await import("@/app/api/v1/me/realtime-token/route");
 const vouchRoute = await import("@/app/api/v1/agents/drivers/[driverId]/vouch/route");
 
 const ID = "8c2d4e6f-1a3b-4c5d-8e7f-9a0b1c2d3e4f";
@@ -280,3 +284,22 @@ describe("agent invites and drivers", () => {
     expect(res.headers.get("Allow")).toContain("POST");
   });
 });
+
+describe("GET /api/v1/me/realtime-token", () => {
+  it("gives a signed-in caller their own session token, never cached", async () => {
+    expect((await tokenRoute.GET(req("GET", "/api/v1/me/realtime-token"), none)).status).toBe(401);
+    fakeCaller = DRIVER;
+    clerk.token = "header.payload.signature";
+    const res = await tokenRoute.GET(req("GET", "/api/v1/me/realtime-token"), none);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+    expect((await res.json()).data.token).toBe("header.payload.signature");
+  });
+
+  it("is 401 when Clerk has no session token", async () => {
+    fakeCaller = DRIVER;
+    clerk.token = null;
+    expect((await tokenRoute.GET(req("GET", "/api/v1/me/realtime-token"), none)).status).toBe(401);
+  });
+});
+
