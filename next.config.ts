@@ -27,7 +27,12 @@ const nextConfig: NextConfig = {
   },
   // Security headers on every response (src/server/security-headers.ts).
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders(process.env) }];
+    return [
+      { source: "/:path*", headers: securityHeaders(process.env) },
+      // The service worker (public/sw.js): the browser must always check
+      // for a new copy, or an old worker could stay for a day.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }] },
+    ];
   },
 };
 

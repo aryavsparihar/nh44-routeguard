@@ -512,7 +512,8 @@
       "tooMany": "You have sent a lot of reports this hour. Wait a while, then try again.",
       "paused": "Reporting is paused for now. The map and advice still work.",
       "server": "Could not send. Check your connection and try again."
-    }
+    },
+    "queued": "No signal. Your report is saved on this phone and will be sent by itself when you're back online."
   },
   "board": {
     "heading": "Board",
@@ -635,7 +636,8 @@
       "consent": "Turn on location sharing in your account first.",
       "outside": "Your position looks outside India. Try again outdoors.",
       "noGps": "Could not get your position. Allow location for this site and try again."
-    }
+    },
+    "savedCopy": "No signal. This is the copy saved at {time} ({age})."
   },
   "auth": {
     "heading": "Sign in",
@@ -735,6 +737,22 @@
       "tooMany": "Too many tries. Wait a while and try again.",
       "invalid": "Some fields are not valid.",
       "server": "Could not save. Try again."
-    }
+    },
+    "signOutWaiting": "{count, plural, one {# report is waiting to send. Signing out deletes it from this phone.} other {# reports are waiting to send. Signing out deletes them from this phone.}}"
+  },
+  "offline": {
+    "update": "New version ready.",
+    "reload": "Reload",
+    "offline": "You're offline.",
+    "unreachable": "Can't reach RouteGuard right now.",
+    "savedAt": "Showing data saved at {time} ({age}).",
+    "savedNone": "Showing what this phone saved last, if anything.",
+    "ageMinutes": "{minutes, plural, =0 {just now} one {# minute old} other {# minutes old}}",
+    "ageHours": "{hours, plural, one {# hour old} other {# hours old}}",
+    "waiting": "{count, plural, one {# report waiting to send.} other {# reports waiting to send.}}",
+    "sendNow": "Send now",
+    "signInToSend": "Sign in to send",
+    "sent": "{count, plural, one {# waiting report sent.} other {# waiting reports sent.}}",
+    "dropped": "{count, plural, one {# waiting report wasn't sent: it was too old, or RouteGuard couldn't accept it.} other {# waiting reports weren't sent: they were too old, or RouteGuard couldn't accept them.}}"
   }
 }

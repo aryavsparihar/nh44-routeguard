@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -8,6 +8,7 @@ import { AppHeader } from "@/src/ui/AppHeader";
 import { BottomNav } from "@/src/ui/BottomNav";
 import { Footer } from "@/src/ui/Footer";
 import { StaleBanner } from "@/src/ui/StaleBanner";
+import { OfflineStatus } from "@/src/ui/offline/OfflineStatus";
 import { fontVariables } from "@/src/ui/fonts";
 import "../globals.css";
 
@@ -23,8 +24,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: t("title"), template: `%s · ${t("title")}` },
     description: t("description"),
+    manifest: "/manifest.webmanifest",
+    icons: { apple: "/icons/icon-192.png" },
   };
 }
+
+export const viewport: Viewport = { themeColor: "#005f3f" };
+
+// The service worker (public/sw.js) runs in production builds only. Its URL
+// carries the deploy's version, so each deploy installs a fresh worker.
+const SW_VERSION = process.env.DEPLOYMENT_VERSION || "local";
+const SW_ENABLED = process.env.NODE_ENV === "production";
 
 export default async function LocaleLayout({ children }: LayoutProps<"/[locale]">) {
   const locale = (await getLocale()) as Locale;
@@ -36,6 +46,7 @@ export default async function LocaleLayout({ children }: LayoutProps<"/[locale]"
           <Suspense fallback={null}>
             <StaleBanner />
           </Suspense>
+          <OfflineStatus version={SW_VERSION} register={SW_ENABLED} />
           <main id="main" className="mx-auto w-full min-w-0 max-w-2xl flex-1 px-4 pt-4">
             {children}
           </main>

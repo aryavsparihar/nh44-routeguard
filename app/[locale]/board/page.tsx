@@ -45,7 +45,7 @@ async function BoardGate() {
   return (
     <>
       <p>{t(`intro.${caller.role as BoardRole}`)}</p>
-      <BoardScreen role={caller.role as BoardRole} />
+      <BoardScreen role={caller.role as BoardRole} userId={caller.userId} />
     </>
   );
 }

@@ -22,6 +22,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `admin.*` (admin and police screens) | not yet reviewed | not yet reviewed | Only admins and the demo police account see these; `updates.notOfficial` is safety text |
 | `board.*`, `advice.save.*` (shipment board) | not yet reviewed | not yet reviewed | Location-sharing text ("the stretch of road, not your exact spot") and the vouch warning are consent and safety text |
 | `auth.*`, `me.*` (sign-in, account, consent, deletion) | not yet reviewed | not yet reviewed | Consent and deletion text: "we deleted your last position", "this can't be undone" must be exact |
+| `offline.*`, `report.queued`, `board.savedCopy`, `me.signOutWaiting`, and `public/offline.html` | not yet reviewed | not yet reviewed | Tells people a report is saved and will send by itself; must not promise it was sent |
 
 ## Choices for the reviewers
 

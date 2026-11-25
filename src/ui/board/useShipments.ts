@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import type { Shipment } from "@/src/shared/api-types";
 import { ApiFetchError, getJson, type ApiList, type Loaded } from "@/src/ui/api";
+import { loadPrivate, savePrivate } from "@/src/ui/offline/private-store";
 
 export type Live = "connecting" | "live" | "off";
 
@@ -15,21 +16,38 @@ export type Live = "connecting" | "live" | "off";
 // them changes to their own shipments only. A change makes us load the list again
 // (at most once a second). Without Realtime the list still works: it reloads
 // every 60 seconds and on "Reload".
-export function useShipments(): { list: Loaded<Shipment[]>; live: Live; reload: () => void } {
+//
+// Each good list is also saved on the phone under this person's user id
+// (src/ui/offline/private-store.ts). With no signal the board shows that
+// copy and when it was saved (`savedAt`); signing out wipes it.
+export function useShipments(userId: string): {
+  list: Loaded<Shipment[]>;
+  live: Live;
+  savedAt: string | null;
+  reload: () => void;
+} {
   const [list, setList] = useState<Loaded<Shipment[]>>({ state: "loading" });
-  const [live, setLive] = useState<Live>("connecting");
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [live, setLive] = useState<Live>(() => (getSupabasePublicEnv() ? "connecting" : "off"));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
     try {
       const body = await getJson<ApiList<Shipment>>("/api/v1/shipments?limit=100");
       setList({ state: "ready", value: body.data });
+      setSavedAt(null);
+      void savePrivate(userId, "shipments", body.data);
     } catch (error) {
-      setList((old) =>
-        old.state === "ready" ? old : { state: "error", status: error instanceof ApiFetchError ? error.status : 0 },
-      );
+      const status = error instanceof ApiFetchError ? error.status : 0;
+      // No signal (status 0): the copy saved on this phone, if there is one.
+      const copy = status === 0 ? await loadPrivate<Shipment[]>(userId, "shipments") : null;
+      setList((old) => {
+        if (old.state === "ready") return old;
+        return copy ? { state: "ready", value: copy.value } : { state: "error", status };
+      });
+      if (copy) setSavedAt((old) => old ?? copy.savedAt);
     }
-  }, []);
+  }, [userId]);
 
   const reload = useCallback(() => {
     if (timer.current) return;
@@ -40,17 +58,17 @@ export function useShipments(): { list: Loaded<Shipment[]>; live: Live; reload: 
   }, [load]);
 
   useEffect(() => {
-    void load();
+    const first = setTimeout(() => void load(), 0);
     const every = setInterval(() => void load(), 60_000);
-    return () => clearInterval(every);
+    return () => {
+      clearTimeout(first);
+      clearInterval(every);
+    };
   }, [load]);
 
   useEffect(() => {
     const env = getSupabasePublicEnv();
-    if (!env) {
-      setLive("off");
-      return;
-    }
+    if (!env) return; // no Realtime: `live` started as "off"
     const realtime = new RealtimeClient(`${env.url}/realtime/v1`, {
       params: { apikey: env.key },
       accessToken: realtimeToken,
@@ -74,7 +92,7 @@ export function useShipments(): { list: Loaded<Shipment[]>; live: Live; reload: 
     [],
   );
 
-  return { list, live, reload: () => void load() };
+  return { list, live, savedAt, reload: () => void load() };
 }
 
 async function realtimeToken(): Promise<string | null> {
