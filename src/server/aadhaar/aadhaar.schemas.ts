@@ -1,8 +1,8 @@
 import { z } from "zod";
+import { AADHAAR_CONSENT_VERSION } from "@/src/shared/aadhaar";
 import { MAX_QR_DIGITS } from "./secure-qr";
 
-// The consent text version the screen showed (messages: me.aadhaar.consent).
-export const AADHAAR_CONSENT_VERSION = "aadhaar-qr-2026-11-25";
+export { AADHAAR_CONSENT_VERSION };
 
 // Only the QR text and the consent tick. Digits only, capped; the checker
 // also caps it, so a schema change can't open a hole.
