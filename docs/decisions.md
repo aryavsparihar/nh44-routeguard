@@ -248,3 +248,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Report photos are shrunk on the phone to about 300 KB before sending, online or not · Section 13's target; it also helps on a weak signal. The server still checks and re-encodes every photo.
 - **2026-11-25** · The outbox only sends reports as the person who wrote them, and sign-out wipes it · Two people can share a phone; a report must never be posted under someone else's name.
 
+
+## Round 3: API docs and Postman (E2, slice 10)
+
+- **2026-11-25** · OpenAPI 3.1 built with zod 4's own `z.toJSONSchema`, not `@asteasolutions/zod-to-openapi` · Our zod (4.6) writes JSON Schema 2020-12, which is what OpenAPI 3.1 uses; no extra package. The request schemas are the routes' own, so the document can't drift from what the API accepts.
+- **2026-11-25** · One hand-written list of operations (`src/server/openapi/operations.ts`), checked by a test against every `route.ts`: method, path, access and rate limit must match, and every request example must pass the route's schema · Next has no route registry to generate from; the test makes a missing or wrong entry fail CI.
+- **2026-11-25** · Example answers use made-up ids, names and times, and say so in the document; the zone and the past closure are real rows from the repo, and the advice example is what `decide()` answers · Section 6 wants examples for every status; "no invented numbers" means none may look like a real reading.
+- **2026-11-25** · Swagger UI 5.34.1 copied from `swagger-ui-dist` into `public/vendor/` at build time and served by `/api/docs` · Section 6: our own files, not a CDN, so the CSP stays `'self'`. Pinned to a release more than two weeks old.
+- **2026-11-25** · A bad query string is documented as 400 (with the field list), a bad body as 422 · That is what the API does (section 6: "400: malformed JSON or query"); Postman caught the first draft saying 422.
+- **2026-11-25** · newman runs the two keyless Postman folders in CI against the Docker image; the signed-in and rate-limit folders run locally · CI has no database or Clerk keys by design. Nothing in the collection creates data: the 429 checks use invalid advice requests and wrong invite codes.

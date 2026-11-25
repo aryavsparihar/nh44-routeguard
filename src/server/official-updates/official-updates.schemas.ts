@@ -1,12 +1,16 @@
 import { z } from "zod";
 import { cleanText } from "@/src/server/schemas/common";
 import { httpsUrl } from "@/src/server/schemas/https-url";
+import { zoneParam } from "@/src/server/schemas/zone-query";
 
 // Same values as the official_update_kind enum in the database.
 export const UPDATE_KINDS = ["closure", "one_way", "reopened", "advisory"] as const;
 
 // A time with its offset, like 2026-11-26T09:30:00+05:30 or ...Z.
 const instant = z.iso.datetime({ offset: true }).transform((value) => new Date(value));
+
+// GET /api/v1/official-updates?zone=
+export const publicUpdatesQuery = z.object({ zone: zoneParam.optional() }).strict();
 
 // The id in /api/v1/admin/official-updates/{id}.
 export const updateId = z.uuid();

@@ -1,11 +1,19 @@
 import { z } from "zod";
 import { cleanText, corridorLat, corridorLng } from "@/src/server/schemas/common";
+import { zoneParam } from "@/src/server/schemas/zone-query";
 import { REPORT_RULES } from "./rules";
 
 export const HAZARDS = ["landslide", "rockfall", "flash_flood", "snow_ice", "accident", "other"] as const;
 export const FLAG_REASONS = ["not_there", "wrong_place", "duplicate", "offensive", "other"] as const;
 
 export const reportId = z.uuid();
+
+// GET /api/v1/reports?zone=&status=: only reports that are on the map.
+export const ACTIVE_STATUSES = ["unconfirmed", "confirmed"] as const;
+export type ActiveStatus = (typeof ACTIVE_STATUSES)[number];
+export const publicReportsQuery = z
+  .object({ zone: zoneParam.optional(), status: z.enum(ACTIVE_STATUSES).optional() })
+  .strict();
 
 // The Idempotency-Key header of POST /api/v1/reports: a UUID the phone makes
 // once per report and sends again on every retry. It becomes the report's

@@ -1,0 +1,801 @@
+// Every endpoint under /api/v1, for the OpenAPI document (spec.ts). Request
+// schemas are the same zod schemas the routes validate with, so the document
+// can't drift from what the API accepts. openapi.test.ts fails when a route
+// file has a method that isn't listed here, or the other way round.
+//
+// The examples show the shape of each answer. Their values are made up for
+// the example (ids, names, times); they are not readings from the road.
+import { z } from "zod";
+import { adviceRequest } from "@/src/server/advice/advice.schemas";
+import { auditLogQuery } from "@/src/server/audit-log/audit-log.schemas";
+import { acceptInviteBody, createInviteBody } from "@/src/server/fleet/fleet.schemas";
+import type { RateLimitName } from "@/src/server/http/rate-limit";
+import type { Role } from "@/src/server/http/caller";
+import { incidentsQuery } from "@/src/server/incidents/incidents.schemas";
+import { modelCard } from "@/src/server/model/model-card";
+import { decide, type Lot } from "@/src/shared/decide";
+import type { RiskRow } from "@/src/shared/risk";
+import {
+  adminUpdatesQuery,
+  createUpdateBody,
+  deleteUpdateBody,
+  editUpdateBody,
+  publicUpdatesQuery,
+  updateId,
+} from "@/src/server/official-updates/official-updates.schemas";
+import {
+  adminReportsQuery,
+  confirmBody,
+  flagBody,
+  idempotencyKey,
+  moderateBody,
+  publicReportsQuery,
+  reportFields,
+  reportId,
+} from "@/src/server/reports/reports.schemas";
+import { riskQuery, summaryQuery } from "@/src/server/risk/risk.schemas";
+import { roadStatusBody } from "@/src/server/road-status/road-status.schemas";
+import {
+  createShipmentBody,
+  locationBody,
+  patchShipmentBody,
+  shipmentId,
+  shipmentsQuery,
+  userId,
+} from "@/src/server/shipments/shipments.schemas";
+import { clerkUserId, deleteMeBody, onboardingBody, patchMeBody, roleChangeBody } from "@/src/server/users/users.schemas";
+
+export type Access = "public" | "signed-in" | readonly Role[];
+export type Method = "get" | "post" | "patch" | "delete";
+
+export type Answer = {
+  description: string;
+  example?: unknown; // the `data` (or whole body for non-JSON); see spec.ts
+  contentType?: string; // default application/json
+  envelope?: "data" | "list" | "none"; // how spec.ts wraps the example
+  meta?: Record<string, unknown>; // for "list"
+  headers?: Record<string, string>; // header name → description
+};
+
+export type Operation = {
+  method: Method;
+  path: string; // OpenAPI form: /api/v1/reports/{id}
+  tag: string;
+  summary: string;
+  description?: string;
+  access: Access;
+  rateLimit?: RateLimitName;
+  params?: Record<string, z.ZodType>;
+  query?: z.ZodType;
+  body?: z.ZodType;
+  multipart?: z.ZodType; // the text fields; the photo is added by spec.ts
+  headers?: { name: string; required: boolean; schema: z.ZodType; description: string }[];
+  bodyExample?: unknown;
+  success: Record<number, Answer>;
+  // Error statuses this endpoint can answer, besides the ones spec.ts adds
+  // for everyone (401/403 for sign-in, 422 for input, 429 for limits, 500).
+  errors?: Record<number, string>;
+};
+
+// Example values -------------------------------------------------------------
+
+const T = "2026-11-26T09:30:00.000Z";
+const LATER = "2026-11-26T15:30:00.000Z";
+const RUN_AT = "2026-11-26T09:00:00.000Z";
+const USER = "user_2pExampleDriver01";
+const AGENT = "user_2pExampleAgent001";
+const REPORT_ID = "6f1c2a7e-3b4d-4e5f-8a9b-0c1d2e3f4a5b";
+const SHIPMENT_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const UPDATE_ID = "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b";
+
+const exampleRisk: RiskRow = {
+  zone_id: 4,
+  horizon_hours: 24,
+  overall: 0.42,
+  risk_low: 0.3,
+  risk_high: 0.55,
+  level: "medium",
+  top_hazard: "landslide",
+  confidence: "medium",
+  hazards: { landslide: 0.42, rockfall: 0.3, flash_flood: 0.1, snow_ice: 0.05 },
+  reason: "40 mm of rain in 24 h near Ramban on a stretch with very high landslide exposure.",
+  reason_code: "landslide_rain",
+  reason_params: { mm: 40, hours: 24, place: "z4_ramban", zone: 4, exposure: "very_high" },
+};
+
+// The advice example is what our own rules (src/shared/decide.ts) answer for
+// the example lot and the example score above, so it always has the real shape.
+const exampleLot: Lot = { variety: "delicious", days_since_picking: 12, tonnes: 10, destination: "azadpur", truck_type: "heavy" };
+const exampleAdvice = decide(
+  exampleLot,
+  { rows: [exampleRisk], run_at: RUN_AT },
+  { mughal_road: "unknown", rail_parcel: "unknown" },
+);
+
+const exampleReport = {
+  id: REPORT_ID,
+  source: "driver",
+  hazard_type: "rockfall",
+  lat: 33.25,
+  lng: 75.19,
+  zone_id: 4,
+  note: "Stones on the left lane after the tunnel.",
+  status: "unconfirmed",
+  confirmations: 0,
+  created_at: T,
+  expires_at: LATER,
+  has_photo: true,
+  is_demo: false,
+};
+
+const exampleUpdate = {
+  id: UPDATE_ID,
+  zone_id: 4,
+  kind: "one_way",
+  title: "One-way traffic from Jammu to Srinagar",
+  body: "Light vehicles only until 14:00.",
+  source_url: "https://example.org/traffic-advisory",
+  source_name: "J&K Traffic Police",
+  issued_at: T,
+  valid_until: LATER,
+  version: 1,
+};
+
+// What the admin routes return (every column, deleted ones too).
+const exampleAdminUpdate = { ...exampleUpdate, supersedes_id: null, created_at: T, deleted_at: null, delete_reason: null };
+
+const exampleShipment = {
+  id: SHIPMENT_ID,
+  agent_id: AGENT,
+  created_by: AGENT,
+  driver_id: USER,
+  driver_name: "Bashir",
+  truck_number: "JK05G7712",
+  truck_type: "heavy",
+  variety: "delicious",
+  tonnes: 10,
+  harvest_date: "2026-11-14",
+  cold_stored: false,
+  origin: "Sopore",
+  destination: "azadpur",
+  status: "moving",
+  advice: exampleAdvice,
+  eta: LATER,
+  last_seen_at: T,
+  last_lat: 33.25,
+  last_lng: 75.19,
+  is_demo: false,
+  created_at: T,
+  updated_at: T,
+};
+
+const exampleMe = {
+  id: USER,
+  role: "driver",
+  display_name: "Bashir",
+  language: "ur",
+  verification_level: "agent_vouched",
+  location_consent: true,
+  consent_version: "2026-11-25",
+  agent_id: AGENT,
+  onboarded: true,
+};
+
+const page = (count: number) => ({ count, next_cursor: null });
+
+// The operations -------------------------------------------------------------
+
+export const OPERATIONS: Operation[] = [
+  // Health
+  {
+    method: "get",
+    path: "/api/v1/health",
+    tag: "Health",
+    summary: "Liveness: the server is up",
+    description: "No database call, so it answers even when the database is down.",
+    access: "public",
+    success: { 200: { description: "Up.", example: { status: "ok" } } },
+  },
+  {
+    method: "get",
+    path: "/api/v1/health/ready",
+    tag: "Health",
+    summary: "Readiness: database reachable, and how old the scores are",
+    description: "Old scores are still a 200 with `stale: true`; the app keeps working and shows a banner.",
+    access: "public",
+    success: {
+      200: {
+        description: "Ready.",
+        example: {
+          status: "ready",
+          database: "ok",
+          last_run_at: RUN_AT,
+          data_age_minutes: 30,
+          stale: false,
+          stale_after_minutes: 90,
+        },
+      },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+
+  // Risk
+  {
+    method: "get",
+    path: "/api/v1/zones",
+    tag: "Risk",
+    summary: "The six NH-44 zones, Jammu to Srinagar",
+    access: "public",
+    success: {
+      200: {
+        description: "The zones.",
+        envelope: "list",
+        meta: page(1),
+        // Zone 4 as seeded (supabase/migrations/20261110173420_seed_zones.sql).
+        example: [{ id: 4, name: "Ramban → Ramsoo", from_place: "Ramban", to_place: "Ramsoo", length_km: 22, danger_km: 9.5 }],
+      },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/risk",
+    tag: "Risk",
+    summary: "The newest closure-risk scores",
+    description:
+      "Without `horizon` or `zone`, every row of the newest run (6 zones × 4 horizons). The ETag is the run time; send `If-None-Match` to get a 304.",
+    access: "public",
+    query: riskQuery,
+    success: {
+      200: {
+        description: "Scores of the newest run.",
+        envelope: "list",
+        meta: { count: 1, next_cursor: null, run_at: RUN_AT, model_version: "rules-2026-11-25" },
+        example: [exampleRisk],
+        headers: { ETag: "The run time of these scores." },
+      },
+      304: { description: "Not modified: you already have this run.", envelope: "none" },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/risk/summary",
+    tag: "Risk",
+    summary: "The newest scores as a few lines of plain text (under 5 KB)",
+    access: "public",
+    query: summaryQuery,
+    success: {
+      200: {
+        description: "Plain text for a weak connection.",
+        contentType: "text/plain",
+        envelope: "none",
+        example: "NH-44 risk, 26 Nov 15:00 IST\nZone 4 Ramban → Ramsoo: medium in 24 h (landslide)\n",
+      },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/road-status",
+    tag: "Risk",
+    summary: "Mughal Road and the parcel train, as an admin last set them",
+    access: "public",
+    success: {
+      200: {
+        description: "Both items.",
+        envelope: "list",
+        meta: page(1),
+        example: [
+          { item: "mughal_road", state: "open", source_url: "https://example.org/mughal-road", updated_at: T },
+        ],
+      },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/model",
+    tag: "Risk",
+    summary: "The model card and backtest results",
+    access: "public",
+    success: { 200: { description: "Read from files in the repository.", example: modelCard() } },
+  },
+  {
+    method: "get",
+    path: "/api/v1/incidents",
+    tag: "Risk",
+    summary: "Verified past closures on NH-44, newest first",
+    access: "public",
+    query: incidentsQuery,
+    success: {
+      200: {
+        description: "Past closures.",
+        envelope: "list",
+        meta: page(1),
+        example: [
+          // The first row of data/incidents.csv.
+          {
+            id: 1,
+            date: "2018-02-06",
+            end_date: "2018-02-06",
+            zone_id: 5,
+            place: "Ramsoo",
+            hazard_type: "landslide",
+            hours_closed: 9,
+            vehicles_stranded: null,
+            source_url:
+              "https://www.business-standard.com/article/pti-stories/landslide-jammu-srinagar-highway-reopens-after-9-hrs-118020601542_1.html",
+            source_publisher: "Business Standard (PTI)",
+            confidence: "high",
+          },
+        ],
+      },
+    },
+    errors: { 503: "The database can't be reached." },
+  },
+
+  // Advice
+  {
+    method: "post",
+    path: "/api/v1/advice",
+    tag: "Advice",
+    summary: "SEND, HOLD, RAIL or DIVERT for one lot",
+    description:
+      "From the newest risk scores and the admin-set road status. Nothing is stored. The phone runs the same rules (`decide()`) offline.",
+    access: "public",
+    rateLimit: "advice",
+    body: adviceRequest,
+    bodyExample: exampleLot,
+    success: { 200: { description: "The advice.", example: exampleAdvice } },
+    errors: { 503: "The database can't be reached." },
+  },
+
+  // Reports
+  {
+    method: "get",
+    path: "/api/v1/reports",
+    tag: "Reports",
+    summary: "Road reports on the map right now",
+    description: "Unconfirmed or confirmed, not expired, not hidden. No user ids.",
+    access: "public",
+    query: publicReportsQuery,
+    success: { 200: { description: "Reports.", envelope: "list", meta: page(1), example: [exampleReport] } },
+    errors: { 503: "The database can't be reached." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/reports",
+    tag: "Reports",
+    summary: "Report a hazard on the road",
+    description:
+      "multipart/form-data with an optional photo (JPEG, PNG or WebP, up to 5 MB; re-encoded to WebP without EXIF). Sending the same `Idempotency-Key` again returns the first answer.",
+    access: ["driver", "agent", "police", "admin"],
+    rateLimit: "report",
+    multipart: reportFields,
+    headers: [
+      { name: "Idempotency-Key", required: true, schema: idempotencyKey, description: "A UUID made once per report." },
+    ],
+    success: {
+      201: {
+        description: "A new report.",
+        example: { id: REPORT_ID, status: "unconfirmed", outcome: "created" },
+        headers: { Location: "/api/v1/reports/{id}" },
+      },
+      200: {
+        description: "The same report again (`repeat`), or counted as a confirmation of one nearby (`merged`).",
+        example: { id: REPORT_ID, status: "confirmed", outcome: "merged" },
+      },
+    },
+    errors: {
+      400: "Not multipart, or the Idempotency-Key is missing or not a UUID.",
+      409: "This Idempotency-Key was already used for another report.",
+      413: "The form or the photo is too big.",
+      503: "Reporting is paused (FEATURE_REPORTS_WRITE=false).",
+    },
+  },
+  {
+    method: "get",
+    path: "/api/v1/reports/{id}/photo",
+    tag: "Reports",
+    summary: "A report's photo (WebP, EXIF removed)",
+    access: "public",
+    params: { id: reportId },
+    success: { 200: { description: "The photo.", contentType: "image/webp", envelope: "none" } },
+    errors: { 404: "No such visible report, or it has no photo." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/reports/{id}/confirm",
+    tag: "Reports",
+    summary: "\"I see it too\"",
+    description:
+      "Verified drivers, agents, police and admins, once per person, never on your own report. Two verified people within 2 km and 3 h, or one police or admin, confirm a report.",
+    access: ["driver", "agent", "police", "admin"],
+    rateLimit: "confirmation",
+    params: { id: reportId },
+    body: confirmBody,
+    bodyExample: { lat: 33.25, lng: 75.19 },
+    success: { 200: { description: "Counted.", example: { status: "confirmed", confirmations: 2, outcome: "confirmed" } } },
+    errors: { 404: "No such report on the map.", 409: "Your own report, or you already confirmed it." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/reports/{id}/flag",
+    tag: "Reports",
+    summary: "\"This is wrong\", with a reason",
+    access: "signed-in",
+    rateLimit: "confirmation",
+    params: { id: reportId },
+    body: flagBody,
+    bodyExample: { reason: "not_there" },
+    success: { 200: { description: "Flagged.", example: { status: "unconfirmed", outcome: "flagged" } } },
+    errors: { 404: "No such report on the map.", 409: "You already flagged it." },
+  },
+
+  // Official updates
+  {
+    method: "get",
+    path: "/api/v1/official-updates",
+    tag: "Official updates",
+    summary: "Police and TCU updates still in force, with their source",
+    access: "public",
+    query: publicUpdatesQuery,
+    success: { 200: { description: "Updates.", envelope: "list", meta: page(1), example: [exampleUpdate] } },
+    errors: { 503: "The database can't be reached." },
+  },
+
+  // Me
+  {
+    method: "get",
+    path: "/api/v1/me",
+    tag: "Me",
+    summary: "Your profile and role",
+    access: "signed-in",
+    success: { 200: { description: "You.", example: exampleMe } },
+    errors: { 409: "Your profile isn't set up yet." },
+  },
+  {
+    method: "patch",
+    path: "/api/v1/me",
+    tag: "Me",
+    summary: "Change your name, language or location sharing",
+    description: "Turning `location_consent` on records the privacy notice version; turning it off deletes your last position.",
+    access: "signed-in",
+    body: patchMeBody,
+    bodyExample: { location_consent: true },
+    success: { 200: { description: "Your updated profile.", example: exampleMe } },
+    errors: { 409: "Your profile isn't set up yet." },
+  },
+  {
+    method: "delete",
+    path: "/api/v1/me",
+    tag: "Me",
+    summary: "Delete your account",
+    description:
+      "Your profile, shipments, invites, confirmations and photos go; your road reports stay without your user id. Police and admin accounts are removed by an admin.",
+    access: "signed-in",
+    rateLimit: "role",
+    body: deleteMeBody,
+    bodyExample: { confirm: "DELETE" },
+    success: { 204: { description: "Deleted.", envelope: "none" } },
+    errors: { 409: "Police and admin accounts can't delete themselves.", 503: "Your data was deleted, but the sign-in account wasn't. Try again." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/me/onboarding",
+    tag: "Me",
+    summary: "Pick your role once: grower, trader, agent or driver",
+    access: "signed-in",
+    rateLimit: "role",
+    body: onboardingBody,
+    bodyExample: { role: "driver", display_name: "Bashir", language: "ur" },
+    success: {
+      201: { description: "Role set.", example: exampleMe },
+      200: { description: "Finished an earlier attempt with the same role.", example: exampleMe },
+    },
+    errors: { 409: "You already have a different role; an admin can change it." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/me/realtime-token",
+    tag: "Me",
+    summary: "Your short-lived session token, for Supabase Realtime on the board",
+    access: "signed-in",
+    success: { 200: { description: "The token (about a minute).", example: { token: "eyJhbGciOiJSUzI1NiJ9.example" } } },
+  },
+
+  // Shipments
+  {
+    method: "get",
+    path: "/api/v1/shipments",
+    tag: "Shipments",
+    summary: "The shipments on your board, newest first",
+    description: "An agent sees their own, a driver the ones assigned to them, a grower or trader the lots they saved, an admin all.",
+    access: ["grower", "trader", "agent", "driver", "admin"],
+    query: shipmentsQuery,
+    success: { 200: { description: "Shipments.", envelope: "list", meta: page(1), example: [exampleShipment] } },
+  },
+  {
+    method: "post",
+    path: "/api/v1/shipments",
+    tag: "Shipments",
+    summary: "Save a lot or a truck on your board, with the advice of this moment",
+    access: ["grower", "trader", "agent"],
+    body: createShipmentBody,
+    bodyExample: {
+      variety: "delicious",
+      tonnes: 10,
+      harvest_date: "2026-11-14",
+      destination: "azadpur",
+      truck_type: "heavy",
+      truck_number: "JK05G7712",
+    },
+    success: {
+      201: {
+        description: "Saved.",
+        example: { id: SHIPMENT_ID, status: "planned", advice: exampleAdvice },
+        headers: { Location: "/api/v1/shipments/{id}" },
+      },
+    },
+    errors: { 409: "This truck already has a shipment that isn't delivered." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/shipments/{id}",
+    tag: "Shipments",
+    summary: "One shipment on your board",
+    access: ["grower", "trader", "agent", "driver", "admin"],
+    params: { id: shipmentId },
+    success: { 200: { description: "The shipment.", example: exampleShipment } },
+    errors: { 404: "Not on your board." },
+  },
+  {
+    method: "patch",
+    path: "/api/v1/shipments/{id}",
+    tag: "Shipments",
+    summary: "Change status, driver or ETA (the owner agent)",
+    access: ["agent"],
+    params: { id: shipmentId },
+    body: patchShipmentBody,
+    bodyExample: { status: "moving", eta: LATER },
+    success: { 200: { description: "The updated shipment.", example: exampleShipment } },
+    errors: { 404: "Not one of your shipments.", 409: "Conflicts with another shipment." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/shipments/{id}/location",
+    tag: "Shipments",
+    summary: "Share where the truck is (the assigned driver, with sharing on)",
+    description: "Stored rounded to 2 decimals (about 1 km).",
+    access: ["driver"],
+    params: { id: shipmentId },
+    body: locationBody,
+    bodyExample: { lat: 33.2512, lng: 75.1934 },
+    success: { 200: { description: "Saved.", example: { last_seen_at: T } } },
+    errors: { 404: "Not a shipment assigned to you that is on the road.", 409: "Location sharing is off." },
+  },
+
+  // Agents
+  {
+    method: "get",
+    path: "/api/v1/agents/invites",
+    tag: "Agents",
+    summary: "Your invite codes, newest first",
+    access: ["agent"],
+    success: {
+      200: {
+        description: "Codes.",
+        envelope: "list",
+        meta: page(1),
+        example: [{ code: "K7MPQ2XR", created_at: T, expires_at: LATER, accepted_at: null, accepted_by_name: null }],
+      },
+    },
+  },
+  {
+    method: "post",
+    path: "/api/v1/agents/invites",
+    tag: "Agents",
+    summary: "A new code a driver types to join your fleet",
+    access: ["agent"],
+    body: createInviteBody,
+    bodyExample: { days: 7 },
+    success: { 201: { description: "The code.", example: { code: "K7MPQ2XR", expires_at: LATER } } },
+    errors: { 429: "You already have 20 open codes." },
+  },
+  {
+    method: "post",
+    path: "/api/v1/agents/invites/accept",
+    tag: "Agents",
+    summary: "Join an agent's fleet with their code (drivers)",
+    access: ["driver"],
+    rateLimit: "verification",
+    body: acceptInviteBody,
+    bodyExample: { code: "K7MPQ2XR" },
+    success: { 200: { description: "Joined, or already joined with this code.", example: { agent_id: AGENT, outcome: "joined" } } },
+    errors: { 404: "Unknown code.", 409: "Used by someone else, or expired." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/agents/drivers",
+    tag: "Agents",
+    summary: "The drivers in your fleet",
+    access: ["agent"],
+    success: {
+      200: {
+        description: "Drivers.",
+        envelope: "list",
+        meta: page(1),
+        example: [{ id: USER, display_name: "Bashir", verification_level: "email", location_consent: true }],
+      },
+    },
+  },
+  {
+    method: "post",
+    path: "/api/v1/agents/drivers/{driverId}/vouch",
+    tag: "Agents",
+    summary: "Say you know this driver (raises them to agent_vouched)",
+    access: ["agent"],
+    rateLimit: "verification",
+    params: { driverId: userId },
+    success: { 200: { description: "Vouched.", example: { verification_level: "agent_vouched", outcome: "vouched" } } },
+    errors: { 404: "Not a driver in your fleet." },
+  },
+
+  // Admin
+  {
+    method: "get",
+    path: "/api/v1/admin/official-updates",
+    tag: "Admin",
+    summary: "Every version of every official update, deleted ones too",
+    access: ["admin", "police"],
+    query: adminUpdatesQuery,
+    success: { 200: { description: "History.", envelope: "list", meta: page(1), example: [exampleAdminUpdate] } },
+  },
+  {
+    method: "post",
+    path: "/api/v1/admin/official-updates",
+    tag: "Admin",
+    summary: "Post a police/TCU update with the https link where it was published",
+    access: ["admin", "police"],
+    body: createUpdateBody,
+    bodyExample: {
+      zone_id: 4,
+      kind: "one_way",
+      title: "One-way traffic from Jammu to Srinagar",
+      source_url: "https://example.org/traffic-advisory",
+      source_name: "J&K Traffic Police",
+      issued_at: "2026-11-26T15:00:00+05:30",
+      valid_until: "2026-11-26T21:00:00+05:30",
+    },
+    success: {
+      201: { description: "Posted (audited).", example: exampleAdminUpdate, headers: { Location: "/api/v1/admin/official-updates/{id}" } },
+    },
+  },
+  {
+    method: "patch",
+    path: "/api/v1/admin/official-updates/{id}",
+    tag: "Admin",
+    summary: "Edit an update (makes a new version; the old one stays in the history)",
+    access: ["admin", "police"],
+    params: { id: updateId },
+    body: editUpdateBody,
+    bodyExample: { title: "Road open both ways", kind: "reopened" },
+    success: {
+      200: {
+        description: "The new version.",
+        example: { ...exampleAdminUpdate, id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e", version: 2, supersedes_id: UPDATE_ID },
+      },
+    },
+    errors: { 404: "No such current update.", 409: "Someone edited it first." },
+  },
+  {
+    method: "delete",
+    path: "/api/v1/admin/official-updates/{id}",
+    tag: "Admin",
+    summary: "Take an update down, with a reason (kept in the history)",
+    access: ["admin", "police"],
+    params: { id: updateId },
+    body: deleteUpdateBody,
+    bodyExample: { reason: "Posted for the wrong zone." },
+    success: {
+      200: { description: "Taken down.", example: { ...exampleAdminUpdate, deleted_at: T, delete_reason: "Posted for the wrong zone." } },
+    },
+    errors: { 404: "No such current update." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/admin/reports",
+    tag: "Admin",
+    summary: "Every report, hidden ones too, with flag counts",
+    access: ["admin"],
+    query: adminReportsQuery,
+    success: {
+      200: { description: "Reports.", envelope: "list", meta: page(1), example: [{ ...exampleReport, status: "hidden", hidden_reason: "Hidden after 3 flags.", flags: 3 }] },
+    },
+  },
+  {
+    method: "patch",
+    path: "/api/v1/admin/reports/{id}",
+    tag: "Admin",
+    summary: "Hide, resolve or restore a report, with a reason (audited)",
+    access: ["admin"],
+    params: { id: reportId },
+    body: moderateBody,
+    bodyExample: { action: "hide", reason: "Photo shows a person's face." },
+    success: { 200: { description: "Done.", example: { id: REPORT_ID, status: "hidden" } } },
+    errors: { 404: "No such report.", 409: "That action doesn't fit the report's status." },
+  },
+  {
+    method: "patch",
+    path: "/api/v1/admin/road-status",
+    tag: "Admin",
+    summary: "Set Mughal Road or the parcel train, with the link that says so",
+    access: ["admin"],
+    body: roadStatusBody,
+    bodyExample: { item: "mughal_road", state: "closed", source_url: "https://example.org/mughal-road" },
+    success: {
+      200: {
+        description: "Saved (audited).",
+        example: { item: "mughal_road", state: "closed", source_url: "https://example.org/mughal-road", updated_at: T },
+      },
+    },
+  },
+  {
+    method: "patch",
+    path: "/api/v1/admin/users/{id}/role",
+    tag: "Admin",
+    summary: "Set any user's role, with a reason (audited)",
+    access: ["admin"],
+    rateLimit: "role",
+    params: { id: clerkUserId },
+    body: roleChangeBody,
+    bodyExample: { role: "police", reason: "Verified with the SSP Ramban office." },
+    success: {
+      200: {
+        description: "Changed. The user's session picks it up within about a minute.",
+        example: { id: USER, old_role: "driver", role: "police", token_refresh_needed: true },
+      },
+    },
+    errors: { 404: "No such user." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/admin/audit-log",
+    tag: "Admin",
+    summary: "Who did which privileged thing, when and why (read-only)",
+    access: ["admin"],
+    query: auditLogQuery,
+    success: {
+      200: {
+        description: "Entries, newest first.",
+        envelope: "list",
+        meta: page(1),
+        example: [
+          {
+            id: 42,
+            at: T,
+            actor_id: AGENT,
+            actor_role: "police",
+            action: "official_update.created",
+            target_type: "official_update",
+            target_id: UPDATE_ID,
+            reason: null,
+            request_id: "4c1f7e2a9b3d",
+            meta: null,
+          },
+        ],
+      },
+    },
+  },
+
+  // Docs
+  {
+    method: "get",
+    path: "/api/v1/openapi.json",
+    tag: "Docs",
+    summary: "This document",
+    access: "public",
+    success: { 200: { description: "OpenAPI 3.1.", envelope: "none" } },
+  },
+];
