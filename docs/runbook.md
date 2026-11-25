@@ -131,6 +131,50 @@ To change the password later, repeat steps 1–3 and the `database-url` secret c
 
 After every migration run `npm run db:types` and `npm run db:schema`; `npm run typecheck` fails if the two disagree.
 
+## Job queue worker
+
+Report and official-update writes put a job on the queue (`pgmq`, migration `20261125200000_jobs_queue.sql`). Every minute pg_cron runs `private.wake_job_worker()`, which calls `POST /api/v1/internal/jobs/run` through pg_net, but only when a job is waiting and only once Vault knows where the worker is. Until you do the steps below, jobs wait in the queue and nothing is lost.
+
+Once, after the first deploy:
+
+1. Make the secret on your Mac and copy it (never into chat or git):
+
+   ```bash
+   openssl rand -hex 32 | pbcopy
+   ```
+
+2. Give it to the app as a Container Apps secret, then point the env var at it:
+
+   ```bash
+   az containerapp secret set --name $APP --resource-group $RG --secrets jobs-secret=<paste>
+   ```
+
+   ```bash
+   az containerapp update --name $APP --resource-group $RG --set-env-vars JOBS_SECRET=secretref:jobs-secret
+   ```
+
+   For your own machine, add `JOBS_SECRET=<paste>` to `.env.local` instead.
+
+3. Supabase → **SQL Editor**. Paste the same secret and the app's address, and run:
+
+   ```sql
+   select vault.create_secret('<paste>', 'jobs_secret');
+   select vault.create_secret('https://<app-address>/api/v1/internal/jobs/run', 'jobs_worker_url');
+   ```
+
+4. Check it: post a road report in the app, wait a minute, then in the SQL editor:
+
+   ```sql
+   select count(*) from pgmq.q_jobs;  -- 0 once the worker took it
+   select status_code, created from net._http_response order by created desc limit 3;  -- 200
+   ```
+
+To change the secret, repeat steps 1–2 and run `select vault.update_secret((select id from vault.secrets where name = 'jobs_secret'), '<paste>');`.
+
+Failed jobs: a job that fails 5 times moves to `job_dead_letters`, shown to admins on `/admin/jobs`. Fix the cause, then post the job again by hand if it still matters, e.g. `select private.enqueue_job('report.confirmed', '{"report_id": "<id>"}');`.
+
+To pause the worker: `select cron.unschedule('jobs-worker');`. To start it again: `select cron.schedule('jobs-worker', '* * * * *', 'select private.wake_job_worker()');`.
+
 ## Risk job timing
 
 The risk job (`.github/workflows/risk-job.yml`) runs on GitHub Actions. GitHub's own hourly schedule skipped most hours (it ran every 6 to 12 hours in November 2026), so Supabase starts it instead:
