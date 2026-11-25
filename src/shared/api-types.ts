@@ -1,5 +1,7 @@
 // Shapes of the public list endpoints, shared by the routes' tests and the
 // screens. JSON turns dates into ISO strings.
+import type { RiskRow } from "./risk";
+
 export type Zone = {
   id: number;
   name: string;
@@ -110,3 +112,19 @@ export type RiskHex = {
   slope_deg: number | null;
   boundary: [number, number][];
 };
+
+// GET /api/v1/risk/replays: a real past storm (jobs/replay.py), scored on
+// the weather that actually happened. Never today's conditions.
+export type ReplaySummary = {
+  id: string;
+  date: string; // incident date, YYYY-MM-DD
+  scored_at: string; // 12:00 IST on that date
+  zone_id: number;
+  place: string;
+  hazard: string;
+  source_publisher: string;
+  source_url: string;
+};
+
+// GET /api/v1/risk/replays/{id}?horizon=
+export type Replay = ReplaySummary & { rows: RiskRow[]; hexes: RiskHex[] };

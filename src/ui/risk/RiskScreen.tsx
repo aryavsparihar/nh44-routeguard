@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatReason, type ReasonTranslate } from "@/src/shared/reason";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
-import type { OfficialUpdate, PublicReport, RiskHex } from "@/src/shared/api-types";
+import type { OfficialUpdate, PublicReport, Replay, ReplaySummary, RiskHex } from "@/src/shared/api-types";
 import {
   HAZARDS,
   HORIZONS,
@@ -19,6 +19,7 @@ import { useApi, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
 import { HexCard, type PickedHex } from "./HexCard";
 import { OfficialUpdates, RoadReports } from "./FeedLists";
+import { ReplayBanner, ReplayPicker, useReplayText } from "./Replay";
 import { RiskMap } from "./RiskMap";
 import { LoadError, Loading } from "./states";
 import { MAP_PLACES } from "@/src/shared/map-places";
@@ -43,7 +44,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
   const t = useTranslations("risk");
   const tr = useTranslations("reason");
   const locale = useLocale();
-  const risk = useRisk();
+  const live = useRisk();
   const [reports, , refreshReports] = useApi<ApiList<PublicReport>>("/api/v1/reports");
   const [updates, , refreshUpdates] = useApi<ApiList<OfficialUpdate>>("/api/v1/official-updates");
   // New reports and updates appear without a reload (D4b).
@@ -55,6 +56,26 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
   const [horizon, setHorizon] = useState<Horizon>(0);
   const [hazard, setHazard] = useState<Hazard | null>(null);
 
+  // A past storm instead of today (jobs/replay.py), for demos on a dry day.
+  // Its zone rows and cells replace the live ones; zone names stay live.
+  const [replays] = useApi<ApiList<ReplaySummary>>("/api/v1/risk/replays");
+  const replayList = replays.state === "ready" ? replays.value.data : [];
+  const [replayId, setReplayId] = useState<string | null>(null);
+  const replayInfo = replayList.find((r) => r.id === replayId) ?? null;
+  const [replay, retryReplay] = useApi<{ data: Replay }>(
+    replayInfo ? `/api/v1/risk/replays/${encodeURIComponent(replayInfo.id)}?horizon=${horizon}` : null,
+  );
+  // The hook keeps the last answer while the next loads: never show one
+  // storm under another's banner.
+  const replayData = replayInfo && replay.state === "ready" && replay.value.data.id === replayInfo.id ? replay.value.data : null;
+  const risk = useMemo(() => {
+    if (!replayInfo || live.state !== "ready") return live;
+    if (replay.state === "error") return { state: "error" as const, retry: retryReplay };
+    if (!replayData) return { state: "loading" as const, retry: retryReplay };
+    return { ...live, rows: replayData.rows };
+  }, [live, replayInfo, replay.state, replayData, retryReplay]);
+  const replayText = useReplayText();
+
   const rows = useMemo(
     () => (risk.state === "ready" ? risk.rows.filter((r) => r.horizon_hours === horizon) : []),
     [risk, horizon],
@@ -64,24 +85,28 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
     for (const row of rows) out[row.zone_id] = scoreFor(row, hazard).level;
     return out;
   }, [rows, hazard]);
-  const [hexRows] = useApi<ApiList<RiskHex>>(`/api/v1/risk/hexes?horizon=${horizon}`);
+  const [liveHexes] = useApi<ApiList<RiskHex>>(replayInfo ? null : `/api/v1/risk/hexes?horizon=${horizon}`);
+  const hexList = useMemo((): RiskHex[] | null => {
+    if (replayInfo) return replayData ? replayData.hexes : null;
+    return liveHexes.state === "ready" ? liveHexes.value.data : null;
+  }, [replayInfo, replayData, liveHexes]);
   const hexes = useMemo(
     () =>
-      hexRows.state === "ready"
-        ? hexRows.value.data.map((h) => ({
+      hexList
+        ? hexList.map((h) => ({
             id: h.h3_index,
             boundary: h.boundary,
             level: hazard ? levelFor(h.hazards[hazard]) : h.level,
           }))
         : [],
-    [hexRows, hazard],
+    [hexList, hazard],
   );
   // The cell tapped on the map. Its numbers follow the time and hazard
   // picked above, like the map's colours.
   const [pickedId, setPickedId] = useState<string | null>(null);
   const picked = useMemo((): PickedHex | null => {
-    if (!pickedId || hexRows.state !== "ready" || risk.state !== "ready") return null;
-    const h = hexRows.value.data.find((x) => x.h3_index === pickedId);
+    if (!pickedId || !hexList || risk.state !== "ready") return null;
+    const h = hexList.find((x) => x.h3_index === pickedId);
     if (!h) return null;
     const score = hazard ? h.hazards[hazard] : (h.overall ?? 0);
     return {
@@ -105,7 +130,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
         ((key, values) => tr(key as never, values as never)) as ReasonTranslate,
       ),
     };
-  }, [pickedId, hexRows, risk, hazard, tr]);
+  }, [pickedId, hexList, risk, hazard, tr]);
   const shownReports = useMemo(() => {
     const list = reports.state === "ready" ? reports.value.data : [];
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;
@@ -116,14 +141,23 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
     [t],
   );
 
-  const when = horizon === 0 ? t("whenNow") : t("whenLater", { hours: horizon });
+  const when = replayInfo
+    ? horizon === 0
+      ? t("replay.whenAt", { date: replayText.date(replayInfo) })
+      : t("replay.whenLater", { hours: horizon, date: replayText.date(replayInfo) })
+    : horizon === 0
+      ? t("whenNow")
+      : t("whenLater", { hours: horizon });
 
   return (
     <div className="flex flex-col gap-4">
+      <ReplayPicker replays={replayList} value={replayInfo ? replayInfo.id : null} onChange={setReplayId} />
+      {replayInfo && <ReplayBanner replay={replayInfo} onBack={() => setReplayId(null)} />}
+
       <div role="group" aria-label={t("forecastTime")} className="flex gap-2 overflow-x-auto pb-1">
         {HORIZONS.map((h) => (
           <button key={h} type="button" className={chip} aria-pressed={horizon === h} onClick={() => setHorizon(h)}>
-            {t(`horizon.h${h}`)}
+            {replayInfo ? t(`replay.horizon.h${h}`) : t(`horizon.h${h}`)}
           </button>
         ))}
       </div>
@@ -152,7 +186,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             segments={segments}
             bounds={bounds}
             levels={levels}
-            reports={shownReports}
+            reports={replayInfo ? [] : shownReports}
             label={t("mapLabel", { when })}
             simpleText={t("mapSimple")}
             hexes={hexes}
@@ -173,8 +207,9 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
         </>
       )}
 
-      {updates.state === "ready" && <OfficialUpdates updates={updates.value.data} />}
-      {reports.state === "ready" && <RoadReports reports={shownReports} />}
+      {/* Today's reports and updates don't belong on a past storm's map. */}
+      {!replayInfo && updates.state === "ready" && <OfficialUpdates updates={updates.value.data} />}
+      {!replayInfo && reports.state === "ready" && <RoadReports reports={shownReports} />}
     </div>
   );
 }

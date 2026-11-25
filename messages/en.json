@@ -129,6 +129,25 @@
       "slopeValue": "{slope}°",
       "unknown": "Not known",
       "close": "Close"
+    },
+    "replay": {
+      "pick": "Weather on the map",
+      "live": "Today (live)",
+      "option": "Past storm: {date}, {hazard}, {place}",
+      "bannerTitle": "Past storm, not today",
+      "bannerText": "The map shows the real weather of {date} near {place}, scored with RouteGuard's rules at 12:00 that day. Later times use the weather that actually came, not a forecast.",
+      "reported": "The highway was reported blocked there that day ({hazard}).",
+      "source": "Source: {publisher}",
+      "hidden": "Road reports and police updates are hidden here: they are from today.",
+      "back": "Back to today",
+      "whenAt": "at 12:00 on {date}",
+      "whenLater": "{hours} h after 12:00 on {date}",
+      "horizon": {
+        "h0": "12:00",
+        "h12": "+12 h",
+        "h24": "+24 h",
+        "h48": "+48 h"
+      }
     }
   },
   "reason": {

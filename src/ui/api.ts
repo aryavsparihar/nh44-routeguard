@@ -41,15 +41,17 @@ export type Loaded<T> =
   | { state: "ready"; value: T };
 
 // Loads `path` once (and again on retry()). Offline caching is the service
-// worker's job, not this hook's.
+// worker's job, not this hook's. A null path loads nothing and stays
+// "loading" (for a screen that only sometimes needs it).
 // The second item reloads and shows "loading" meanwhile; the third reloads
 // quietly (past the browser's HTTP cache), keeping what is on screen until
 // the new answer arrives.
-export function useApi<T>(path: string): [Loaded<T>, () => void, () => void] {
+export function useApi<T>(path: string | null): [Loaded<T>, () => void, () => void] {
   const [result, setResult] = useState<Loaded<T>>({ state: "loading" });
   const [attempt, setAttempt] = useState({ n: 0, fresh: false });
 
   useEffect(() => {
+    if (path === null) return;
     const controller = new AbortController();
     getJson<T>(path, controller.signal, { fresh: attempt.fresh }).then(
       (value) => setResult({ state: "ready", value }),

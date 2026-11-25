@@ -123,6 +123,8 @@ A hand-written service worker keeps the app shell, the last risk scores and the 
 
 **Backtest** ([docs/backtest.md](docs/backtest.md), `jobs/backtest.py`, run on 25 Nov 2026): of 16 verified incidents recent enough for archived forecasts, the 24 h forecast flagged the zone (medium or high) for 15 and the right hazard for 14; the 48 h forecast flagged the zone for 13. The cost is false alarms: 495 alarm days in 5994 zone-days at 24 h (about 2.5 per zone per 30 days). The sample is small; read the caveats in the doc.
 
+**Storm replays** (`jobs/replay.py`, `lib/risk/replays.json`): on a dry day every score is 0, so the map has a "Weather on the map" picker with three verified past storms (snow at the Navyug Tunnel on 23 Jan 2026, landslides at Digdol on 6 Apr 2026, the Seri–Maroog flash flood on 20 Apr 2025). Each is scored with the same rules on the weather that actually happened (ERA5 via the Open-Meteo archive), at 12:00 IST that day. A banner says it is a past storm, not today; nothing is written to the live scores. Served by `GET /api/v1/risk/replays` and `/api/v1/risk/replays/{id}`.
+
 ### Hourly job
 
 [`jobs/run_risk.py`](jobs/run_risk.py) fetches the weather (one Open-Meteo call), saves it to `weather_readings`, scores the 6 zones for 0/12/24/48 h and writes 24 rows to `risk_scores`. GitHub Actions runs it at minute 7 of every hour ([`.github/workflows/risk-job.yml`](.github/workflows/risk-job.yml)), then checks the new rows arrived.
