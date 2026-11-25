@@ -8,6 +8,10 @@
 
 **A decision and what we rejected:** rate limits counted in Postgres (one upsert per hit, fixed windows) so they hold across replicas. Rejected: in-memory limits (each replica would allow its own 60) and Upstash Redis (another account to manage; section 17 allows the Postgres fallback).
 
-**A limitation and the fix:** the thresholds (0.30 / 0.65) and priority assumptions are starting values, not fitted to data. Fix: tune them against the backtest once we have more verified incidents. Also, map place names stay in English: we'd need a base map with Hindi and Urdu labels.
+**A limitation and the fix:** the thresholds (0.30 / 0.65) and priority assumptions are starting values, not fitted to data. Fix: tune them against the backtest once we have more verified incidents. 
 
 Measured: `docs/scaling.md` (warm p50 3 ms, 304 p50 2 ms, on a laptop, 25 Nov 2026).
+
+**Cells (C5):** `jobs/tools/build_hexes.py` → `data/corridor_hexes.csv` + `data/hex_slope.csv` → `jobs/load_hexes.py` → the hourly job scores 291 cells → `GET /api/v1/risk/hexes` (outlines from h3-js on the server) → a fill layer under the corridor line. Test: `src/server/risk/hexes.routes.test.ts` (closed outline, 304, 400).
+
+**Map labels (C6):** in Hindi and Urdu, `RiskMap.tsx` hides the base map's labels and draws the towns in `src/shared/map-places.ts` as page text, because MapLibre can't shape Devanagari or join Urdu letters.
