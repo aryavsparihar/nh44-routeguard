@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(109);
+select plan(119);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -437,6 +437,31 @@ select is((select bool_or(am.inherit_option) or not bool_and(am.set_option)
 select is(has_table_privilege('routeguard_app', 'public.users', 'select')
           or has_table_privilege('routeguard_app', 'public.zones', 'select'),
   false, 'routeguard_app: reads nothing without switching role first');
+
+-- Shared rate limits (C3, 20261125140000_rate_limits.sql), as the app's
+-- signed-out role. The private schema isn't exposed by the REST API.
+set local role anon;
+set local request.jwt.claims = '{"role": "anon"}';
+select is((select allowed from private.rate_limit_hit('pgtap:limit', 2, 3600)), true, 'rate limit: first hit allowed');
+select is((select allowed from private.rate_limit_hit('pgtap:limit', 2, 3600)), true, 'rate limit: second hit allowed');
+select is((select allowed::text || ' ' || hits || ' ' || (retry_after_seconds > 0)::text
+           from private.rate_limit_hit('pgtap:limit', 2, 3600)),
+  'false 3 true', 'rate limit: third hit refused, with a wait time');
+select is((select allowed from private.rate_limit_hit('pgtap:other', 2, 3600)), true, 'rate limit: buckets count separately');
+select throws_ok($$ select * from private.rate_limit_hit('', 2, 60) $$,
+  '22023', null::text, 'rate limit: refuses an empty bucket');
+select throws_ok($$ select * from private.rate_limit_hit('pgtap:x', 2, 100000) $$,
+  '22023', null::text, 'rate limit: refuses a window longer than a day');
+select throws_ok($$ select * from private.rate_limits $$,
+  '42501', null::text, 'anon: cannot read rate_limits');
+select throws_ok($$ select private.rate_limits_cleanup() $$,
+  '42501', null::text, 'anon: cannot run the rate limit cleanup');
+set local role postgres;
+select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where p.proname = 'rate_limit_hit' and n.nspname = 'public'),
+  0::bigint, 'rate_limit_hit is not in the public schema (no REST access)');
+select is((select schedule from cron.job where jobname = 'rate-limits-cleanup'), '23 * * * *',
+  'pg_cron clears old rate limit windows every hour');
 
 select * from finish();
 
