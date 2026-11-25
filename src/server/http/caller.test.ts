@@ -48,8 +48,12 @@ describe("getCaller", () => {
 });
 
 describe("roleFromClaims", () => {
-  it.each(["grower", "trader", "agent", "driver", "police", "admin"])("accepts %s", (role) => {
+  it.each(["grower", "trader", "agent", "driver", "admin"])("accepts %s", (role) => {
     expect(roleFromClaims({ metadata: { role } })).toBe(role);
+  });
+
+  it("treats police as no role (merged into TCU, 26 Nov 2026)", () => {
+    expect(roleFromClaims({ metadata: { role: "police" } })).toBeNull();
   });
 
   it.each([

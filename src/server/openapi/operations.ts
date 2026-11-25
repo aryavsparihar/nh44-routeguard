@@ -46,7 +46,15 @@ import {
   shipmentsQuery,
   userId,
 } from "@/src/server/shipments/shipments.schemas";
-import { clerkUserId, deleteMeBody, onboardingBody, patchMeBody, roleChangeBody } from "@/src/server/users/users.schemas";
+import {
+  clerkUserId,
+  deleteMeBody,
+  onboardingBody,
+  patchMeBody,
+  reviewBody,
+  roleChangeBody,
+  usersListQuery,
+} from "@/src/server/users/users.schemas";
 
 export type Access = "public" | "signed-in" | readonly Role[];
 export type Method = "get" | "post" | "patch" | "delete";
@@ -195,6 +203,8 @@ const exampleMe = {
   location_consent: true,
   consent_version: "2026-11-25",
   agent_id: AGENT,
+  approval: "approved",
+  review_note: null,
   onboarded: true,
 };
 
@@ -594,28 +604,30 @@ export const OPERATIONS: Operation[] = [
     tag: "Me",
     summary: "Delete your account",
     description:
-      "Your profile, shipments, invites, confirmations and photos go; your road reports stay without your user id. Police and admin accounts are removed by an admin.",
+      "Your profile, shipments, invites, confirmations and photos go; your road reports stay without your user id. TCU accounts are removed by the operator.",
     access: "signed-in",
     rateLimit: "role",
     body: deleteMeBody,
     bodyExample: { confirm: "DELETE" },
     success: { 204: { description: "Deleted.", envelope: "none" } },
-    errors: { 409: "Police and admin accounts can't delete themselves.", 503: "Your data was deleted, but the sign-in account wasn't. Try again." },
+    errors: { 409: "TCU accounts can't delete themselves.", 503: "Your data was deleted, but the sign-in account wasn't. Try again." },
   },
   {
     method: "post",
     path: "/api/v1/me/onboarding",
     tag: "Me",
-    summary: "Pick your role once: grower, trader, agent or driver",
+    summary: "Ask for your role once: grower, trader, agent or driver",
+    description:
+      "Saves the request as approval 'pending'. TCU approves it (POST /api/v1/admin/users/{id}/review); only then does the role reach the session token. Until then the account counts as signed in with no role.",
     access: "signed-in",
     rateLimit: "role",
     body: onboardingBody,
     bodyExample: { role: "driver", display_name: "Bashir", language: "ur" },
     success: {
-      201: { description: "Role set.", example: exampleMe },
-      200: { description: "Finished an earlier attempt with the same role.", example: exampleMe },
+      201: { description: "Request saved; waiting for TCU.", example: { ...exampleMe, approval: "pending", agent_id: null } },
+      200: { description: "The same request again.", example: { ...exampleMe, approval: "pending", agent_id: null } },
     },
-    errors: { 409: "You already have a different role; an admin can change it." },
+    errors: { 409: "You already asked for a different role; TCU can change it." },
   },
   {
     method: "get",
@@ -889,19 +901,65 @@ export const OPERATIONS: Operation[] = [
     method: "patch",
     path: "/api/v1/admin/users/{id}/role",
     tag: "Admin",
-    summary: "Set any user's role, with a reason (audited)",
+    summary: "TCU moves an approved user to another self-service role, with a reason (audited)",
+    description: "TCU (admin) is the only staff role and can't be given in the app; the police role was merged into TCU.",
     access: ["admin"],
     rateLimit: "role",
     params: { id: clerkUserId },
     body: roleChangeBody,
-    bodyExample: { role: "police", reason: "Verified with the SSP Ramban office." },
+    bodyExample: { role: "agent", reason: "Now runs his own trucks; checked with the transport union." },
     success: {
       200: {
         description: "Changed. The user's session picks it up within about a minute.",
-        example: { id: USER, old_role: "driver", role: "police", token_refresh_needed: true },
+        example: { id: USER, old_role: "driver", role: "agent", token_refresh_needed: true },
       },
     },
     errors: { 404: "No such user." },
+  },
+  {
+    method: "get",
+    path: "/api/v1/admin/users",
+    tag: "Admin",
+    summary: "Accounts waiting for TCU (or turned down), oldest first, with their sign-in email",
+    access: ["admin"],
+    query: usersListQuery,
+    success: {
+      200: {
+        description: "Accounts.",
+        envelope: "list",
+        meta: page(1),
+        example: [
+          {
+            id: USER,
+            role: "driver",
+            display_name: "Bashir",
+            email: "bashir@example.com",
+            verification_level: "email",
+            approval: "pending",
+            review_note: null,
+            reviewed_at: null,
+            created_at: T,
+          },
+        ],
+      },
+    },
+  },
+  {
+    method: "post",
+    path: "/api/v1/admin/users/{id}/review",
+    tag: "Admin",
+    summary: "TCU approves or turns down a waiting account (audited)",
+    description:
+      "Approving puts the requested role into Clerk, so it reaches the person's token within about a minute. Turning down needs a reason, which the person sees on /me. Sending the same decision again changes nothing.",
+    access: ["admin"],
+    rateLimit: "review",
+    params: { id: clerkUserId },
+    body: reviewBody,
+    bodyExample: { decision: "approved" },
+    success: {
+      200: { description: "Decided.", example: { id: USER, approval: "approved", role: "driver" } },
+    },
+    errors: { 404: "No such account.", 409: "Already approved." },
   },
   {
     method: "get",

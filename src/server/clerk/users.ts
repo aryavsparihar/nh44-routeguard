@@ -55,3 +55,21 @@ export async function deleteClerkUser(userId: string): Promise<void> {
     throw clerkUnavailable(error);
   }
 }
+
+// The sign-in email of each account TCU is reviewing, so TCU knows who is
+// asking. Only TCU's approvals list calls this (docs/guardrails.md section 3).
+export async function clerkEmails(userIds: string[]): Promise<Record<string, string>> {
+  if (userIds.length === 0) return {};
+  try {
+    const clerk = await clerkClient();
+    const { data } = await clerk.users.getUserList({ userId: userIds, limit: userIds.length });
+    const emails: Record<string, string> = {};
+    for (const user of data) {
+      const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
+      if (email) emails[user.id] = email;
+    }
+    return emails;
+  } catch (error) {
+    throw clerkUnavailable(error);
+  }
+}

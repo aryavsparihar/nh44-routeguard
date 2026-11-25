@@ -19,10 +19,13 @@ const roleSchema = z.enum(ROLES);
 // dashboard step "customise session token" is done (docs/runbook.md).
 // Anything that isn't exactly one of our roles counts as "no role", so a
 // broken or unexpected claim can never grant access.
+// The police role was merged into TCU (admin) on 26 Nov 2026, so a token
+// that still says "police" counts as no role, the same as in the database
+// (private.jwt_role in 20261126040000_tcu_approval.sql).
 export function roleFromClaims(claims: unknown): Role | null {
   const metadata = (claims as { metadata?: { role?: unknown } } | null)?.metadata;
   const result = roleSchema.safeParse(metadata?.role);
-  return result.success ? result.data : null;
+  return result.success && result.data !== "police" ? result.data : null;
 }
 
 export async function getCaller(): Promise<Caller | null> {
