@@ -14,14 +14,16 @@ import { saveLocaleCookie } from "@/src/ui/locale-cookie";
 import { outboxCount } from "@/src/ui/offline/outbox";
 import { clearOfflineData } from "@/src/ui/offline/private-store";
 import { SignInLink } from "@/src/ui/SignInLink";
+import { AlertsCard } from "./AlertsCard";
+import { turnOffAlertsHere } from "./push";
 
 const SELF_SERVICE = ["grower", "trader", "agent", "driver"] as const;
 type Message = { kind: "ok" | "error"; text: string } | null;
 const card = "flex flex-col gap-3 rounded-lg border border-border bg-elevated p-4";
 
 // Your account (/me): pick a role the first time, then your name, language,
-// location sharing (drivers), sign out and delete the account.
-export function MeScreen() {
+// location sharing (drivers), alerts, sign out and delete the account.
+export function MeScreen({ pushKey = null }: { pushKey?: string | null }) {
   const t = useTranslations("me");
   const [me, retry] = useApi<{ data: MeProfile }>("/api/v1/me");
 
@@ -40,6 +42,7 @@ export function MeScreen() {
   return (
     <div className="flex flex-col gap-5">
       {profile.onboarded ? <Profile me={profile} onSaved={retry} /> : <Onboarding />}
+      {profile.onboarded && <AlertsCard publicKey={pushKey} />}
       <Account me={profile} />
     </div>
   );
@@ -265,6 +268,7 @@ function Account({ me }: { me: MeProfile }) {
   // for this person: the board copy, the outbox and the service worker's
   // caches (src/ui/offline/private-store.ts).
   async function leave() {
+    await turnOffAlertsHere();
     await clearOfflineData();
     await signOut({ redirectUrl: "/" }).catch(() => window.location.assign(new URL("/", window.location.origin)));
   }

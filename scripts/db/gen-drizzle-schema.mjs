@@ -33,6 +33,11 @@ const camel = (s) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
 const sqlText = (s) => s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 
 function builder(col, enums) {
+  // Arrays: the element's builder plus .array() (udt "_int2" is smallint[]).
+  if (col.udt.startsWith('_')) {
+    const [inner, imp] = builder({ ...col, udt: col.udt.slice(1) }, enums);
+    return [`${inner}.array()`, imp];
+  }
   switch (col.udt) {
     case 'text': return ['text()', 'text'];
     case 'int2': return ['smallint()', 'smallint'];

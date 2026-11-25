@@ -5,3 +5,8 @@
 # A random test UUID used as an Idempotency-Key in the report route tests;
 # the variable was called KEY. Renamed to CLIENT_ID in the next commit.
 5faf993b638d05e0ed274e2c6b3e0504ac9e6e93:src/server/reports/reports.routes.test.ts:generic-api-key:49
+
+# The OpenAPI example body for POST /push/subscriptions. p256dh and auth are
+# the public sample values from the Web Push docs, not a key of ours; a real
+# auth value is made by each browser and never stored in the repo.
+a32d02498a537694854d4da0a151c93815ac7b2f:src/server/openapi/operations.ts:generic-api-key:864

@@ -90,6 +90,7 @@ Migrations: `supabase/migrations/20261124160006_rls_helpers.sql` and `2026112416
 | `agent_invites` | the agent who made them | only through `create_agent_invite()` and `accept_agent_invite()` | grower can't make one, driver reads none |
 | `idempotency_keys` | your own | your own | someone else's key blocked |
 | `weather_readings` | nobody | risk job only | – |
+| `push_subscriptions` | your own | add or change only through `save_push_subscription()` (signed in with a role, known zones, at most 10 browsers); delete your own; the worker reads them only through `push_targets()`; deleted with the account | direct insert and update blocked, grower sees and deletes nobody else's, no role blocked, worker can't read the table, account deletion removes them |
 | `job_dead_letters` | admins | only `private.bury_job()` (the queue functions) | driver reads none, admin reads them |
 | queue `pgmq.q_jobs` and the job functions | nobody directly | `enqueue_job()`: signed-in writes, known job names and id-only payloads up to 2 KB. `read_jobs()`, `ack_job()`, `fail_job()`: only `routeguard_worker` | unknown job and big payload refused, signed-in user can't read jobs, worker can't read `users` |
 
@@ -102,3 +103,8 @@ The tests also check that every table in `public` has RLS on, and that the datab
 - A user picks grower, trader, agent or driver once (`POST /api/v1/me/onboarding`). police and admin are granted only by an admin with a reason (`PATCH /api/v1/admin/users/{id}/role`), and every change is in `audit_log`.
 - The role lives in Clerk `publicMetadata.role` (users can't edit it) and is mirrored in `users.role`. The database is written first, then Clerk, so the token never holds a role the database and the audit log don't know about.
 - Pages: `proxy.ts` sends signed-out visitors of `/board`, `/report/new` and `/admin/...` to sign-in; each page then checks the role with `requirePageRole()`. API routes: `withApi()` checks every route, and `app/api/routes.test.ts` fails if a route skips it.
+
+## Web Push endpoints
+
+The queue worker sends a request to each browser's push endpoint, so an endpoint is an address our server will call. The API accepts only the browsers' own push services over https on port 443 (`fcm.googleapis.com`, `updates.push.services.mozilla.com`, `web.push.apple.com`, `*.push.apple.com`, `*.notify.windows.com`; `src/server/push/push.schemas.ts`), and the worker checks again before sending. Anything else (an internal address, a metadata service, another site) is refused with 422. Payloads carry no personal data: the hazard, the zone number, the update's title and source, and a link to our own page; the service worker opens only our own paths.
+

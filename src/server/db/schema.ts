@@ -185,6 +185,17 @@ export const publicReports = pgView("public_reports", {
   has_photo: boolean(),
 }).existing();
 
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid().primaryKey().default(sql`gen_random_uuid()`),
+  user_id: text().notNull(),
+  endpoint: text().notNull(),
+  keys: jsonb().notNull(),
+  zones: smallint().array().notNull(),
+  language: text().default(sql`'en'::text`).notNull(),
+  created_at: timestamp({ withTimezone: true, mode: "date" }).default(sql`now()`).notNull(),
+  updated_at: timestamp({ withTimezone: true, mode: "date" }).default(sql`now()`).notNull(),
+}).enableRLS();
+
 export const reportConfirmations = pgTable("report_confirmations", {
   report_id: uuid().notNull(),
   user_id: text().notNull(),

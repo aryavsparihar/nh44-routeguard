@@ -13,6 +13,7 @@ import type { RateLimitName } from "@/src/server/http/rate-limit";
 import type { Role } from "@/src/server/http/caller";
 import { incidentsQuery } from "@/src/server/incidents/incidents.schemas";
 import { deadLettersQuery } from "@/src/server/jobs/jobs.schemas";
+import { subscriptionBody, unsubscribeBody } from "@/src/server/push/push.schemas";
 import { modelCard } from "@/src/server/model/model-card";
 import { decide, type Lot } from "@/src/shared/decide";
 import type { RiskRow } from "@/src/shared/risk";
@@ -819,6 +820,80 @@ export const OPERATIONS: Operation[] = [
         ],
       },
     },
+  },
+
+  // Alerts
+  {
+    method: "get",
+    path: "/api/v1/push/subscriptions",
+    tag: "Alerts",
+    summary: "Your browsers with alerts on, and the zones each follows",
+    access: "signed-in",
+    success: {
+      200: {
+        description: "Your browsers.",
+        envelope: "list",
+        meta: page(1),
+        example: [
+          {
+            id: "3c9e2b1a-7d4f-4a6b-9c8d-1e2f3a4b5c6d",
+            endpoint: "https://fcm.googleapis.com/fcm/send/example-endpoint",
+            zones: [3, 4],
+            language: "hi",
+            created_at: T,
+            updated_at: T,
+          },
+        ],
+      },
+    },
+  },
+  {
+    method: "post",
+    path: "/api/v1/push/subscriptions",
+    tag: "Alerts",
+    summary: "Turn alerts on in this browser, or change its zones or language",
+    description:
+      "The endpoint and keys come from PushSubscription.toJSON(). Only the browsers' push services are accepted as endpoints (Google, Mozilla, Apple, Microsoft). Alerts go out for confirmed road reports and official updates in the zones you follow. At most 10 browsers per account.",
+    access: "signed-in",
+    rateLimit: "push",
+    body: subscriptionBody,
+    bodyExample: {
+      endpoint: "https://fcm.googleapis.com/fcm/send/example-endpoint",
+      keys: {
+        p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM",
+        auth: "tBHItJI5svbpez7KI4CCXg",
+      },
+      zones: [3, 4],
+      language: "hi",
+    },
+    success: {
+      201: {
+        description: "Alerts are on in this browser.",
+        headers: { Location: "The list of your browsers." },
+        example: { id: "3c9e2b1a-7d4f-4a6b-9c8d-1e2f3a4b5c6d", zones: [3, 4], language: "hi" },
+      },
+      200: {
+        description: "Already on; zones and language updated.",
+        example: { id: "3c9e2b1a-7d4f-4a6b-9c8d-1e2f3a4b5c6d", zones: [3, 4], language: "hi" },
+      },
+    },
+    errors: {
+      403: "Pick your role on the account page before turning alerts on.",
+      409: "Alerts are on in 10 browsers already. Turn one off first.",
+      503: "Alerts are not set up on this server.",
+    },
+  },
+  {
+    method: "delete",
+    path: "/api/v1/push/subscriptions",
+    tag: "Alerts",
+    summary: "Turn alerts off in this browser",
+    description: "204 whether or not the browser was yours or on, so the answer says nothing about other people's browsers.",
+    access: "signed-in",
+    rateLimit: "push",
+    body: unsubscribeBody,
+    bodyExample: { endpoint: "https://fcm.googleapis.com/fcm/send/example-endpoint" },
+    success: { 204: { description: "Off.", envelope: "none" } },
   },
 
   // Internal

@@ -17,6 +17,7 @@ const COLLECT = [
   "collectReports",
   "collectShipments",
   "collectLocation",
+  "collectAlerts",
   "collectLogs",
 ] as const;
 

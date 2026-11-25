@@ -269,3 +269,14 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Jobs may run twice, so every handler must be safe to repeat · `report.confirmed` is added for every new confirmation of a confirmed report (we don't know if it was already confirmed), and a worker can die after the work but before it says "done".
 - **2026-11-25** · Until Web Push (B6) the handlers only log the event · The queue, retries, dead letters and wake-up are real and tested against the database; the push fan-out is the next slice.
 
+## Round 3: Web Push alerts (B6, slice 11b)
+
+- **2026-11-25** · `web-push` 4.0.0 for VAPID signing and payload encryption, no Firebase SDK · One small library for every browser's push service; Firebase would add a Google account and a client SDK. 4.0.0 is more than two weeks old and `npm audit` is clean.
+- **2026-11-25** · Alerts only for confirmed reports and official updates, never for unconfirmed reports · One person's word shouldn't wake a driver at 3 am; section 9's confirmation rules decide what is trusted.
+- **2026-11-25** · People pick the zones they follow; a whole-road update goes to everyone · A driver on the Banihal side doesn't need every Jammu alert. Zone matching is a Postgres array with a GIN index.
+- **2026-11-25** · Each event is pushed once (`private.push_sent`), and a job is retried only when every send failed · Jobs may run twice; a partial failure (one browser timing out) shouldn't send everyone a second copy.
+- **2026-11-25** · Endpoints limited to the known push services · The worker calls the endpoint, so an open URL field would let anyone point our server at any address (SSRF).
+- **2026-11-25** · The alert's language is the one the browser had when alerts were turned on, and pressing Save again updates it · The worker runs with no request, so it can't read the cookie.
+- **2026-11-25** · Signing out turns alerts off in that browser · Phones are shared; the next person shouldn't get the last person's alerts.
+- **2026-11-25** · The VAPID public key is read on the server when `/me` is shown, not baked in as `NEXT_PUBLIC_` · The image is built without keys (CI); this way the same image works with whatever keys Azure has.
+
