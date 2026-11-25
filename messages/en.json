@@ -115,7 +115,19 @@
       "qazigund": "Qazigund",
       "srinagar": "Srinagar"
     },
-    "hexNote": "Zoom in to see the road in cells of about 0.8 km², each scored with its own slope and the nearest weather point."
+    "hexNote": "Zoom in to see the road in cells of about 0.8 km², each scored with its own slope and the nearest weather point. Tap the road to see one cell's ID, zone, score and slope.",
+    "cell": {
+      "title": "This cell {when}",
+      "id": "H3 cell",
+      "zone": "Zone",
+      "risk": "Risk",
+      "mainHazard": "Main hazard",
+      "noHazard": "None",
+      "slope": "Slope",
+      "slopeValue": "{slope}°",
+      "unknown": "Not known",
+      "close": "Close"
+    }
   },
   "reason": {
     "none": "Zone {zone}: no rain, snow or frost trigger in the window",
