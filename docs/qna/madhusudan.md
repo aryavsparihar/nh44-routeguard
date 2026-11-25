@@ -1,4 +1,4 @@
-# Madhusudan: field data, reports, police updates, alerts (WP-B)
+# Madhusudan: field data, reports, police updates, alerts (WP-B), API docs
 
 **What I own:** `data/incidents.csv` and its checks (`scripts/validate_incidents.py`, `seed.mjs`), road reports (`src/server/reports/`, `app/api/v1/reports/`), official updates and road status (`src/server/official-updates/`, `src/server/road-status/`), the job queue (`src/server/jobs/`, pgmq migration), Web Push (`src/server/push/`), and the docs `docs/guardrails.md` and `docs/verification.md`.
 
@@ -9,3 +9,5 @@
 **A decision and what we rejected:** the queue is Supabase Queues (pgmq) inside our own Postgres, enqueued in the same transaction as the write. Rejected: Redis or a cloud queue, which costs money and could lose a job if the write commits and the enqueue fails.
 
 **A limitation and the fix:** the incident history has 27 verified rows and is not a complete list of closures. Fix: ask J&K Traffic Police / TCU for their closure log, and keep adding sourced rows with a second verifier.
+
+**API docs and Postman (mine since 26 Nov):** the OpenAPI document and Swagger UI (`src/server/openapi/`, `/api/docs`) and the Postman collection (`postman/`, run by newman in CI). Decision: the OpenAPI document is generated from the routes' own zod schemas, and `openapi.test.ts` fails if a route is missing. Rejected: a hand-written YAML file, which drifts from the code.

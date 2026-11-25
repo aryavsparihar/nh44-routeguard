@@ -1,4 +1,4 @@
-# Navaya: map, risk read path, priority score (WP-C)
+# Navaya: map, risk read path, priority score (WP-C), advice engine
 
 **What I own:** the map and zone screens (`src/ui/risk/`), the risk read API (`src/server/risk/`, `app/api/v1/risk/`, `/zones`, `/risk/summary`), the shared rate-limit store (`src/server/http/rate-limit*.ts`, `private.rate_limits`), the priority module (`src/shared/priority.ts`, `config/advice-assumptions.json`) and the read-path part of `docs/scaling.md`.
 
@@ -15,3 +15,5 @@ Measured: `docs/scaling.md` (warm p50 3 ms, 304 p50 2 ms, on a laptop, 25 Nov 20
 **Cells (C5):** `jobs/tools/build_hexes.py` → `data/corridor_hexes.csv` + `data/hex_slope.csv` → `jobs/load_hexes.py` → the hourly job scores 291 cells → `GET /api/v1/risk/hexes` (outlines from h3-js on the server) → a fill layer under the corridor line. Test: `src/server/risk/hexes.routes.test.ts` (closed outline, 304, 400).
 
 **Map labels (C6):** in Hindi and Urdu, `RiskMap.tsx` hides the base map's labels and draws the towns in `src/shared/map-places.ts` as page text, because MapLibre can't shape Devanagari or join Urdu letters.
+
+**The advice engine (mine since 26 Nov):** `src/shared/decide.ts` and `POST /api/v1/advice` (`src/server/advice/`). Trace: `{variety, days_since_picking, tonnes, destination, truck_type}` → `withApi()`: public, 60 a minute per IP, strict zod body → the newest risk rows for the zones on the route and the admin-set Mughal Road / rail status → `decide()` returns SEND, HOLD, RAIL or DIVERT with a `reason_code`, a priority band (from my `priority.ts`) and notes such as "Mughal Road status unknown" → the phone translates the reason. Offline, the phone runs the same `decide()` on its saved scores. Test: `src/server/advice/advice.routes.test.ts` feeds the same inputs to the API and to `decide()` and expects the same answer, so online and offline advice never disagree; `decide.test.ts` covers every answer and the edges. Demo step 4 is mine.
