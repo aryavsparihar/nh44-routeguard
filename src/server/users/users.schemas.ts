@@ -19,6 +19,23 @@ export const onboardingBody = z
 
 export type OnboardingInput = z.infer<typeof onboardingBody>;
 
+// PATCH /api/v1/me: your own name, language and location sharing. Turning
+// location sharing on records the privacy notice version you agreed to (the
+// server sets it; the client can't).
+export const patchMeBody = z
+  .object({
+    display_name: cleanText(60).nullable().optional(),
+    language: z.enum(LANGUAGES).optional(),
+    location_consent: z.boolean().optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: "Send at least one of display_name, language or location_consent." });
+
+export type PatchMeInput = z.infer<typeof patchMeBody>;
+
+// DELETE /api/v1/me: the body must say so, so a stray request can't do it.
+export const deleteMeBody = z.object({ confirm: z.literal("DELETE") }).strict();
+
 // PATCH /api/v1/admin/users/{id}/role
 export const roleChangeBody = z
   .object({

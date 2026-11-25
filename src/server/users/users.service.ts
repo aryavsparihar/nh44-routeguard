@@ -1,10 +1,14 @@
 import "server-only";
-import { clerkUserExists, setClerkRole } from "@/src/server/clerk/users";
+import { clerkUserExists, deleteClerkUser, setClerkRole } from "@/src/server/clerk/users";
 import type { Db } from "@/src/server/db";
 import type { Caller, Role } from "@/src/server/http/caller";
 import { ConflictError, NotFoundError, ServiceUnavailableError } from "@/src/server/http/errors";
-import type { OnboardingInput, RoleChangeInput } from "./users.schemas";
-import { adminSetRole, findUser, insertOwnUser, type UserProfile } from "./users.repository";
+import type { Logger } from "pino";
+import { removePhoto } from "@/src/server/reports/storage";
+import { REPORT_RULES_JSON } from "@/src/server/reports/rules";
+import { PRIVACY_VERSION } from "@/src/shared/consent";
+import type { OnboardingInput, PatchMeInput, RoleChangeInput } from "./users.schemas";
+import { adminSetRole, deleteOwnAccount, findUser, insertOwnUser, updateOwnUser, type UserProfile } from "./users.repository";
 
 // The order of writes, for both flows below: the database first, then Clerk.
 // RLS trusts the role in the Clerk token, so if Clerk went first and the
@@ -18,6 +22,9 @@ export type Me = {
   display_name: string | null;
   language: string | null;
   verification_level: UserProfile["verification_level"] | null;
+  location_consent: boolean;
+  consent_version: string | null;
+  agent_id: string | null;
   onboarded: boolean;
 };
 
@@ -30,6 +37,9 @@ export async function getMe(db: Db, caller: Caller): Promise<Me> {
       display_name: null,
       language: null,
       verification_level: null,
+      location_consent: false,
+      consent_version: null,
+      agent_id: null,
       onboarded: false,
     };
   }
@@ -64,6 +74,39 @@ export async function onboard(
 
   await setClerkRole(caller.userId, input.role);
   return { me: await getMe(db, caller), created: result === "created" };
+}
+
+// Your own name, language and location sharing. Turning sharing on stores
+// the privacy notice version you agreed to.
+export async function updateMe(db: Db, caller: Caller, input: PatchMeInput): Promise<Me> {
+  const patch = {
+    ...(input.display_name !== undefined ? { display_name: input.display_name } : {}),
+    ...(input.language !== undefined ? { language: input.language } : {}),
+    ...(input.location_consent !== undefined ? { location_consent: input.location_consent } : {}),
+    ...(input.location_consent === true ? { consent_version: PRIVACY_VERSION } : {}),
+  };
+  if (!(await updateOwnUser(db, caller.userId, patch))) {
+    throw new ConflictError("Pick your role first (POST /api/v1/me/onboarding).");
+  }
+  return getMe(db, caller);
+}
+
+// Deletes your account: first the database (row, audit entry, photo paths),
+// then the photos in Storage (with your still-valid session), then the Clerk
+// account. If Clerk fails, sending DELETE again finishes the job.
+export async function deleteMe(db: Db, caller: Caller, requestId: string, log: Logger): Promise<void> {
+  const paths = await deleteOwnAccount(db, REPORT_RULES_JSON, requestId);
+  for (const path of paths) {
+    await removePhoto(path).catch(() => log.warn("could not remove a photo of a deleted account"));
+  }
+  try {
+    await deleteClerkUser(caller.userId);
+  } catch (error) {
+    if (error instanceof ServiceUnavailableError) {
+      throw new ServiceUnavailableError("Your data was deleted, but the sign-in account wasn't. Try again.");
+    }
+    throw error;
+  }
 }
 
 // An admin sets any role, including police and admin, with a reason.
