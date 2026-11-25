@@ -1,0 +1,12 @@
+{
+  "_note": "Pinned public keys for the Aadhaar Secure QR check (BUILD_PROMPT section 11). Each entry's sha256 is the SHA-256 of its pem text and is checked before use. Add UIDAI's current Secure QR signing certificate from uidai.gov.in (Developer section, certificate details) as a non-test entry; see docs/runbook.md, 'Aadhaar QR'. Test entries are accepted only when AADHAAR_ALLOW_TEST_CERT=true.",
+  "certificates": [
+    {
+      "version": "routeguard-test-2026-11",
+      "test": true,
+      "note": "RouteGuard demo key made by scripts/aadhaar/make-demo-qr.mjs. Not a UIDAI certificate.",
+      "sha256": "10f86543d8ceba8582e159ed751ddb14cbfb6bdf7bfe143cdc9b452df7d5e8ac",
+      "pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAj/BJ/y/kLPnkoTfgS92a\nbsBaA9VjiBs6GQqpMzu1ikNGRPr/yPbJJecbV+n8AFAK3maM64ctYiyXjv/RxR9F\n4Pp7C8FytnPrlDFso2m3aJebRgfFCgmE2XLZ1MHmsbre9vxM5GHQT5K8JJ2S+RRa\nq8DLqDj85qQzCR8nzeXKNCN3dwySmVAUE/DafIjxYT6RdhetTavMwgehniP4DbVN\nmOR0BU7cV9YKhr1pNDfeMOC3j8Z6DeJy7arIN/LnYZdsci8gqokDbAM1ZQxqruQG\nLaQcyq6Jld4YipPGRD2tj4Z0jWN/WkgJZ4RJiatGBBSZUmEr4tg632b0PV0sZ8QE\nYwIDAQAB\n-----END PUBLIC KEY-----\n"
+    }
+  ]
+}
