@@ -146,12 +146,12 @@ jobs/.venv/bin/python jobs/run_risk.py --dry-run
 
 ## Testing
 
-| What | How to run | Count (25 Nov 2026) |
+| What | How to run | Count (26 Nov 2026) |
 | --- | --- | --- |
-| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 554 tests in 56 files, all passing; 41.7% of lines covered (most UI files have no unit tests) |
-| Risk job (pytest) | `python3 -m pytest jobs/tests` | 151 passing |
-| RLS tests against a local Supabase | `npm run db:test` (needs Docker) | see `supabase/tests/rls.test.sql` |
-| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone, plus 4 signed-in flows (report, offline outbox, board, official update) with the demo accounts; 9 per phone run in CI without keys |
+| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, the Aadhaar QR checker, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 645 tests in 68 files, all passing; 42.5% of lines covered (most UI files have no unit tests) |
+| Risk job (pytest) | `python3 -m pytest jobs/tests` | 154 passing |
+| Database tests (pgTAP): RLS, roles, reports, Aadhaar, audit | `npm run db:test` (runs on the linked Supabase project inside a transaction that is rolled back; no Docker) | 229 passing |
+| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone, plus 6 signed-in flows with the demo accounts (unverified driver asked to get verified, vouched driver's report, offline outbox, board, official update, Aadhaar demo QR); 9 per phone run in CI without keys |
 | Postman / newman | `npx newman run postman/RouteGuard.postman_collection.json -e postman/ci.postman_environment.json` | 42 requests |
 | Smoke test after each deploy | `node scripts/smoke.mjs <url>` | health, ready, risk + 304, home, 401, 404, 405, headers |
 
@@ -186,7 +186,10 @@ Risk is computed once an hour for everyone; reads are cached (ETag, `Cache-Contr
 | Hosting on Vercel | Azure Container Apps (Azure for Students) | Google Cloud billing setup failed; Azure for Students needs no card and its credit covers the round |
 | Supabase Auth, phone OTP | Clerk, one-time code by email | SMS is a paid Clerk feature on our free plan |
 | Serwist service worker | Hand-written service worker | Full control over what is never cached (signed-in data) |
-| Verified drivers | Same, plus a written verification model, report confirmations and an audit log | Makes reports trustworthy; an addition, not a new feature |
+| Verified drivers | Same: drivers post reports only once verified, as the PPT said. Plus a written verification model, report confirmations and an audit log | Makes reports trustworthy; an addition, not a new feature |
+| Drivers verified through their agent | Same, plus an optional Aadhaar Secure QR check (never required) | A second way to get verified; planned as P1 in section 3 of the plan |
+| Extra languages on the cut list | English, Hindi and Urdu built | Users in J&K read Urdu and Hindi |
+| `users.phone` in the ER diagram | Phone stays with Clerk; we keep only a verification level | Less personal data in our database |
 
 The full table with the 10–15% budget is in [the plan](docs/round3/BUILD_PROMPT.md), section 3, and every decision is in [docs/decisions.md](docs/decisions.md).
 
@@ -210,7 +213,7 @@ Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://
 - Clerk runs as a development instance.
 - No read replicas; one database.
 - Translations are checked by team members, not professional translators, and the safety strings are not reviewed yet.
-- The Aadhaar check has UIDAI's current certificates pinned but has only been tried with our demo key (`docs/demo/aadhaar-demo-qr.png`), not a real card ([runbook](docs/runbook.md#aadhaar-qr)). `manual_review` results have no admin screen yet.
+- The Aadhaar check proves a card's QR is genuine, not that the person scanning it is the cardholder (no holder binding). We are not registered with UIDAI as an offline verification agency (OVSE); real use would need that and a legal review. It has UIDAI's current certificates pinned but has only been tried with our demo key (`docs/demo/aadhaar-demo-qr.png`), not a real card ([runbook](docs/runbook.md#aadhaar-qr)). `manual_review` results have no admin screen yet.
 
 ## Setup from a fresh clone
 

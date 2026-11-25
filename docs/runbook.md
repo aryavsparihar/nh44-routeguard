@@ -422,6 +422,18 @@ REQUIRE_READY=1 node scripts/smoke.mjs https://<app url>
 
 If it warns that the data is stale, press **Run workflow** on **Risk job** too.
 
+### Demo day: if something fails
+
+| What fails | What you see | What to do |
+| --- | --- | --- |
+| Venue Wi-Fi | Pages don't load | Phone hotspot for the laptop and the phone. The phone still shows its saved scores, the 48 h strip and advice offline (docs/offline.md), which is part of the demo anyway |
+| Azure app | Live link errors | On the laptop: `npm run build && npm start`, show `localhost:3000`. For the phone on the same hotspot: `npm run dev` and open the laptop's address (the "Network" line it prints) |
+| Supabase | `/api/v1/health/ready` is 503; map says it can't load scores | The phone keeps its last saved scores and advice works offline. Check status.supabase.com; nothing to fix on our side |
+| Clerk | Sign-in doesn't finish | Map, strip and advisor need no sign-in; show those. Board, report and admin need Clerk, so skip those steps and say why |
+| Hourly risk job | "The hourly update is late" banner; `/ready` says `stale: true` | GitHub → Actions → Risk job → **Run workflow**; the banner goes when the new run lands |
+
+A screen recording of the full demo script, made the day before on the real phone, is the last fallback. We haven't made it yet.
+
 ### If a deploy breaks the app
 
 Roll back to the previous image: GitHub → Actions → Deploy → open the last green run → **Re-run all jobs**. Or in the portal: container app → Revisions → activate the previous revision.
