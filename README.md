@@ -25,7 +25,13 @@ No sign-in is needed for the map, the 48 h strip and the advisor.
 
 ## Screenshots
 
-To add: phone screenshots in English, Hindi and Urdu after the deploy.
+Pixel 5 size, taken with `node scripts/ui/screenshots.mjs` on 25 Nov 2026 with the demo data.
+
+| | Map | 48 h strip | Advisor |
+| --- | --- | --- | --- |
+| English | <img src="docs/screenshots/en-home.jpg" width="200" alt="Map screen in English"> | <img src="docs/screenshots/en-strip.jpg" width="200" alt="48-hour strip in English"> | <img src="docs/screenshots/en-advisor.jpg" width="200" alt="Advisor in English"> |
+| हिन्दी | <img src="docs/screenshots/hi-home.jpg" width="200" alt="Map screen in Hindi"> | <img src="docs/screenshots/hi-strip.jpg" width="200" alt="48-hour strip in Hindi"> | <img src="docs/screenshots/hi-advisor.jpg" width="200" alt="Advisor in Hindi"> |
+| اردو | <img src="docs/screenshots/ur-home.jpg" width="200" alt="Map screen in Urdu"> | <img src="docs/screenshots/ur-strip.jpg" width="200" alt="48-hour strip in Urdu"> | <img src="docs/screenshots/ur-advisor.jpg" width="200" alt="Advisor in Urdu"> |
 
 ## How it works
 
@@ -141,7 +147,7 @@ jobs/.venv/bin/python jobs/run_risk.py --dry-run
 | Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 554 tests in 56 files, all passing; 41.7% of lines covered (most UI files have no unit tests) |
 | Risk job (pytest) | `python3 -m pytest jobs/tests` | 151 passing |
 | RLS tests against a local Supabase | `npm run db:test` (needs Docker) | see `supabase/tests/rls.test.sql` |
-| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone; 9 run in CI without keys |
+| Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone, plus 4 signed-in flows (report, offline outbox, board, official update) with the demo accounts; 9 per phone run in CI without keys |
 | Postman / newman | `npx newman run postman/RouteGuard.postman_collection.json -e postman/ci.postman_environment.json` | 42 requests |
 | Smoke test after each deploy | `node scripts/smoke.mjs <url>` | health, ready, risk + 304, home, 401, 404, 405, headers |
 
@@ -157,7 +163,17 @@ Measured on 25 Nov 2026, `next start` on an Apple M4 laptop reading the real dat
 | Warm (memory cache) | 3 ms | 6 ms | 2980 |
 | With ETag (304) | 2 ms | 4 ms | 3449 |
 
-Risk is computed once an hour for everyone; reads are cached (ETag, `Cache-Control`, 60 s memory cache); writes go through a Postgres queue; the app is stateless and scales 0 to 3 replicas. Lighthouse scores and the Azure replica test are not measured yet. Details: [docs/scaling.md](docs/scaling.md).
+Lighthouse 12.8 mobile (simulated slow 4G and 4× slower CPU), `next start` on the same laptop, 25 Nov 2026:
+
+| Page | Performance | Accessibility | Best practices | SEO | LCP | TBT | CLS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/` (map) | 79 | 100 | 100 | 100 | 4.1 s | 130 ms | 0 |
+| `/advisor` | 82 | 100 | 100 | 100 | 4.3 s | 30 ms | 0 |
+| `/strip` | 84 | 100 | 100 | 100 | 4.0 s | 30 ms | 0 |
+
+The map page first scored 27 (TBT 2,050 ms, CLS 0.6): the footer jumped when the scores arrived, and the 1 MB map library started at once. We now reserve the screen height and start the map when the browser is idle. Lighthouse 12 no longer has a PWA category, so there is no PWA score.
+
+Risk is computed once an hour for everyone; reads are cached (ETag, `Cache-Control`, 60 s memory cache); writes go through a Postgres queue; the app is stateless and scales 0 to 3 replicas. The Azure replica test is not measured yet. Details: [docs/scaling.md](docs/scaling.md).
 
 ## Changes since Round 1
 
@@ -189,6 +205,7 @@ Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://
 - GPS can be spoofed; a report's location is what the phone says.
 - Clerk runs as a development instance.
 - No read replicas; one database.
+- Map place names stay in English in all three languages (from the base map).
 - Translations are checked by team members, not professional translators, and the safety strings are not reviewed yet.
 - Aadhaar Secure QR (P1) is not built.
 
