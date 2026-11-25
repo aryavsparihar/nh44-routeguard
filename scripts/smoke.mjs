@@ -80,6 +80,22 @@ await check("GET /api/v1/health/ready", async () => {
   }
 });
 
+await check("GET /api/v1/risk", async () => {
+  const res = await request("/api/v1/risk");
+  if (res.status === 200) {
+    const etag = res.headers.get("etag");
+    pass("GET /api/v1/risk is 200");
+    if (!etag) return fail("GET /api/v1/risk sent no ETag");
+    const again = await request("/api/v1/risk", { headers: { "if-none-match": etag } });
+    if (again.status === 304) pass("GET /api/v1/risk with its ETag is 304");
+    else fail(`GET /api/v1/risk with its ETag: expected 304, got ${again.status}`);
+  } else if (res.status === 503 && isProblem(res) && !requireReady) {
+    pass("GET /api/v1/risk is 503 problem+json (no database here, allowed)");
+  } else {
+    fail(`GET /api/v1/risk: expected 200${requireReady ? "" : " or 503"}, got ${res.status}`);
+  }
+});
+
 await check("GET /", async () => {
   const res = await request("/");
   // 307 is Clerk's development-instance handshake on a first page visit.
