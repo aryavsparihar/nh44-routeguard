@@ -74,6 +74,11 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;
   }, [reports, hazard]);
 
+  const places = useMemo(
+    () => MAP_PLACES.map((p) => ({ name: t(`mapPlaces.${p.id}`), lng: p.lng, lat: p.lat })),
+    [t],
+  );
+
   const when = horizon === 0 ? t("whenNow") : t("whenLater", { hours: horizon });
 
   return (
@@ -112,13 +117,10 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             levels={levels}
             reports={shownReports}
             label={t("mapLabel", { when })}
-            failedText={t("mapFailed")}
+            simpleText={t("mapSimple")}
             hexes={hexes}
-            placeLabels={
-              locale === "en"
-                ? undefined
-                : MAP_PLACES.map((p) => ({ name: t(`mapPlaces.${p.id}`), lng: p.lng, lat: p.lat }))
-            }
+            places={places}
+            baseLabels={locale === "en"}
           />
           <Legend />
 
