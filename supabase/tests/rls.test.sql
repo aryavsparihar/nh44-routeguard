@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(176);
+select plan(192);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -424,13 +424,14 @@ select is(has_function_privilege('authenticated', 'private.dispatch_risk_job()',
 select is((select schedule from cron.job where jobname = 'risk-job-dispatch'), '7,37 * * * *',
   'pg_cron starts the risk job at :07 and :37');
 
--- The web app's database login (ORM): no privileges of its own, may only become anon or authenticated.
+-- The web app's database login (ORM): no privileges of its own, may only become anon, authenticated
+-- or (in the job worker endpoint only) routeguard_worker.
 select is((select rolsuper or rolbypassrls or rolinherit or rolcreaterole from pg_roles where rolname = 'routeguard_app'),
   false, 'routeguard_app: not superuser, no RLS bypass, no inherit, no createrole');
 select is((select array_agg(r.rolname::text order by r.rolname)
            from pg_auth_members am join pg_roles r on r.oid = am.roleid join pg_roles m on m.oid = am.member
            where m.rolname = 'routeguard_app'),
-  array['anon', 'authenticated'], 'routeguard_app: member of anon and authenticated only');
+  array['anon', 'authenticated', 'routeguard_worker'], 'routeguard_app: member of anon, authenticated and routeguard_worker only');
 select is((select bool_or(am.inherit_option) or not bool_and(am.set_option)
            from pg_auth_members am join pg_roles m on m.oid = am.member where m.rolname = 'routeguard_app'),
   false, 'routeguard_app: may switch to those roles but does not inherit their rights');
@@ -690,6 +691,62 @@ select is((select count(*) from public.shipments where id = '00000000-0000-4000-
 select is(private.clear_old_locations(), 0, 'location: the 7-day rule leaves a fresh delivery alone');
 select is((select count(*) from cron.job where jobname = 'shipment-location-cleanup'), 1::bigint,
   'location: the daily cleanup job is scheduled');
+
+-- Job queue (20261125200000_jobs_queue.sql)
+-- pgTAP's functions live in the extensions schema; let the worker role call
+-- them in this (rolled back) transaction only.
+set local role postgres;
+grant usage on schema extensions to routeguard_worker;
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select lives_ok($$ select private.enqueue_job('report.created', '{"report_id": "00000000-0000-4000-8000-0000000000f1"}') $$,
+  'jobs: the API (as a signed-in user) can add a known job');
+select throws_ok($$ select private.enqueue_job('drop.everything', '{}') $$, '22023', null::text,
+  'jobs: an unknown job name is refused');
+select throws_ok($$ select private.enqueue_job('report.created', '[1, 2]') $$, '22023', null::text,
+  'jobs: a payload must be a JSON object');
+select throws_ok($$ select * from private.read_jobs(10, 30) $$, '42501', null::text,
+  'jobs: a signed-in user cannot read the queue');
+select throws_ok($$ select private.wake_job_worker() $$, '42501', null::text,
+  'jobs: a signed-in user cannot call the worker');
+select throws_ok($$ select count(*) from pgmq.q_jobs $$, '42501', null::text,
+  'jobs: the queue table is closed to signed-in users');
+set local role anon;
+select throws_ok($$ select private.enqueue_job('report.created', '{}') $$, '42501', null::text,
+  'jobs: signed-out visitors cannot add jobs');
+
+set local role routeguard_worker;
+create temp table job_seen on commit drop as
+  select * from private.read_jobs(50, 30) where payload ->> 'report_id' = '00000000-0000-4000-8000-0000000000f1';
+select is((select count(*) from job_seen), 1::bigint, 'jobs: the worker reads the job');
+select is((select private.fail_job((select msg_id from job_seen), 'push service down')), 'retry',
+  'jobs: a failed job is tried again later');
+select is((select private.ack_job((select msg_id from job_seen))), true, 'jobs: a finished job is removed');
+select throws_ok($$ select count(*) from public.users $$, '42501', null::text,
+  'jobs: the worker role cannot read user profiles');
+
+set local role postgres;
+create temp table job_dead on commit drop as
+  select private.enqueue_job('official_update.created', '{"update_id": "00000000-0000-4000-8000-0000000000f2"}') as msg_id;
+grant select on job_dead to routeguard_worker;
+update pgmq.q_jobs set read_ct = 5 where msg_id = (select msg_id from job_dead);
+set local role routeguard_worker;
+select is((select private.fail_job((select msg_id from job_dead), 'gave up')), 'dead',
+  'jobs: after 5 tries a job goes to the dead letters');
+set local role postgres;
+select is((select count(*) from public.job_dead_letters where msg_id = (select msg_id from job_dead)
+           and job = 'official_update.created' and attempts = 5 and last_error = 'gave up'), 1::bigint,
+  'jobs: the dead letter keeps the job, tries and last error');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "user_testdriver", "role": "authenticated", "metadata": {"role": "driver"}}';
+select is((select count(*) from public.job_dead_letters), 0::bigint, 'jobs: drivers cannot see dead letters');
+set local request.jwt.claims = '{"sub": "user_testadmin", "role": "authenticated", "metadata": {"role": "admin"}}';
+select isnt((select count(*) from public.job_dead_letters), 0::bigint, 'jobs: admins see dead letters');
+
+set local role postgres;
+select is((select count(*) from cron.job where jobname = 'jobs-worker'), 1::bigint,
+  'jobs: the worker is woken by pg_cron every minute');
 
 -- Account deletion
 set local role authenticated;

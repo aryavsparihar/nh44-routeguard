@@ -272,6 +272,39 @@ export type Database = {
           },
         ]
       }
+      job_dead_letters: {
+        Row: {
+          attempts: number
+          enqueued_at: string
+          failed_at: string
+          id: number
+          job: string
+          last_error: string | null
+          msg_id: number
+          payload: Json
+        }
+        Insert: {
+          attempts: number
+          enqueued_at: string
+          failed_at?: string
+          id?: never
+          job: string
+          last_error?: string | null
+          msg_id: number
+          payload: Json
+        }
+        Update: {
+          attempts?: number
+          enqueued_at?: string
+          failed_at?: string
+          id?: never
+          job?: string
+          last_error?: string | null
+          msg_id?: number
+          payload?: Json
+        }
+        Relationships: []
+      }
       official_updates: {
         Row: {
           body: string | null

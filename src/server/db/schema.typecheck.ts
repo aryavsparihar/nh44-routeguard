@@ -14,6 +14,7 @@ export type auditLogColumns = Check<SameKeys<typeof s.auditLog.$inferSelect, Pub
 export type hexesColumns = Check<SameKeys<typeof s.hexes.$inferSelect, Pub["Tables"]["hexes"]["Row"]>>;
 export type idempotencyKeysColumns = Check<SameKeys<typeof s.idempotencyKeys.$inferSelect, Pub["Tables"]["idempotency_keys"]["Row"]>>;
 export type incidentsColumns = Check<SameKeys<typeof s.incidents.$inferSelect, Pub["Tables"]["incidents"]["Row"]>>;
+export type jobDeadLettersColumns = Check<SameKeys<typeof s.jobDeadLetters.$inferSelect, Pub["Tables"]["job_dead_letters"]["Row"]>>;
 export type latestRiskColumns = Check<SameKeys<typeof s.latestRisk._.selectedFields, Pub["Views"]["latest_risk"]["Row"]>>;
 export type officialUpdatesColumns = Check<SameKeys<typeof s.officialUpdates.$inferSelect, Pub["Tables"]["official_updates"]["Row"]>>;
 export type publicReportsColumns = Check<SameKeys<typeof s.publicReports._.selectedFields, Pub["Views"]["public_reports"]["Row"]>>;
