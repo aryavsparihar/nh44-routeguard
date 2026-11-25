@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/ui/copy-maplibre-worker.mjs",
+    "predev": "node scripts/ui/copy-maplibre-worker.mjs && node scripts/ui/copy-swagger-ui.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/ui/copy-maplibre-worker.mjs",
+    "prebuild": "node scripts/ui/copy-maplibre-worker.mjs && node scripts/ui/copy-swagger-ui.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -46,6 +46,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "supabase": "^3.1.0",
+    "swagger-ui-dist": "5.34.1",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
     "vitest": "5.1.0"
