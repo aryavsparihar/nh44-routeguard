@@ -105,7 +105,16 @@
     "legendTitle": "जोखिम का स्तर",
     "lineNote": "मोटी रेखा का मतलब ज़्यादा जोखिम।",
     "scoreLabel": "स्कोर {score}",
-    "details": "क्यों"
+    "details": "क्यों",
+    "mapPlaces": {
+      "jammu": "जम्मू",
+      "udhampur": "उधमपुर",
+      "ramban": "रामबन",
+      "banihal": "बनिहाल",
+      "qazigund": "क़ाज़ीगुंड",
+      "srinagar": "श्रीनगर"
+    },
+    "hexNote": "सड़क को लगभग 0.7 वर्ग किमी के खानों में देखने के लिए ज़ूम करें। हर खाने का स्कोर उसकी अपनी ढलान और सबसे पास के मौसम बिंदु से निकाला गया है।"
   },
   "reason": {
     "none": "ज़ोन {zone}: इस अवधि में बारिश, बर्फ़ या पाले का कोई कारण नहीं",
@@ -134,21 +143,21 @@
       "snow_ice": "बर्फ़/पाले"
     },
     "places": {
-      "z1_nagrota": "Nagrota",
-      "z1_jakhani": "Udhampur (Jakhani)",
-      "z2_chenani": "Chenani",
-      "z3_nashri": "Nashri",
-      "z3_peerah": "Peerah",
-      "z3_seri": "Seri",
-      "z4_ramban": "Ramban",
-      "z4_digdol": "Digdol",
-      "z4_marog": "Marog",
-      "z5_ramsoo": "Ramsoo",
-      "z5_banihal": "Banihal",
-      "z5_navyug_south": "Navyug tunnel (Banihal side)",
-      "z5_qazigund": "Qazigund",
-      "z6_bijbehara": "Anantnag (Bijbehara)",
-      "z6_srinagar": "Srinagar"
+      "z1_nagrota": "नगरोटा",
+      "z1_jakhani": "उधमपुर (जखानी)",
+      "z2_chenani": "चेनानी",
+      "z3_nashri": "नाशरी",
+      "z3_peerah": "पीरा",
+      "z3_seri": "सेरी",
+      "z4_ramban": "रामबन",
+      "z4_digdol": "डिगडोल",
+      "z4_marog": "मरोग",
+      "z5_ramsoo": "रामसू",
+      "z5_banihal": "बनिहाल",
+      "z5_navyug_south": "नवयुग सुरंग (बनिहाल की ओर)",
+      "z5_qazigund": "क़ाज़ीगुंड",
+      "z6_bijbehara": "अनंतनाग (बिजबेहड़ा)",
+      "z6_srinagar": "श्रीनगर"
     }
   },
   "reports": {

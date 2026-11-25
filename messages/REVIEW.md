@@ -10,6 +10,8 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 
 | Section | Hindi reviewed by (date) | Urdu reviewed by (date) | Notes |
 | --- | --- | --- | --- |
+| `reason.places.*`, `risk.mapPlaces.*` (place names) | not yet reviewed | not yet reviewed | Town names on the map and in risk reasons. Check local spellings (e.g. Banihal: बनिहाल / بانہال, Qazigund: क़ाज़ीगुंड / قاضی گنڈ) |
+| `risk.hexNote` | not yet reviewed | not yet reviewed | |
 | `footer.disclaimer` (safety) | not yet reviewed | not yet reviewed | Must say clearly: not official, follow J&K Traffic Police, call 112 |
 | `privacy.*` (consent) | not yet reviewed | not yet reviewed | Legal meaning matters; keep "DPDP Act, 2023" |
 | `banner.*` | not yet reviewed | not yet reviewed | |

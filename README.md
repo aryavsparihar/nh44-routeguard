@@ -58,7 +58,7 @@ flowchart LR
 | Endpoint | Who |
 | --- | --- |
 | `GET /api/v1/health`, `/health/ready` | public |
-| `GET /api/v1/zones`, `/risk`, `/risk/summary`, `/road-status`, `/official-updates`, `/reports`, `/incidents`, `/model` | public |
+| `GET /api/v1/zones`, `/risk`, `/risk/hexes`, `/risk/summary`, `/road-status`, `/official-updates`, `/reports`, `/incidents`, `/model` | public |
 | `POST /api/v1/advice` | public, 60 a minute per IP |
 | `GET/PATCH/DELETE /api/v1/me`, `POST /me/onboarding`, `GET /me/realtime-token` | signed in |
 | `POST /api/v1/reports`, `/reports/{id}/confirm`, `/reports/{id}/flag`, `GET /reports/{id}/photo` | signed in (rules per role) |
@@ -81,7 +81,7 @@ flowchart LR
 
 ## Languages
 
-English, Hindi and Urdu on every screen and every API error, chosen with a cookie (no language in the URL). Urdu is right-to-left. CI fails if the three message files don't have the same keys. Reviews of safety text are tracked in [messages/REVIEW.md](messages/REVIEW.md); as of 25 Nov 2026 the safety strings are machine-drafted and **not yet reviewed** by fluent readers.
+English, Hindi and Urdu on every screen and every API error, chosen with a cookie (no language in the URL). Urdu is right-to-left. In Hindi and Urdu the map's town names are drawn by the browser, not the map library, so the script is shaped correctly. CI fails if the three message files don't have the same keys. Reviews of safety text are tracked in [messages/REVIEW.md](messages/REVIEW.md); as of 25 Nov 2026 the safety strings are machine-drafted and **not yet reviewed** by fluent readers.
 
 ## Offline
 
@@ -118,6 +118,8 @@ A hand-written service worker keeps the app shell, the last risk scores and the 
 - A zone takes its worst point. `overall` is the highest of the 4 hazards, with a range that widens for 12/24/48 h ahead.
 - Level: **low** below 0.30, **medium** 0.30–0.65, **high** above 0.65. Confidence goes up when a report or past incidents agree.
 - All thresholds are our own starting values in [`lib/risk/config.json`](lib/risk/config.json), to be tuned in the backtest. Full details: [docs/risk-model.md](docs/risk-model.md).
+
+**Cells along the road.** Besides the six zones, the job scores 291 H3 cells (resolution 8, about 0.7 km²) that the highway passes through, each with its own slope (steepest centre-to-corner slope from the Copernicus 90 m terrain model, via Open-Meteo) and its nearest weather point. Zone 4 (Ramban–Ramsoo) has a median cell slope of 27.7°, zone 6 (Kashmir valley) 0.6°. `jobs/tools/build_hexes.py` builds `data/corridor_hexes.csv` and `data/hex_slope.csv`; `GET /api/v1/risk/hexes` serves them with outlines; zoom in on the map to see them.
 
 **Backtest** ([docs/backtest.md](docs/backtest.md), `jobs/backtest.py`, run on 25 Nov 2026): of 16 verified incidents recent enough for archived forecasts, the 24 h forecast flagged the zone (medium or high) for 15 and the right hazard for 14; the 48 h forecast flagged the zone for 13. The cost is false alarms: 495 alarm days in 5994 zone-days at 24 h (about 2.5 per zone per 30 days). The sample is small; read the caveats in the doc.
 
@@ -205,7 +207,6 @@ Pull requests: [github.com/aryavsparihar/nh44-routeguard/pulls?q=is:pr](https://
 - GPS can be spoofed; a report's location is what the phone says.
 - Clerk runs as a development instance.
 - No read replicas; one database.
-- Map place names stay in English in all three languages (from the base map).
 - Translations are checked by team members, not professional translators, and the safety strings are not reviewed yet.
 - Aadhaar Secure QR (P1) is not built.
 

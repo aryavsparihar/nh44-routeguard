@@ -93,3 +93,17 @@ h3 {
     repeating-linear-gradient(45deg, transparent 0 4px, rgb(255 255 255 / 0.4) 4px 6px),
     repeating-linear-gradient(-45deg, transparent 0 4px, rgb(255 255 255 / 0.4) 4px 6px);
 }
+
+/* Town names on the map in Hindi and Urdu (src/shared/map-places.ts): page
+   text, so the browser shapes the script. Clicks go through to the map. */
+.map-place {
+  pointer-events: none;
+  white-space: nowrap;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.85);
+  padding: 0 4px;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}

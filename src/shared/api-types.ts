@@ -94,3 +94,15 @@ export type MeProfile = {
   agent_id: string | null;
   onboarded: boolean;
 };
+
+// GET /api/v1/risk/hexes (src/server/risk/hexes.ts).
+export type RiskHex = {
+  h3_index: string;
+  zone_id: number | null;
+  overall: number | null;
+  hazards: { landslide: number; rockfall: number; flash_flood: number; snow_ice: number };
+  level: "low" | "medium" | "high";
+  top_hazard: string | null;
+  confidence: string | null;
+  boundary: [number, number][];
+};

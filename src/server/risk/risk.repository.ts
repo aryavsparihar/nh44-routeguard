@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import type { Db } from "@/src/server/db";
 import { latestRisk } from "@/src/server/db/schema";
 
@@ -58,3 +58,29 @@ export async function latestRunRows(db: Db) {
 }
 
 export type RunRow = Awaited<ReturnType<typeof latestRunRows>>[number];
+
+// Hexagon rows (h3_index set) of the newest run at one horizon, for
+// GET /api/v1/risk/hexes. The risk job writes them in the same run as the
+// zone rows when the hexes table is loaded (jobs/load_hexes.py).
+export async function latestHexRows(db: Db, horizonHours: number) {
+  return db.rls((tx) =>
+    tx
+      .select({
+        h3_index: latestRisk.h3_index,
+        zone_id: latestRisk.zone_id,
+        landslide: latestRisk.landslide,
+        rockfall: latestRisk.rockfall,
+        flash_flood: latestRisk.flash_flood,
+        snow_ice: latestRisk.snow_ice,
+        overall: latestRisk.overall,
+        level: latestRisk.level,
+        top_hazard: latestRisk.top_hazard,
+        confidence: latestRisk.confidence,
+      })
+      .from(latestRisk)
+      .where(and(isNotNull(latestRisk.h3_index), eq(latestRisk.horizon_hours, horizonHours)))
+      .orderBy(asc(latestRisk.zone_id), asc(latestRisk.h3_index)),
+  );
+}
+
+export type HexRow = Awaited<ReturnType<typeof latestHexRows>>[number];
