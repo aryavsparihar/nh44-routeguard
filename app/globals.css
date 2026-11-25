@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Colours, spacing and type from the Round 2 style guide
+   (docs/ux/data/tokens.json; contrast pairs checked there). Tailwind classes
+   use these names: bg-canvas, text-primary, bg-high-bg, text-send-text ... */
+@theme {
+  --color-canvas: #f1f2ee;
+  --color-surface: #e4e7e0;
+  --color-elevated: #ffffff;
+  --color-map: #dce1d5;
+  --color-primary: #15191c;
+  --color-secondary: #4a5250;
+  --color-inverse: #ffffff;
+  --color-border: #c8cdc5;
+  --color-border-strong: #737b75;
+
+  --color-apple: #c42a30;
+  --color-apple-ink: #a3212a;
+  --color-highway: #005f3f;
+  --color-milestone: #f2b705;
+  --color-milestone-ink: #6b4f00;
+  --color-rail: #1d4b8a;
+
+  --color-send-fill: #005f3f;
+  --color-send-bg: #dceee3;
+  --color-send-text: #08432f;
+  --color-hold-fill: #a87a00;
+  --color-hold-bg: #fceebf;
+  --color-hold-text: #4f3a00;
+  --color-rail-fill: #1d4b8a;
+  --color-rail-bg: #dee6f3;
+  --color-rail-text: #163a69;
+  --color-divert-fill: #c65316;
+  --color-divert-bg: #fbe3d2;
+  --color-divert-text: #6e2a05;
+  --color-high-fill: #b0202b;
+  --color-high-bg: #f8dedc;
+  --color-high-text: #74131b;
+
+  --color-risk-low: #1f6e50;
+  --color-risk-medium: #8f6a00;
+  --color-risk-high: #b0202b;
+
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --font-body: var(--font-atkinson), Verdana, sans-serif;
+  --font-heading: var(--font-barlow), "Arial Narrow", sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Hindi and Urdu: the script's own font first, then the Latin one for
+   numbers and English words. Nastaliq needs more line height. */
+html[lang="hi"] {
+  --font-body: var(--font-devanagari), var(--font-atkinson), sans-serif;
+  --font-heading: var(--font-devanagari), var(--font-barlow), sans-serif;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html[lang="ur"] {
+  --font-body: var(--font-nastaliq), var(--font-atkinson), sans-serif;
+  --font-heading: var(--font-nastaliq), var(--font-barlow), sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 22px;
+}
+html[lang="ur"] body {
+  line-height: 1.9;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+}
+
+/* Visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 3px solid var(--color-rail);
+  outline-offset: 2px;
 }

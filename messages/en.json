@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "title": "NH-44 RouteGuard",
+    "description": "Closure risk on NH-44 (Jammu–Srinagar) for the next 48 hours, for apple shipments. Advisory only."
+  },
+  "header": {
+    "title": "NH-44 RouteGuard",
+    "skip": "Skip to content",
+    "language": "Language"
+  },
+  "nav": {
+    "label": "Main",
+    "map": "Map",
+    "strip": "48 h",
+    "advisor": "Advisor",
+    "board": "Board",
+    "report": "Report"
+  },
+  "footer": {
+    "disclaimer": "RouteGuard is a student project. It is not an official government or police service. Follow instructions from J&K Traffic Police. In an emergency call 112.",
+    "privacy": "Privacy",
+    "call112": "Call 112"
+  },
+  "banner": {
+    "stale": "Scores last updated {time}. The hourly update is late.",
+    "noRun": "No risk scores yet. The hourly update hasn't run.",
+    "dbDown": "Can't reach our database right now. Scores may be out of date."
+  },
+  "home": {
+    "heading": "Road risk on NH-44",
+    "intro": "Closure risk for the next 48 hours in each of the six NH-44 zones between Jammu and Srinagar, worked out every hour from weather forecasts. It is advice, not a road status.",
+    "lastRun": "Scores from {time} ({minutes, plural, =0 {just now} one {# minute ago} other {# minutes ago}})"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "There is no page at this address.",
+    "home": "Go to the start page"
+  },
+  "privacy": {
+    "title": "Privacy",
+    "version": "Version {version}",
+    "intro": "RouteGuard is a student project for the NH-44 Jammu–Srinagar road. This page says what we collect, why, how long we keep it and how to delete it, following India's Digital Personal Data Protection Act, 2023.",
+    "collectTitle": "What we collect",
+    "collectAccount": "Your email address, to sign in with a one-time code. Our sign-in provider, Clerk, stores it; our database doesn't.",
+    "collectProfile": "Your display name, your role (grower, trader, agent or driver) and your language.",
+    "collectReports": "Road reports you send: the hazard, the place on the road, an optional note and an optional photo. We remove the photo's hidden data (EXIF), including where it was taken, before we store it.",
+    "collectShipments": "Shipments you add: truck number, load, destination and status.",
+    "collectLocation": "Drivers only, and only if you turn it on: your latest location, rounded to about 1 km, shared only with your own transport agent.",
+    "collectLogs": "Server logs: the time, a request id and a short scrambled code instead of your user id. No message contents, photos or phone numbers.",
+    "whyTitle": "Why",
+    "why": "To show the risk on the road, to let drivers report and confirm hazards, and to let agents follow their own trucks. We don't sell data and we don't show ads.",
+    "keepTitle": "How long we keep it",
+    "keep": "Reports leave the map when they expire (3 to 12 hours, by type of hazard) and stay in the road history. For a driver's location we keep only the latest point, and we clear it 7 days after the delivery. The record of admin and police actions (the audit log) is kept for the length of the project and can't be changed.",
+    "consentTitle": "Your consent",
+    "consent": "We ask you before turning on location sharing and before any identity check, and we record which version of this notice you agreed to. You can turn location sharing off at any time.",
+    "deleteTitle": "Deleting your data",
+    "delete": "You can delete your account. Your road reports then stay in the history without your name or user id.",
+    "emergency": "RouteGuard is not an emergency service. In an emergency call 112."
+  }
+}

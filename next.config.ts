@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 import { securityHeaders } from "./src/server/security-headers";
 
 const nextConfig: NextConfig = {
@@ -10,6 +11,9 @@ const nextConfig: NextConfig = {
   // reload the page instead of breaking. Unset locally.
   deploymentId: process.env.DEPLOYMENT_VERSION || undefined,
   cacheComponents: true,
+  // A plain 404 for addresses that match no route (app/global-not-found.tsx);
+  // needed because the root layout sits in the [locale] folder.
+  experimental: { globalNotFound: true },
   partialPrefetching: true,
   // Don't advertise the framework in an X-Powered-By header.
   poweredByHeader: false,
@@ -27,4 +31,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// next-intl: translations for server components (src/i18n/request.ts).
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
+export default withNextIntl(nextConfig);
