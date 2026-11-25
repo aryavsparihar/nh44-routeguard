@@ -20,6 +20,7 @@ The Hindi (`hi.json`) and Urdu (`ur.json`) strings were machine-drafted on
 | `updates.*`, `reports.*` | not yet reviewed | not yet reviewed | "Closure", "one-way" must match what J&K Traffic Police say |
 | `report.*`, `reports.actions.*` (report screen, consent) | not yet reviewed | not yet reviewed | Safety and consent text: "photograph the road, not people", the location consent and "I see it too" must read clearly |
 | `admin.*` (admin and police screens) | not yet reviewed | not yet reviewed | Only admins and the demo police account see these; `updates.notOfficial` is safety text |
+| `board.*`, `advice.save.*` (shipment board) | not yet reviewed | not yet reviewed | Location-sharing text ("the stretch of road, not your exact spot") and the vouch warning are consent and safety text |
 
 ## Choices for the reviewers
 
