@@ -12,7 +12,8 @@ export const LANGUAGES = ["en", "hi", "ur"] as const;
 export const onboardingBody = z
   .object({
     role: z.enum(SELF_SERVICE_ROLES),
-    display_name: cleanText(60).optional(),
+    // Required: TCU needs to know who is asking, and agents see it.
+    display_name: cleanText(60),
     language: z.enum(LANGUAGES).optional(),
   })
   .strict();
@@ -24,7 +25,7 @@ export type OnboardingInput = z.infer<typeof onboardingBody>;
 // server sets it; the client can't).
 export const patchMeBody = z
   .object({
-    display_name: cleanText(60).nullable().optional(),
+    display_name: cleanText(60).optional(), // a name can be changed, not removed
     language: z.enum(LANGUAGES).optional(),
     location_consent: z.boolean().optional(),
   })
