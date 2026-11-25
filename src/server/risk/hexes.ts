@@ -10,6 +10,7 @@ export type HexFeature = {
   level: "low" | "medium" | "high";
   top_hazard: string | null;
   confidence: string | null;
+  slope_deg: number | null; // steepest centre-to-corner slope of the cell
   boundary: [number, number][]; // [lng, lat], closed ring
 };
 
@@ -31,6 +32,7 @@ export function withBoundaries(rows: HexRow[]): HexFeature[] {
       level: r.level as HexFeature["level"],
       top_hazard: r.top_hazard,
       confidence: r.confidence,
+      slope_deg: r.slope_deg ?? null,
       boundary: cellToBoundary(r.h3_index, true).map(([lng, lat]) => [round(lng), round(lat)] as [number, number]),
     }));
 }

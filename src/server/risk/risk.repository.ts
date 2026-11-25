@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import type { Db } from "@/src/server/db";
-import { latestRisk } from "@/src/server/db/schema";
+import { hexes, latestRisk } from "@/src/server/db/schema";
 
 // The newest risk job run for each zone (zone rows, not hexes) at one horizon.
 export async function latestZoneRisk(db: Db, horizonHours: number) {
@@ -76,8 +76,10 @@ export async function latestHexRows(db: Db, horizonHours: number) {
         level: latestRisk.level,
         top_hazard: latestRisk.top_hazard,
         confidence: latestRisk.confidence,
+        slope_deg: hexes.slope_deg, // public table, from jobs/tools/build_hexes.py
       })
       .from(latestRisk)
+      .leftJoin(hexes, eq(hexes.h3_index, latestRisk.h3_index))
       .where(and(isNotNull(latestRisk.h3_index), eq(latestRisk.horizon_hours, horizonHours)))
       .orderBy(asc(latestRisk.zone_id), asc(latestRisk.h3_index)),
   );

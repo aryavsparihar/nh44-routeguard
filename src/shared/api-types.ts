@@ -104,5 +104,6 @@ export type RiskHex = {
   level: "low" | "medium" | "high";
   top_hazard: string | null;
   confidence: string | null;
+  slope_deg: number | null;
   boundary: [number, number][];
 };
