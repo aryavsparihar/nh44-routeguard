@@ -720,7 +720,8 @@
       "tooMany": "Too many tries. Wait a few minutes and try again.",
       "captcha": "The bot check didn't load. Reload the page and try again.",
       "other": "Could not sign in. Try again, or use another email."
-    }
+    },
+    "oldSession": "Your earlier sign-in on this device had stopped working, so we signed it out. Tap “Send me a code” again."
   },
   "me": {
     "heading": "Your account",
