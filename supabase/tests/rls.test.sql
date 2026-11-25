@@ -12,7 +12,7 @@
 
 begin;
 
-select plan(96);
+select plan(109);
 
 -- ===========================================================================
 -- Fixtures (as the owner, so RLS doesn't apply)
@@ -243,6 +243,36 @@ select throws_ok(
 select is((select count(*) from public.official_updates where id = '00000000-0000-4000-8000-0000000000b2'),
   1::bigint, 'police: sees deleted official updates (history)');
 
+-- An edit, as PATCH /api/v1/admin/official-updates/{id} sends it: close the
+-- old version, add version 2 pointing at it, audit it. Then a soft delete.
+select lives_ok(
+  $$ update public.official_updates
+     set deleted_at = now(), delete_reason = 'Replaced by version ' || (version + 1)
+     where id = '00000000-0000-4000-8000-0000000000b1' and deleted_at is null $$,
+  'police: can close the old version of an update');
+select lives_ok(
+  $$ insert into public.official_updates (id, zone_id, kind, title, source_url, source_name, issued_at, valid_until,
+       version, supersedes_id, created_by)
+     values ('00000000-0000-4000-8000-0000000000b3', 1, 'advisory', 'Live test update, edited',
+       'https://example.com/live', 'pgTAP', now(), now() + interval '1 day',
+       2, '00000000-0000-4000-8000-0000000000b1', 'user_testpolice') $$,
+  'police: can add the new version');
+select lives_ok($$ select public.write_audit('official_update.edited', 'official_update',
+  '00000000-0000-4000-8000-0000000000b3', null, 'req-pgtap-ou', '{"version": 2}'::jsonb) $$,
+  'police: can audit the edit');
+select lives_ok(
+  $$ update public.official_updates set deleted_at = now(), delete_reason = 'pgTAP delete'
+     where id = '00000000-0000-4000-8000-0000000000b3' and deleted_at is null $$,
+  'police: can soft delete an update with a reason');
+select throws_ok(
+  $$ update public.official_updates set deleted_at = now(), delete_reason = null
+     where id = '00000000-0000-4000-8000-0000000000b1' $$,
+  '23514', null::text, 'police: cannot delete an update without a reason');
+select lives_ok($$ delete from public.official_updates where id = '00000000-0000-4000-8000-0000000000b3' $$,
+  'police: a real delete runs but removes nothing (checked below)');
+select lives_ok($$ update public.road_status set state = 'closed' where item = 'rail_parcel' $$,
+  'police: an update of road_status runs but changes nothing (checked below)');
+
 -- ===========================================================================
 -- A new user onboarding
 -- ===========================================================================
@@ -275,6 +305,17 @@ select throws_ok($$ update public.audit_log set reason = 'changed' $$,
   '42501', null::text, 'admin: cannot change audit_log');
 select throws_ok($$ delete from public.audit_log $$,
   '42501', null::text, 'admin: cannot delete from audit_log');
+
+-- Road status, as PATCH /api/v1/admin/road-status sends it.
+select lives_ok($$ select state from public.road_status where item = 'mughal_road' for update $$,
+  'admin: can lock a road_status row to read the old state');
+select lives_ok(
+  $$ update public.road_status set state = 'open', source_url = 'https://example.com/mughal', updated_by = 'user_testadmin'
+     where item = 'mughal_road' $$,
+  'admin: can set Mughal Road open with a source');
+select throws_ok(
+  $$ update public.road_status set source_url = 'http://example.com/rail' where item = 'rail_parcel' $$,
+  '23514', null::text, 'admin: road_status refuses an http:// source');
 
 -- Role changes (admin_set_role)
 select lives_ok($$ select public.admin_set_role('user_testgrower', 'police', 'Demo police account for the round', 'req-pgtap-1') $$,
@@ -314,8 +355,15 @@ select is((select status::text from public.reports where id = '00000000-0000-400
   'resolved', 'the admin''s update resolved the report');
 select is((select status::text from public.shipments where id = '00000000-0000-4000-8000-0000000000a1'),
   'holding', 'agent 2 did not change agent 1''s shipment');
-select is((select state::text from public.road_status where item = 'mughal_road'),
-  'unknown', 'a grower did not change road_status');
+select is((select state::text || ' ' || source_url from public.road_status where item = 'mughal_road'),
+  'open https://example.com/mughal', 'only the admin changed Mughal Road (the grower''s update did nothing)');
+select is((select state::text from public.road_status where item = 'rail_parcel'),
+  'unknown', 'police did not change road_status');
+select is((select delete_reason from public.official_updates where id = '00000000-0000-4000-8000-0000000000b1'),
+  'Replaced by version 2', 'the old version is closed, not removed');
+select is((select version || ' ' || supersedes_id || ' ' || delete_reason from public.official_updates
+           where id = '00000000-0000-4000-8000-0000000000b3'),
+  '2 00000000-0000-4000-8000-0000000000b1 pgTAP delete', 'the new version points at the old one and is soft deleted');
 select is((select display_name from public.users where id = 'user_testdriver'),
   'Renamed driver', 'the driver''s display name changed');
 

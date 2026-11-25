@@ -1,5 +1,5 @@
 import "server-only";
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import type { Db } from "@/src/server/db";
 
 // Writes one row to audit_log through the database function write_audit().
@@ -16,6 +16,11 @@ import type { Db } from "@/src/server/db";
 //     requestId,
 //   });
 //
+// When the action and its audit row must succeed or fail together, run
+// auditSql() inside the same db.rls() transaction instead:
+//
+//   await db.rls(async (tx) => { ...; await tx.execute(auditSql(entry)); });
+//
 // Never put personal data (names, emails, phone numbers) in meta.
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -28,14 +33,14 @@ export type AuditEntry = {
   meta?: { [key: string]: Json };
 };
 
-export async function writeAudit(db: Db, entry: AuditEntry): Promise<number> {
+export function auditSql(entry: AuditEntry): SQL {
   const meta = entry.meta === undefined ? null : JSON.stringify(entry.meta);
-  const rows = await db.rls((tx) =>
-    tx.execute<{ id: string | number }>(
-      sql`select public.write_audit(${entry.action}::text, ${entry.targetType ?? null}::text,
-        ${entry.targetId ?? null}::text, ${entry.reason ?? null}::text, ${entry.requestId ?? null}::text,
-        ${meta}::jsonb) as id`,
-    ),
-  );
+  return sql`select public.write_audit(${entry.action}::text, ${entry.targetType ?? null}::text,
+    ${entry.targetId ?? null}::text, ${entry.reason ?? null}::text, ${entry.requestId ?? null}::text,
+    ${meta}::jsonb) as id`;
+}
+
+export async function writeAudit(db: Db, entry: AuditEntry): Promise<number> {
+  const rows = await db.rls((tx) => tx.execute<{ id: string | number }>(auditSql(entry)));
   return Number(rows[0].id);
 }

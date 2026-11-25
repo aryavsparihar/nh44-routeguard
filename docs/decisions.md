@@ -182,3 +182,12 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-25** · Advice answers are codes (`reason_code`, `delay_code`, `notes`) translated on the phone · Same words in all three languages, and the shipment board can store the code with `rules_version`.
 - **2026-11-25** · When every zone is low, the advisor doesn't name a "deciding" zone · Same reason as L2: a tie at 0.00 must not point at zone 1.
 
+## Round 3: official updates, road status, admin (B3)
+
+- **2026-11-25** · Editing an official update makes a new version: the old row is closed ("Replaced by version n") and a new row carries the change, `version + 1` and `supersedes_id` · People can see what was shown before, and nothing is overwritten. The edit claims the old row with `where deleted_at is null`, so two edits at once can't both win (the second gets 409).
+- **2026-11-25** · Deleting is a soft delete with a written reason; there is no hard delete (no RLS delete policy) · Section 12. The history and the audit log keep it.
+- **2026-11-25** · The change and its audit row are written in one transaction (`auditSql()` inside `db.rls()`) · A failed audit insert undoes the change, so there is never a privileged change without a log entry.
+- **2026-11-25** · Road status is set one item at a time, and "open" or "closed" needs an https source link; "unknown" clears it · L14: the advisor only suggests Mughal Road or the parcel train with a source behind it.
+- **2026-11-25** · Admin forms take times in IST (`datetime-local` read as +05:30) · Every time the app shows is IST; a phone set to another time zone would otherwise post the wrong time.
+- **2026-11-25** · Roles are given by Clerk user id on `/admin/users`; there is no user search yet · Section 8 asks only for `PATCH /api/v1/admin/users/{id}/role`. A list of users would show personal data, so we wait until it is needed.
+- **2026-11-25** · Police and TCU updates show "From {publisher} · Open source · issued · until" and a "not official" note above the list · Section 12: we copy from a source, we are not that source.

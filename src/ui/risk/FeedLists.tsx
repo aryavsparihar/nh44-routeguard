@@ -3,7 +3,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/src/i18n/routing";
 import type { OfficialUpdate, PublicReport } from "@/src/shared/api-types";
-import { formatDayTime } from "@/src/shared/format";
+import { formatDayTime, isolate } from "@/src/shared/format";
+import { NotOfficial } from "@/src/ui/NotOfficial";
 
 // Police/TCU updates in force. Each one links to where it was published.
 export function OfficialUpdates({ updates }: { updates: OfficialUpdate[] }) {
@@ -14,6 +15,7 @@ export function OfficialUpdates({ updates }: { updates: OfficialUpdate[] }) {
       <h2 id="updates-heading" className="text-lg font-bold">
         {t("heading")}
       </h2>
+      <NotOfficial />
       {updates.length === 0 ? (
         <p className="text-sm text-secondary">{t("none")}</p>
       ) : (
@@ -32,10 +34,12 @@ export function OfficialUpdates({ updates }: { updates: OfficialUpdate[] }) {
                 </p>
               )}
               <p className="text-sm">
+                <bdi>{t("from", { name: u.source_name })}</bdi> ·{" "}
                 <a href={u.source_url} target="_blank" rel="noopener noreferrer" className="underline">
-                  {t("source", { name: u.source_name })}
+                  {t("sourceLink")}
                 </a>{" "}
-                · {t("validUntil", { time: formatDayTime(new Date(u.valid_until), locale) })}
+                · {t("issued", { time: isolate(formatDayTime(new Date(u.issued_at), locale)) })} ·{" "}
+                {t("validUntil", { time: isolate(formatDayTime(new Date(u.valid_until), locale)) })}
               </p>
             </li>
           ))}
