@@ -50,7 +50,7 @@ export { notSupported as GET, notSupported as PUT, notSupported as PATCH, notSup
 | Log something | `log.info({ zone }, "message")`. Never log bodies, tokens, phone numbers or query strings |
 | The caller in a non-public route | `requireCaller(caller)` gives a `Caller` instead of `Caller \| null` |
 | Talk to the database | `const db = await getDb()` then `db.rls((tx) => tx.select()…)` (`src/server/db`): one transaction as the caller's role and claims, so RLS applies; 503 if `DATABASE_URL` isn't set. `sql` templates only, never `sql.raw()` |
-| Record a privileged action | `await writeAudit(db, { action, targetType, targetId, reason, requestId })` (`src/server/audit.ts`) |
+| Record a privileged action | `await writeAudit(db, { action, targetType, targetId, reason, requestId })` (`src/server/audit.ts`); when the change and its audit row must succeed together, `await tx.execute(auditSql(entry))` inside the same `db.rls()` |
 | Is the data stale? | `dataAgeMinutes(runAt)` and `isStale(age)` from `src/shared/freshness.ts` (over 90 min, or no run). `GET /api/v1/health/ready` reports the same |
 
 Shared zod pieces live in `src/server/schemas/common.ts`: `cleanText(max)`, `truckNumber`, `corridorLat`, `corridorLng`, `pageQuery`. Always end objects with `.strict()`.

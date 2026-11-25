@@ -28,10 +28,13 @@ Each row names the protection, where it lives and what tests it. "CI" means it r
 | Bad query strings returning everything | Every query string goes through a zod `.strict()` schema (`readQuery`): `?zone=abc`, an unknown horizon or an extra parameter is a 400 problem+json, never an unfiltered 200 (L7). Cursors must match their exact format | `src/server/risk/risk.schemas.ts`, `src/server/schemas/zone-query.ts`, `src/server/incidents/incidents.schemas.ts` | `risk.routes.test.ts`, `lists.routes.test.ts` |
 | Personal data in public lists | Public lists select named columns only: reports come from the `public_reports` view (no user id), official updates leave out `created_by`, incidents show verified rows only | `src/server/reports/`, `src/server/official-updates/`, `src/server/incidents/` | `lists.routes.test.ts`; `rls.test.sql` for the view |
 | Nonsense advice input | `POST /api/v1/advice` takes a zod `.strict()` body: known varieties and destinations, tonnes 0.1–40, whole days 0–120, light or heavy; anything else is 422. Nothing is stored | `src/server/advice/advice.schemas.ts` | `advice.routes.test.ts` |
+| Fake or untraceable official updates | Only police and admins can post (`withApi` role check, then RLS). Every update needs an https source link (no `http:`, `javascript:` or user:password links; the database checks the prefix again) and who published it. Edits keep the old version; deletes are soft with a reason | `src/server/official-updates/`, `src/server/schemas/https-url.ts` | `admin.routes.test.ts`, `official-updates.schemas.test.ts`, `rls.test.sql` |
+| A privileged change with no audit entry | Official update writes and road status changes run their `write_audit()` call in the same transaction, so a failed audit undoes the change. Role changes already do this inside `admin_set_role()` | `src/server/audit.ts` (`auditSql`), the repositories | `rls.test.sql` |
+| Marking Mughal Road or the parcel train open without a source | `PATCH /api/v1/admin/road-status` is admin only and refuses "open"/"closed" without an https source | `src/server/road-status/` | `admin.routes.test.ts`, `rls.test.sql` |
 
 ### Gaps we know about
 
-- **Rate limits.** Section 10's limits (role attempts, reports, 60 advice requests a minute per IP) wait for the shared rate limiter (section 17). Routes that need one carry `TODO(rate-limit)`.
+- **Rate limits.** Section 10's limits (role attempts, admin writes, reports, 60 advice requests a minute per IP) wait for the shared rate limiter (section 17). Routes that need one carry `TODO(rate-limit)`.
 - **Photo uploads.** File type checks by magic bytes and size limits come with the reports API (B2).
 - **XSS test on report notes.** A test that saves `<script>` in a note and checks it shows as text comes with the reports API (B2).
 - **Error tracking.** Sentry comes with A7.
