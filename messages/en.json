@@ -359,7 +359,8 @@
       "audit": "Audit log",
       "users": "Roles",
       "reports": "Road reports",
-      "jobs": "Failed jobs"
+      "jobs": "Failed jobs",
+      "overview": "Road overview"
     },
     "hints": {
       "updates": "Post, edit or remove police and TCU updates",
@@ -367,7 +368,8 @@
       "audit": "Who changed what, when and why",
       "users": "Give someone a role, including police or admin",
       "reports": "Hide, clear or restore reports, and see the flags",
-      "jobs": "Background jobs that failed 5 times"
+      "jobs": "Background jobs that failed 5 times",
+      "overview": "Risk, reports waiting for confirmation, police and TCU updates, and road status on one screen"
     },
     "back": "Back to admin",
     "saving": "Saving…",
@@ -519,6 +521,34 @@
       "failed": "Gave up {time}",
       "error": "Last error: {error}",
       "payload": "Ids: {payload}"
+    },
+    "overview": {
+      "heading": "Road overview",
+      "intro": "Everything on this screen is what the public map and API already show, in one place. Nothing about people: no names, no truck positions. RouteGuard is not an official police service.",
+      "nowHeading": "Now",
+      "tiles": {
+        "highNow": "zones at high risk now",
+        "mediumNow": "zones at medium risk now",
+        "waiting": "road reports waiting for confirmation",
+        "inForce": "police and TCU updates in force"
+      },
+      "scoresFrom": "Risk scores from {time}",
+      "noScores": "No risk scores yet.",
+      "riskHeading": "Risk over the next 48 hours",
+      "postUpdate": "Post or change an update",
+      "roadHeading": "Mughal Road and parcel train",
+      "road": {
+        "mughal_road": "Mughal Road (light trucks)",
+        "rail_parcel": "Budgam–Delhi parcel train"
+      },
+      "roadState": {
+        "open": "Open, according to the source",
+        "closed": "Closed, according to the source",
+        "unknown": "Not known: nobody has set it with a source"
+      },
+      "roadSet": "set {time}",
+      "source": "Source",
+      "changeRoad": "Change road and rail status"
     }
   },
   "report": {
