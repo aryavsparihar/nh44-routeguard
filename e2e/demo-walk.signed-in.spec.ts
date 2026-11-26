@@ -15,7 +15,7 @@ const WALKS: { who: string; email: string | null; screens: string[] }[] = [
   {
     who: "TCU",
     email: "routeguard.admin+clerk_test@example.com",
-    screens: ["/admin", "/admin/approvals", "/admin/updates", "/admin/road-status", "/admin/audit", "/board", "/report/new"],
+    screens: ["/admin", "/admin/approvals", "/admin/updates", "/admin/reports", "/admin/road-status", "/admin/audit", "/board", "/report/new"],
   },
   { who: "agent", email: "routeguard.agent+clerk_test@example.com", screens: ["/board", "/", "/report/new", "/me"] },
   { who: "driver, vouched", email: "routeguard.driver1+clerk_test@example.com", screens: ["/board", "/report/new", "/me", "/"] },
@@ -68,18 +68,6 @@ for (const walk of WALKS) {
     }
   });
 }
-
-// Found by this walk on 26 Nov 2026: GET /api/v1/admin/reports answers 500
-// (Postgres 42883, "function or operator does not exist") on the real
-// database, so /admin/reports shows its error state. The route tests pass
-// with a faked database. Un-fixme this once the query is fixed.
-test.fixme("demo walk as TCU: /admin/reports loads its list", async ({ page }) => {
-  const problems = watch(page);
-  await signIn(page, "routeguard.admin+clerk_test@example.com");
-  await page.goto("/admin/reports");
-  await page.waitForTimeout(2500);
-  expect(problems).toEqual([]);
-});
 
 test("the new screens: share on the strip, How this works, the backtest numbers", async ({ page }) => {
   const problems = watch(page);
