@@ -88,6 +88,12 @@ const SHIPMENTS: DemoShipment[] = [
 const HOUR = 3600_000;
 const now = Date.now();
 
+// How long the demo official updates stay in force, counted from the time you
+// run the seed. The sources are past news reports with no validity of their
+// own, so this is a demo window, not a real one: long enough to seed the
+// evening before and present the next day. Set DEMO_WINDOW_HOURS to change it.
+const DEMO_WINDOW_HOURS = Math.min(Math.max(Number(process.env.DEMO_WINDOW_HOURS ?? 36) || 36, 1), 72);
+
 type DemoReport = {
   by: "admin" | "driverVouched" | "agent";
   source: "admin" | "driver";
@@ -97,7 +103,10 @@ type DemoReport = {
   status: "confirmed" | "unconfirmed" | "expired";
   confirmations: number;
   ageHours: number;
-  lifeHours: number; // from config/report-rules.json expiry_hours
+  // From config/report-rules.json expiry_hours, counted from created_at. We
+  // keep the real rule instead of stretching it for the demo, so seed within
+  // 2 hours of presenting (docs/demo-script.md, "Before we present").
+  lifeHours: number;
   note: string;
 };
 
@@ -137,7 +146,7 @@ if (dryRun) {
   console.log(`  ${USERS.length} Clerk test accounts: ${USERS.map((u) => `${u.role} <${u.email}>`).join(", ")}`);
   console.log(`  ${SHIPMENTS.length} shipments on the demo agent's board (${SHIPMENTS.map((s) => s.status).join(", ")})`);
   console.log(`  ${REPORTS.length} reports (${REPORTS.map((r) => r.status).join(", ")})`);
-  console.log(`  ${UPDATES.length} official updates with sources, and road_status (Mughal Road, rail) set to unknown`);
+  console.log(`  ${UPDATES.length} official updates with sources, in force for ${DEMO_WINDOW_HOURS} h, each with an audit entry, and road_status (Mughal Road, rail) set to unknown`);
   process.exit(0);
 }
 
@@ -325,15 +334,36 @@ if (oldPolice) check("old police account's reports", await db.from("reports").de
 // private.jwt_role), but clear it so nobody is confused.
 if (oldPolice) await clerk.users.updateUserMetadata(oldPolice, { publicMetadata: { role: null } });
 for (const [i, u] of UPDATES.entries()) {
-  check(
+  const row = check(
     `official update ${i + 1}`,
-    await db.from("official_updates").insert({
-      ...u,
-      issued_at: new Date(now - (i + 1) * HOUR).toISOString(),
-      valid_until: new Date(now + 12 * HOUR).toISOString(),
-      created_by: ids.admin,
-    }),
+    await db
+      .from("official_updates")
+      .insert({
+        ...u,
+        issued_at: new Date(now - (i + 1) * HOUR).toISOString(),
+        valid_until: new Date(now + DEMO_WINDOW_HOURS * HOUR).toISOString(),
+        created_by: ids.admin,
+      })
+      .select("id, kind, zone_id")
+      .single(),
   );
+  // The same audit entry the console writes (official_update.created), so
+  // /admin/audit lists the demo updates too. The reason says it came from
+  // this script, not from someone using the console.
+  if (row) {
+    check(
+      `audit for official update ${i + 1}`,
+      await db.from("audit_log").insert({
+        actor_id: ids.admin,
+        actor_role: "admin",
+        action: "official_update.created",
+        target_type: "official_update",
+        target_id: row.id,
+        reason: `Demo seed (scripts/seed-demo.mts), copied from ${u.source_name}`,
+        meta: { version: 1, kind: row.kind, zone_id: row.zone_id, seed: true },
+      }),
+    );
+  }
 }
 
 console.log(`Demo data ready: ${USERS.length} accounts, ${SHIPMENTS.length} shipments, ${REPORTS.length} reports, ${UPDATES.length} official updates.`);
