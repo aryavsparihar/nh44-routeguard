@@ -350,6 +350,19 @@ Environment variables. The `NEXT_PUBLIC_` values are public (they are in the bro
 az containerapp update --name $APP --resource-group $RG --set-env-vars CLERK_SECRET_KEY=secretref:clerk-secret-key DATABASE_URL=secretref:database-url NEXT_PUBLIC_SUPABASE_URL=<url> NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key> NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<pk_...> NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=1 NEXT_PUBLIC_CLERK_TELEMETRY_DISABLED=1 LOG_LEVEL=info
 ```
 
+### 4b. What the demo needs on top (after the first deploy, once you have the URL)
+
+These are set the same way as above, as secrets or plain settings. Without them the app still runs; the matching feature is off.
+
+1. **Job worker and alerts:** "Job queue worker" above (the `jobs-secret` secret, `JOBS_SECRET=secretref:jobs-secret`, and the two Supabase Vault values with the app's address) and "Web Push" (the `vapid-private-key` secret plus `VAPID_PUBLIC_KEY`, `VAPID_SUBJECT`).
+2. **Aadhaar demo check** (demo step 6), as plain settings:
+
+   ```bash
+   az containerapp update --name $APP --resource-group $RG --set-env-vars FEATURE_AADHAAR_QR=true AADHAAR_ALLOW_TEST_CERT=true
+   ```
+
+   After the round, set `AADHAAR_ALLOW_TEST_CERT=false` again.
+
 ### 5. Let GitHub deploy without a password
 
 A managed identity that GitHub Actions on `main` can sign in as, allowed to change only this resource group:
@@ -419,6 +432,12 @@ With 0 replicas the first visit starts the app, which takes a few seconds. A few
 ```bash
 REQUIRE_READY=1 node scripts/smoke.mjs https://<app url>
 ```
+
+```bash
+node scripts/demo-check.mjs https://<app url>
+```
+
+Every line of the second one must say PASS (it only reads; see `docs/demo-script.md`).
 
 If it warns that the data is stale, press **Run workflow** on **Risk job** too.
 
