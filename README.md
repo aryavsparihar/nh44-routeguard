@@ -208,6 +208,7 @@ Each one makes one of the seven Round 1 features (PPT slide 6) easier to use; no
 | Share the text summary: a button on the 48 h strip sends the plain-text summary (data time, raised zones, the "not an official police service" line, a link) through the phone's share sheet, or copies it. Under 5 KB in every language, and works offline from the saved copy | 7. Offline mode (text summary under 5 KB) | `src/ui/risk/share.ts` |
 | Heading into risk: on `/board`, a truck whose current zone (from its last position) or next zone on the route is high now or within 12 h gets a mark that says it is advice only. Missing scores give no mark | 6. Shipment board | `src/shared/truck-risk.ts` |
 | Play a past storm: in replay mode, Play / Pause steps the storm from now to +12, +24 and +48 h, about 2 s a step. The "past storm, not today" banner stays on screen; with reduced motion there is no Play, only the step buttons; the live map is unchanged | 2. 48-hour strip (and 1. the risk map it is shown on) | `src/ui/risk/replay-play.ts` |
+| Backtest in the app: `/backtest`, linked from the map's "How this works", shows the hits table, false-alarm rate, date range, incident count, sources and the small-sample limit, all read from `lib/risk/backtest.json` (a pytest checks it says the same as `docs/backtest.md`) | 1. Live risk map (how far to trust its colours) | `app/[locale]/backtest/page.tsx` |
 
 ## Team
 
