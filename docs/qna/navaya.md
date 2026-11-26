@@ -3,7 +3,7 @@
 
 ## What I Own
 
-My responsibilities cover the map and zone screens (`src/ui/risk/`), the risk read API (`src/server/risk/`, `app/api/v1/risk/`, `/zones`, `/risk/summary`), the shared rate-limit store (`src/server/http/rate-limit*.ts`, `private.rate_limits`), the priority module (`src/shared/priority.ts`, `config/advice-assumptions.json`), the advice engine, and the read-path section of `docs/scaling.md`.
+My responsibilities cover the ap and zone screens (`src/ui/risk/`), the risk read API (`src/server/risk/`, `app/api/v1/risk/`, `/zones`, `/risk/summary`), the shared rate-limit store (`src/server/http/rate-limit*.ts`, `private.rate_limits`), the priority module (`src/shared/priority.ts`, `config/advice-assumptions.json`), the advice engine, and the read-path section of `docs/scaling.md`.
 
 ## Risk API: Request Flow
 
