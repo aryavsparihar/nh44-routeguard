@@ -280,7 +280,10 @@
     "worst": "अगले 48 घंटे में सबसे ज़्यादा जोखिम: ज़ोन {zone} ({name}) {when} {level} है।",
     "zoneCol": "ज़ोन",
     "patternNote": "मध्यम खानों में धारियाँ हैं और ऊँचे खानों में जाली, ताकि रंग के बिना भी स्तर पढ़ा जा सके।",
-    "cellLabel": "ज़ोन {zone}, {when}: {level}, स्कोर {score}"
+    "cellLabel": "ज़ोन {zone}, {when}: {level}, स्कोर {score}",
+    "share": "यह सारांश भेजें",
+    "copied": "कॉपी हो गया। इसे WhatsApp या SMS में चिपकाएँ।",
+    "shareFailed": "भेज नहीं सके। सिग्नल मिलने पर फिर कोशिश करें।"
   },
   "summary": {
     "title": "NH-44 RouteGuard: सड़क का जोखिम",

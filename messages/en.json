@@ -280,7 +280,10 @@
     "worst": "Highest risk in the next 48 hours: zone {zone} ({name}) is {level} {when}.",
     "zoneCol": "Zone",
     "patternNote": "Medium cells have stripes and high cells cross-hatching, so the level reads without colour.",
-    "cellLabel": "Zone {zone}, {when}: {level}, score {score}"
+    "cellLabel": "Zone {zone}, {when}: {level}, score {score}",
+    "share": "Share this summary",
+    "copied": "Copied. Paste it into WhatsApp or a text message.",
+    "shareFailed": "Couldn't share it. Try again when you have signal."
   },
   "summary": {
     "title": "NH-44 RouteGuard: road risk",

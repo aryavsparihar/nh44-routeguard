@@ -280,7 +280,10 @@
     "worst": "اگلے 48 گھنٹے میں سب سے زیادہ خطرہ: زون {zone} ({name}) {when} {level} ہے۔",
     "zoneCol": "زون",
     "patternNote": "درمیانے خانوں میں دھاریاں اور زیادہ والے خانوں میں جالی ہے، تاکہ رنگ کے بغیر بھی سطح پڑھی جا سکے۔",
-    "cellLabel": "زون {zone}، {when}: {level}، اسکور {score}"
+    "cellLabel": "زون {zone}، {when}: {level}، اسکور {score}",
+    "share": "یہ خلاصہ بھیجیں",
+    "copied": "کاپی ہو گیا۔ اسے WhatsApp یا SMS میں چسپاں کریں۔",
+    "shareFailed": "نہیں بھیج سکے۔ سگنل ملنے پر دوبارہ کوشش کریں۔"
   },
   "summary": {
     "title": "NH-44 RouteGuard: سڑک کا خطرہ",
