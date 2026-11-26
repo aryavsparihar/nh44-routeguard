@@ -7,6 +7,8 @@ import { formatReason, type ReasonTranslate } from "@/src/shared/reason";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
 import type { OfficialUpdate, PastClosure, PublicReport, Replay, ReplaySummary, RiskHex } from "@/src/shared/api-types";
 import { closuresByCell } from "@/src/shared/cell-closures";
+import { reportsInForce, updatesInForce } from "@/src/shared/in-force";
+import { useNow } from "@/src/ui/offline/useNow";
 import {
   HAZARDS,
   HORIZONS,
@@ -147,10 +149,17 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
       ),
     };
   }, [pickedId, hexList, risk, hazard, tr]);
+  // Offline, the saved copy can be hours old: never show a report past its
+  // expiry time or an update past its end (src/shared/in-force.ts).
+  const now = useNow();
   const shownReports = useMemo(() => {
-    const list = reports.state === "ready" ? reports.value.data : [];
+    const list = reports.state === "ready" ? reportsInForce(reports.value.data, now) : [];
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;
-  }, [reports, hazard]);
+  }, [reports, hazard, now]);
+  const shownUpdates = useMemo(
+    () => (updates.state === "ready" ? updatesInForce(updates.value.data, now) : []),
+    [updates, now],
+  );
 
   const places = useMemo(
     () => MAP_PLACES.map((p) => ({ name: t(`mapPlaces.${p.id}`), lng: p.lng, lat: p.lat })),
@@ -262,7 +271,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
       )}
 
       {/* Today's reports and updates don't belong on a past storm's map. */}
-      {!replayInfo && updates.state === "ready" && <OfficialUpdates updates={updates.value.data} />}
+      {!replayInfo && updates.state === "ready" && <OfficialUpdates updates={shownUpdates} />}
       {!replayInfo && reports.state === "ready" && <RoadReports reports={shownReports} />}
     </div>
   );

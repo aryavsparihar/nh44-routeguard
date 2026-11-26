@@ -89,7 +89,7 @@ describe("service worker policy", () => {
   });
 
   it("keeps the public API reads, network first", () => {
-    for (const path of ["/api/v1/risk", "/api/v1/risk?horizon=24", "/api/v1/risk/summary", "/api/v1/zones", "/api/v1/reports", "/api/v1/road-status"]) {
+    for (const path of ["/api/v1/risk", "/api/v1/risk?horizon=24", "/api/v1/risk/summary", "/api/v1/risk/hexes?horizon=12", "/api/v1/zones", "/api/v1/reports", "/api/v1/road-status"]) {
       expect(policy.classify(req(path))).toBe("api");
     }
   });

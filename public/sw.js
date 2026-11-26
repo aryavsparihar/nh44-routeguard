@@ -57,6 +57,7 @@ const NEVER_CACHE_PAGES = ["/board", "/report/new", "/me", "/admin", "/sign-in"]
 const CACHED_API = [
   "/api/v1/risk",
   "/api/v1/risk/summary",
+  "/api/v1/risk/hexes", // the H3 cells: the map's hexagons and "When to leave"
   "/api/v1/zones",
   "/api/v1/official-updates",
   "/api/v1/incidents",
