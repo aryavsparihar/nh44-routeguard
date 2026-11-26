@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { HORIZONS, ZONE_IDS, worstZone, type Level, type RiskRow } from "@/src/shared/risk";
+import { shareSummary, shareText, type ShareResult } from "./share";
 import { LoadError, Loading } from "./states";
 import { useRisk } from "./useRisk";
 
@@ -87,6 +89,49 @@ export function StripScreen() {
         </tbody>
       </table>
       <p className="text-sm text-secondary">{t("patternNote")}</p>
+      <ShareSummary />
+    </div>
+  );
+}
+
+// "Share this summary": the API's plain-text summary (under 5 KB, kept by the
+// service worker for offline use) plus a link to this page, through the
+// phone's share sheet or the clipboard (src/ui/risk/share.ts).
+function ShareSummary() {
+  const t = useTranslations("strip");
+  const ts = useTranslations("summary");
+  const locale = useLocale();
+  const [result, setResult] = useState<ShareResult | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function share() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/v1/risk/summary?lang=${encodeURIComponent(locale)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = shareText(await res.text(), `${window.location.origin}/strip`);
+      setResult(await shareSummary(navigator, ts("title"), text));
+    } catch {
+      setResult("failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={share}
+        disabled={busy}
+        className="min-h-12 self-start rounded-md border border-border-strong bg-elevated px-4 font-bold"
+      >
+        {t("share")}
+      </button>
+      <p aria-live="polite" className="text-sm">
+        {result === "copied" ? t("copied") : result === "failed" ? t("shareFailed") : null}
+      </p>
     </div>
   );
 }
