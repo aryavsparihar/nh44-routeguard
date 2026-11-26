@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import cases from "@/jobs/tests/fixtures/tipping_cases.json";
+import cases from "@/lib/risk/tipping_cases.json";
 import { levelFor } from "./risk";
 import { landslideScore, slopeFactor, tippingPoint } from "./tipping";
 

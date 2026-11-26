@@ -3,18 +3,17 @@ job's landslide rule backwards. This checks its table against the job itself:
 at the listed mm the cell reaches the level, and 1 mm less it doesn't."""
 
 import json
-from pathlib import Path
 
 import pytest
 
 from helpers import T, series, spread
-from risk.config import load_config
+from risk.config import REPO_ROOT, load_config
 from risk.hexes import slope_factor
 from risk.scoring import level, pick_hazards
 from risk.triggers import all_triggers
 
 CFG = load_config()
-CASES = json.loads((Path(__file__).parent / "fixtures" / "tipping_cases.json").read_text())["cases"]
+CASES = json.loads((REPO_ROOT / "lib" / "risk" / "tipping_cases.json").read_text())["cases"]
 
 
 def cell_level(zone: int, slope: float | None, mm: float) -> str:
