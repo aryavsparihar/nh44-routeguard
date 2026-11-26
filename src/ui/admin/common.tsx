@@ -17,7 +17,7 @@ export const quietButtonClass =
 export function BackToAdmin() {
   const t = useTranslations("admin");
   return (
-    <Link href="/admin" className="text-sm underline">
+    <Link href="/admin" className="inline-flex min-h-12 items-center self-start text-sm font-bold underline">
       {t("back")}
     </Link>
   );
