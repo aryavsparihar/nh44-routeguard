@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatReason, type ReasonTranslate } from "@/src/shared/reason";
@@ -227,6 +228,9 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
           />
           {picked && <HexCard cell={picked} when={when} onClose={() => setPickedId(null)} />}
           <Legend />
+          <Link href="/backtest" className="inline-flex min-h-12 items-center self-start text-sm font-bold underline">
+            {t("howItWorks")}
+          </Link>
 
           <section aria-labelledby="zones-heading" className="flex flex-col gap-2">
             <h2 id="zones-heading" className="text-lg font-bold">
