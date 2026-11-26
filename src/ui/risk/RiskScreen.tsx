@@ -5,7 +5,8 @@ import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatReason, type ReasonTranslate } from "@/src/shared/reason";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
-import type { OfficialUpdate, PublicReport, Replay, ReplaySummary, RiskHex } from "@/src/shared/api-types";
+import type { OfficialUpdate, PastClosure, PublicReport, Replay, ReplaySummary, RiskHex } from "@/src/shared/api-types";
+import { closuresByCell } from "@/src/shared/cell-closures";
 import {
   HAZARDS,
   HORIZONS,
@@ -112,6 +113,12 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
   // The cell tapped on the map. Its numbers follow the time and hazard
   // picked above, like the map's colours.
   const [pickedId, setPickedId] = useState<string | null>(null);
+  // Verified past closures, for the cell card (cached like the other lists).
+  const [closures] = useApi<ApiList<PastClosure>>("/api/v1/incidents?limit=100");
+  const byCell = useMemo(
+    () => (closures.state === "ready" && hexes ? closuresByCell(hexes, closures.value.data) : null),
+    [closures, hexes],
+  );
   const picked = useMemo((): PickedHex | null => {
     if (!pickedId || !hexList || risk.state !== "ready") return null;
     const h = hexList.find((x) => x.h3_index === pickedId);
@@ -226,7 +233,18 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             pickedHex={picked ? picked.id : null}
             onPickHex={setPickedId}
           />
-          {picked && <HexCard cell={picked} when={when} onClose={() => setPickedId(null)} />}
+          {picked && (
+            <HexCard
+              cell={picked}
+              when={when}
+              onClose={() => setPickedId(null)}
+              closures={
+                byCell && closures.state === "ready"
+                  ? { here: byCell.get(picked.id) ?? [], total: closures.value.data.length }
+                  : null
+              }
+            />
+          )}
           <Legend />
           <Link href="/backtest" className="inline-flex min-h-12 items-center self-start text-sm font-bold underline">
             {t("howItWorks")}
