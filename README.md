@@ -152,8 +152,8 @@ jobs/.venv/bin/python jobs/run_risk.py --dry-run
 
 | What | How to run | Count (26 Nov 2026) |
 | --- | --- | --- |
-| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, the Aadhaar QR checker, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 727 tests in 79 files, all passing; 42.6% of lines covered (most UI files have no unit tests) |
-| Risk job (pytest) | `python3 -m pytest jobs/tests` | 156 passing |
+| Unit and API tests (Vitest): `decide()`, priority, schemas, problem+json, rate limits, the Aadhaar QR checker, every route's status codes with fake repositories | `npm test` (coverage: `npm test -- --coverage`) | 750 tests in 82 files, all passing; 43.2% of lines covered (most UI files have no unit tests) |
+| Risk job (pytest) | `python3 -m pytest jobs/tests` | 162 passing |
 | Database tests (pgTAP): RLS, roles, reports, Aadhaar, audit | `npm run db:test` (runs on the linked Supabase project inside a transaction that is rolled back; no Docker) | 243 passing |
 | Playwright on Pixel 5 and a 360 px phone | `npm run build && npm run e2e` (`E2E_DB=1` for the tests that need keys) | 12 tests per phone, plus 8 signed-in flows with the demo accounts (unverified driver asked to get verified, vouched driver's report, offline outbox, the whole offline story, board, official update, TCU approving a new driver, Aadhaar demo QR) and a read-only walk through the demo script's screens as each account (no console errors, no failed `/api/v1` call), including TCU and a grower reaching their screens by tapping; 9 per phone run in CI without keys |
 | Postman / newman | `npx newman run postman/RouteGuard.postman_collection.json -e postman/ci.postman_environment.json` | 42 requests |
