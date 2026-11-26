@@ -24,7 +24,7 @@ One phone (or Chrome DevTools in a phone size) on the projector, one laptop with
 ## Before we present
 
 1. `node scripts/seed-demo.mts` (Aryaveer's machine, app running) **within 2 hours of presenting**. Demo reports keep the real expiry rules (`config/report-rules.json`: 6 h for the rockfall and landslide), counted from seed time. The two demo official updates stay in force for 36 h (`DEMO_WINDOW_HOURS`), each with an audit entry. Run it again after any signed-in Playwright run: the Aadhaar test leaves driver2 checked.
-2. Open the live URL and call `/api/v1/health/ready` a few minutes before, so a replica is warm (min replicas is 0).
+2. `node scripts/demo-check.mjs <url>` (the live URL, or `http://localhost:3000`) a few minutes before. It also warms a replica (min replicas is 0). Every line must say PASS: health, fresh risk data, an official update in force, a confirmed and an unconfirmed demo report, the storm replays, and each demo account's role and approval. It only reads; it never writes or prints a key.
 3. Check `/api/v1/health/ready` says `stale: false`. If stale, run the risk job by hand (`risk-job.yml`, "Run workflow").
 4. Sign in on the phone as the demo driver; sign in on the laptop as the admin. Code for all demo accounts: `424242`.
 5. Postman: environment "local" or "live" with fresh tokens (postman/README.md).
