@@ -452,6 +452,8 @@ export const OPERATIONS: Operation[] = [
             end_date: "2018-02-06",
             zone_id: 5,
             place: "Ramsoo",
+            lat: 33.3365,
+            lng: 75.1924,
             hazard_type: "landslide",
             hours_closed: 9,
             vehicles_stranded: null,

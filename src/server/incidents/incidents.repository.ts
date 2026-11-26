@@ -24,6 +24,10 @@ export async function listVerifiedIncidents(
         end_date: incidents.event_end_date,
         zone_id: incidents.zone_id,
         place: incidents.place,
+        // Where the source puts it (a place, often a village centre, not the
+        // exact spot); the map's cell card lists closures by nearest cell.
+        lat: incidents.lat,
+        lng: incidents.lng,
         hazard_type: incidents.hazard_type,
         hours_closed: incidents.hours_closed,
         vehicles_stranded: incidents.vehicles_stranded,
