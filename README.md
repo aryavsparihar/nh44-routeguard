@@ -1,6 +1,6 @@
 # NH-44 RouteGuard
 
-Apple trucks from Kashmir have one all-weather road out, NH-44, and landslides, rockfall, flash floods and snow close it every season. RouteGuard gives growers, transport agents and drivers a 48-hour closure-risk forecast for six stretches of the highway and a dispatch advice for each lot: send, hold, rail or divert. Drivers and police can report hazards from the road.
+Apple trucks from Kashmir have one all-weather road out, NH-44, and landslides, rockfall, flash floods and snow close it every season. RouteGuard gives growers, transport agents and drivers a 48-hour closure-risk forecast for six stretches of the highway and a dispatch advice for each lot: send, hold, rail or divert. Verified drivers and transport agents can report hazards from the road.
 
 RouteGuard is a student project. It is not an official government or police service. Follow instructions from J&K Traffic Police. In an emergency call 112.
 
@@ -196,6 +196,15 @@ Risk is computed once an hour for everyone; reads are cached (ETag, `Cache-Contr
 | `users.phone` in the ER diagram | Phone stays with Clerk; we keep only a verification level | Less personal data in our database |
 
 The full table with the 10–15% budget is in [the plan](docs/round3/BUILD_PROMPT.md), section 3, and every decision is in [docs/decisions.md](docs/decisions.md).
+
+### Added before the final demo
+
+Each one makes one of the seven Round 1 features (PPT slide 6) easier to use; none is a new feature.
+
+| Addition | Round 1 feature it improves | Where |
+| --- | --- | --- |
+| Read aloud: the phone reads the advice, the reason and the advisory line in the screen's language, with a Stop button. Hidden when the phone has no voice for that language | 4. Dispatch advisor | `src/ui/advice/speech.ts` |
+| What would change the answer: up to two lines, such as "With 2 fewer days since picking: Divert", found by running the same `decide()` again with nearby values you typed. Only real changes are shown | 4. Dispatch advisor | `src/shared/what-if.ts` |
 
 ## Team
 
