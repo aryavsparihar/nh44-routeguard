@@ -19,6 +19,7 @@ import {
 } from "@/src/shared/risk";
 import { useApi, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
+import { DepartureRibbon } from "./DepartureRibbon";
 import { HexCard, type PickedHex } from "./HexCard";
 import { OfficialUpdates, RoadReports } from "./FeedLists";
 import { ReplayBanner, ReplayPicker, ReplayPlay, useReplayText } from "./Replay";
@@ -256,6 +257,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             </h2>
             <ZoneList rows={rows} names={risk.names} hazard={hazard} />
           </section>
+          <DepartureRibbon replayId={replayInfo ? replayInfo.id : null} />
         </>
       )}
 
