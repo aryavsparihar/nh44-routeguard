@@ -357,6 +357,15 @@
       "signIn": "Sign in to save this lot",
       "wrongRole": "Only growers, traders and agents save lots.",
       "err": "Could not save. Try again."
+    },
+    "readAloud": "Read aloud",
+    "stopReading": "Stop reading",
+    "whatIf": {
+      "heading": "What would change the answer (same rules, worked out on this phone):",
+      "daysFewer": "{count, plural, one {With # day less since picking} other {With # fewer days since picking}}: {decision}",
+      "daysMore": "{count, plural, one {With # more day since picking} other {With # more days since picking}}: {decision}",
+      "light": "With a light truck: {decision}",
+      "heavy": "With a heavy truck: {decision}"
     }
   },
   "admin": {
