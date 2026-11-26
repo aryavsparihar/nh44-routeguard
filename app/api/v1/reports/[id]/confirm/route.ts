@@ -1,9 +1,8 @@
 // POST /api/v1/reports/{id}/confirm: "I see it too". Verified drivers,
-// agents, police and admins, once per person, never on your own report. The
+// agents and TCU, once per person, never on your own report. The
 // body may carry where you are now ({ lat, lng }); only the distance to the
-// report is kept. Two verified people within 2 km and 3 h, or one police or
-// admin, make an unconfirmed report confirmed (section 9). A police or
-// admin confirmation is written to the audit log (report.official_confirm).
+// report is kept. Two verified people within 2 km and 3 h, or TCU, make an
+// unconfirmed report confirmed (section 9). A TCU confirmation is written to the audit log (report.official_confirm).
 // Rate limited: 30 an hour per user.
 import { getDb } from "@/src/server/db";
 import { reportsWriteEnabled } from "@/src/server/flags";
@@ -15,7 +14,7 @@ import { confirmReport } from "@/src/server/reports/reports.repository";
 import { confirmBody, reportId } from "@/src/server/reports/reports.schemas";
 
 export const POST = withApi<{ id: string }>(
-  { access: ["driver", "agent", "police", "admin"], rateLimit: "confirmation" },
+  { access: ["driver", "agent", "admin"], rateLimit: "confirmation" },
   async ({ req, params, requestId }) => {
     if (!reportsWriteEnabled()) throw new ServiceUnavailableError("Reporting is paused for now.");
     if (!reportId.safeParse(params.id).success) throw new NotFoundError("No report with this id.");

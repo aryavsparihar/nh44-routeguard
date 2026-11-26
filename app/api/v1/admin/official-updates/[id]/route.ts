@@ -3,7 +3,7 @@
 //        history keeps what was shown before. Returns the new version.
 // DELETE /api/v1/admin/official-updates/{id}: soft delete with a reason in
 //        the JSON body. The row stays for the history.
-// Admin and police only. Both are audited in the same transaction.
+// TCU (admin) only. Both are audited in the same transaction.
 import { getDb } from "@/src/server/db";
 import { readJson } from "@/src/server/http/body";
 import { NotFoundError } from "@/src/server/http/errors";
@@ -24,7 +24,7 @@ function checkId(id: string): string {
 }
 
 export const PATCH = withApi<{ id: string }>(
-  { access: ["police", "admin"] },
+  { access: ["admin"] },
   async ({ req, params, caller, requestId }) => {
     const id = checkId(params.id);
     const { reason, ...patch } = await readJson(req, editUpdateBody);
@@ -34,7 +34,7 @@ export const PATCH = withApi<{ id: string }>(
 );
 
 export const DELETE = withApi<{ id: string }>(
-  { access: ["police", "admin"] },
+  { access: ["admin"] },
   async ({ req, params, requestId }) => {
     const id = checkId(params.id);
     const { reason } = await readJson(req, deleteUpdateBody);

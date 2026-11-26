@@ -1,5 +1,6 @@
-// GET /api/v1/official-updates?zone=: police and TCU updates still in force,
-// each with its source link. Public. Writing them is admin/police only
+// GET /api/v1/official-updates?zone=: updates TCU copied from police or TCU
+// advisories, still in force,
+// each with its source link. Public. Writing them is TCU only
 // (/api/v1/admin/official-updates).
 import { getDb } from "@/src/server/db";
 import { readQuery } from "@/src/server/http/body";

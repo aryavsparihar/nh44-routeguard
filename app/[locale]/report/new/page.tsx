@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("heading") };
 }
 
-const CAN_REPORT: Role[] = ["driver", "agent", "police", "admin"];
+const CAN_REPORT: Role[] = ["driver", "agent", "admin"];
 
 export default async function ReportPage() {
   const t = await getTranslations("report");
