@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatReason, type ReasonTranslate } from "@/src/shared/reason";
 import type { CorridorSegment, LngLat } from "@/src/shared/corridor";
 import type { OfficialUpdate, PastClosure, PublicReport, Replay, ReplaySummary, RiskHex } from "@/src/shared/api-types";
 import { closuresByCell } from "@/src/shared/cell-closures";
 import { reportsInForce, updatesInForce } from "@/src/shared/in-force";
+import { modelGaps } from "@/src/shared/model-gaps";
 import { useNow } from "@/src/ui/offline/useNow";
 import {
   HAZARDS,
@@ -23,6 +24,7 @@ import { useApi, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
 import { DepartureRibbon } from "./DepartureRibbon";
 import { HexCard, type PickedHex } from "./HexCard";
+import { ModelGaps } from "./ModelGaps";
 import { OfficialUpdates, RoadReports } from "./FeedLists";
 import { ReplayBanner, ReplayPicker, ReplayPlay, useReplayText } from "./Replay";
 import { RiskMap } from "./RiskMap";
@@ -156,6 +158,21 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
     const list = reports.state === "ready" ? reportsInForce(reports.value.data, now) : [];
     return hazard ? list.filter((r) => r.hazard_type === hazard) : list;
   }, [reports, hazard, now]);
+  // Confirmed reports on cells the model scores Low for that hazard. Today's
+  // "now" cells only: a later time is a forecast, and a past storm has no
+  // reports. Every confirmed report, whatever hazard filter is on.
+  const gaps = useMemo(() => {
+    if (replayInfo || horizon !== 0 || !hexList || reports.state !== "ready") return null;
+    return modelGaps(hexList, reportsInForce(reports.value.data, now));
+  }, [replayInfo, horizon, hexList, reports, now]);
+  const gapIds = useMemo(() => [...new Set((gaps ?? []).map((g) => g.id))], [gaps]);
+  // "Show on map": pick the cell, then bring the map back into view (after
+  // the cell card has scrolled itself in).
+  const mapBox = useRef<HTMLDivElement>(null);
+  const showCell = useCallback((id: string) => {
+    setPickedId(id);
+    setTimeout(() => mapBox.current?.scrollIntoView({ block: "start" }), 50);
+  }, []);
   const shownUpdates = useMemo(
     () => (updates.state === "ready" ? updatesInForce(updates.value.data, now) : []),
     [updates, now],
@@ -230,24 +247,28 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             ))}
           </div>
 
-          <RiskMap
-            segments={segments}
-            bounds={bounds}
-            levels={levels}
-            reports={replayInfo ? [] : shownReports}
-            label={t("mapLabel", { when })}
-            simpleText={t("mapSimple")}
-            hexes={hexes}
-            places={places}
-            baseLabels={locale === "en"}
-            pickedHex={picked ? picked.id : null}
-            onPickHex={setPickedId}
-          />
+          <div ref={mapBox} className="scroll-mt-20">
+            <RiskMap
+              segments={segments}
+              bounds={bounds}
+              levels={levels}
+              reports={replayInfo ? [] : shownReports}
+              label={t("mapLabel", { when })}
+              simpleText={t("mapSimple")}
+              hexes={hexes}
+              places={places}
+              baseLabels={locale === "en"}
+              pickedHex={picked ? picked.id : null}
+              onPickHex={setPickedId}
+              gapHexes={gapIds}
+            />
+          </div>
           {picked && (
             <HexCard
               cell={picked}
               when={when}
               onClose={() => setPickedId(null)}
+              gaps={gaps ? gaps.filter((g) => g.id === picked.id) : null}
               closures={
                 byCell && closures.state === "ready"
                   ? { here: byCell.get(picked.id) ?? [], total: closures.value.data.length }
@@ -255,7 +276,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
               }
             />
           )}
-          <Legend />
+          <Legend gaps={gapIds.length > 0} />
           <Link href="/backtest" className="inline-flex min-h-12 items-center self-start text-sm font-bold underline">
             {t("howItWorks")}
           </Link>
@@ -266,6 +287,7 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
             </h2>
             <ZoneList rows={rows} names={risk.names} hazard={hazard} />
           </section>
+          {gaps && <ModelGaps gaps={gaps} zoneName={(z) => risk.names[z] ?? ""} onShow={showCell} />}
           <DepartureRibbon replayId={replayInfo ? replayInfo.id : null} />
         </>
       )}
@@ -317,7 +339,7 @@ function WorstCard({
   );
 }
 
-function Legend() {
+function Legend({ gaps }: { gaps: boolean }) {
   const t = useTranslations("risk");
   const items: { level: Level; width: string; color: string }[] = [
     { level: "low", width: "h-1", color: "bg-risk-low" },
@@ -334,6 +356,12 @@ function Legend() {
           </li>
         ))}
       </ul>
+      {gaps && (
+        <p className="flex items-center gap-2">
+          <span aria-hidden="true" className="inline-block h-4 w-6 rounded-sm border-2 border-dashed border-rail-fill" />
+          {t("gaps.legend")}
+        </p>
+      )}
       <p className="text-secondary">{t("lineNote")}</p>
       <p className="text-secondary">{t("hexNote")}</p>
     </div>

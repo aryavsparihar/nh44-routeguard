@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import en from "@/messages/en.json";
 import ur from "@/messages/ur.json";
+import type { ModelGap } from "@/src/shared/model-gaps";
 import { HexCard, type PickedHex } from "./HexCard";
 
 // A real resolution-8 cell at Ramban (data/corridor_hexes.csv, hex_slope.csv).
@@ -65,5 +66,18 @@ describe("HexCard", () => {
 
   it("keeps the ID left to right in Urdu", () => {
     expect(render(RAMBAN, "ur")).toMatch(/<dd dir="ltr"[^>]*>883d308abdfffff<\/dd>/);
+  });
+
+  it("says when confirmed reports here disagree with the model, and that the score stays", () => {
+    const gap = { id: RAMBAN.id, zone: 4, hazard: "landslide", score: 0.12, reports: [{}, {}] } as unknown as ModelGap;
+    const html = renderToStaticMarkup(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Kolkata">
+        <HexCard cell={RAMBAN} when="right now" onClose={() => {}} gaps={[gap]} />
+      </NextIntlClientProvider>,
+    );
+    expect(html).toContain("Reports and the model disagree here");
+    expect(html).toContain("Landslide: 2 confirmed reports, but the model&#x27;s score is 0.12 (Low).");
+    expect(html).toContain("The score stays as the weather model made it.");
+    expect(render(RAMBAN)).not.toContain("disagree");
   });
 });
