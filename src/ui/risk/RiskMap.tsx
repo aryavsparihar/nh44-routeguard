@@ -46,7 +46,13 @@ export type MapProps = {
   // road); the picked cell gets an outline.
   pickedHex?: string | null;
   onPickHex?: (id: string | null) => void;
+  // Cells where a confirmed report and the model disagree
+  // (src/shared/model-gaps.ts): drawn with a dashed blue outline.
+  gapHexes?: readonly string[];
 };
+
+const NO_GAPS: readonly string[] = [];
+const gapFilter = (ids: readonly string[]) => ["in", ["get", "id"], ["literal", [...ids]]] as never;
 
 function hexData(hexes: MapProps["hexes"]) {
   return {
@@ -100,6 +106,7 @@ export function RiskMap({
   hexes,
   pickedHex = null,
   onPickHex,
+  gapHexes = NO_GAPS,
 }: MapProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -109,9 +116,9 @@ export function RiskMap({
   // True after a pick zoomed the map in; clearing the pick zooms back out.
   const zoomedIn = useRef(false);
   // The newest props, for the map's load handler (which runs later).
-  const latest = useRef({ segments, levels, places, baseLabels, hexes, pickedHex, onPickHex });
+  const latest = useRef({ segments, levels, places, baseLabels, hexes, pickedHex, onPickHex, gapHexes });
   useEffect(() => {
-    latest.current = { segments, levels, places, baseLabels, hexes, pickedHex, onPickHex };
+    latest.current = { segments, levels, places, baseLabels, hexes, pickedHex, onPickHex, gapHexes };
   });
 
   useEffect(() => {
@@ -207,6 +214,14 @@ export function RiskMap({
             layout: { "line-cap": "round", "line-join": "round" },
             paint: { "line-color": color as never, "line-width": width as never },
           });
+          // Cells where reports and the model disagree: a dashed outline.
+          m.addLayer({
+            id: "hex-gap",
+            type: "line",
+            source: "hexes",
+            filter: gapFilter(latest.current.gapHexes),
+            paint: { "line-color": cssColor("--color-rail"), "line-width": 2.5, "line-dasharray": [2, 1] },
+          });
           // The picked cell's outline, on top of the road line.
           m.addLayer({
             id: "hex-picked",
@@ -224,10 +239,6 @@ export function RiskMap({
             const tolKm = (TAP_PX * metresPerPixel(lat, m.getZoom())) / 1000;
             const cell = pickHex(latest.current.hexes ?? [], [lng, lat], tolKm);
             latest.current.onPickHex?.(cell ? cell.id : null);
-            if (cell && m.getZoom() < PICK_ZOOM) {
-              zoomedIn.current = true;
-              m.easeTo({ center: centre(cell.boundary), zoom: PICK_ZOOM, duration: reducedMotion() ? 0 : 600 });
-            }
           });
           m.on("mouseenter", "hexes", () => (m.getCanvas().style.cursor = "pointer"));
           m.on("mouseleave", "hexes", () => (m.getCanvas().style.cursor = ""));
@@ -273,16 +284,29 @@ export function RiskMap({
     source?.setData(hexData(hexes));
   }, [loaded, hexes]);
 
-  // Outline the picked cell. With nothing picked any more, go back to the
-  // whole road if a pick had zoomed in.
+  // Outline the picked cell and zoom in to it (a tap, or "Show on map" in a
+  // list). With nothing picked any more, go back to the whole road if a pick
+  // had zoomed in.
   useEffect(() => {
     if (!loaded || !map.current) return;
-    map.current.setFilter("hex-picked", ["==", ["get", "id"], pickedHex ?? ""]);
+    const m = map.current;
+    m.setFilter("hex-picked", ["==", ["get", "id"], pickedHex ?? ""]);
+    const cell = pickedHex ? latest.current.hexes?.find((h) => h.id === pickedHex) : undefined;
+    // Also move when the cell is off screen (a list picked it while zoomed in).
+    if (cell && (m.getZoom() < PICK_ZOOM || !m.getBounds().contains(centre(cell.boundary)))) {
+      zoomedIn.current = true;
+      m.easeTo({ center: centre(cell.boundary), zoom: Math.max(m.getZoom(), PICK_ZOOM), duration: reducedMotion() ? 0 : 600 });
+    }
     if (!pickedHex && zoomedIn.current) {
       zoomedIn.current = false;
       map.current.fitBounds(bounds, { padding: FIT_PADDING, duration: reducedMotion() ? 0 : 600 });
     }
   }, [loaded, pickedHex, bounds]);
+
+  useEffect(() => {
+    if (!loaded || !map.current) return;
+    map.current.setFilter("hex-gap", gapFilter(gapHexes));
+  }, [loaded, gapHexes]);
 
   // Report markers: solid outline when confirmed or from police/admin,
   // dashed when unconfirmed (the legend below says so).

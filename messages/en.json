@@ -124,6 +124,18 @@
       "srinagar": "Srinagar"
     },
     "hexNote": "Zoom in to see the road in cells of about 0.8 km², each scored with its own slope and the nearest weather point. Tap the road to zoom to one cell and see its ID, zone, score, reason and slope.",
+    "gaps": {
+      "heading": "Where reports and the model disagree",
+      "intro": "Confirmed road reports on map cells that the weather model scores Low for the same hazard. We don't change the score: a confirmed report already raises the zone's confidence. Look twice here; these cells also show us where the model needs work.",
+      "item": "{count, plural, one {# confirmed report} other {# confirmed reports}}; the model's score here is {score} ({level}).",
+      "newest": "Newest report: {time}",
+      "show": "Show on map",
+      "none": "Right now no confirmed report sits on a cell that the model scores Low.",
+      "legend": "Dashed blue outline: a confirmed report on a cell the model scores Low",
+      "cellHeading": "Reports and the model disagree here",
+      "cellItem": "{hazard}: {count, plural, one {# confirmed report} other {# confirmed reports}}, but the model's score is {score} ({level}).",
+      "cellNote": "The score stays as the weather model made it. A report counts for a cell when the cell's centre is the nearest one and within 1 km."
+    },
     "cell": {
       "title": "This cell {when}",
       "id": "H3 cell",

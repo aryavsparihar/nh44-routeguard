@@ -3,6 +3,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/src/i18n/routing";
 import type { PastClosure } from "@/src/shared/api-types";
 import { EXTERNAL_REL, formatDate, isolate } from "@/src/shared/format";
+import type { ModelGap } from "@/src/shared/model-gaps";
 import type { ReasonText } from "@/src/shared/reason";
 import { HAZARDS, type Hazard, type Level } from "@/src/shared/risk";
 import { LevelBadge } from "./LevelBadge";
@@ -32,6 +33,7 @@ export function HexCard({
   when,
   onClose,
   closures = null,
+  gaps = null,
 }: {
   cell: PickedHex;
   when: string;
@@ -39,6 +41,8 @@ export function HexCard({
   // Verified past closures nearest to this cell (src/shared/cell-closures.ts);
   // null while they load or when they couldn't be read.
   closures?: { here: PastClosure[]; total: number } | null;
+  // Confirmed reports here that the model scores Low (src/shared/model-gaps.ts).
+  gaps?: ModelGap[] | null;
 }) {
   const t = useTranslations("risk");
   const row = "contents";
@@ -110,6 +114,24 @@ export function HexCard({
           </dd>
         </div>
       </dl>
+      {gaps && gaps.length > 0 && (
+        <div className="mt-3 rounded-md border-2 border-dashed border-rail-fill p-2">
+          <h4 className="font-bold">{t("gaps.cellHeading")}</h4>
+          <ul className="flex flex-col gap-1">
+            {gaps.map((g) => (
+              <li key={g.hazard}>
+                {t("gaps.cellItem", {
+                  hazard: t(`hazard.${g.hazard}`),
+                  count: g.reports.length,
+                  score: g.score.toFixed(2),
+                  level: t("level.low"),
+                })}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-secondary">{t("gaps.cellNote")}</p>
+        </div>
+      )}
       {closures && <CellClosures here={closures.here} total={closures.total} />}
     </section>
   );
