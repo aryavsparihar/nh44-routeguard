@@ -23,6 +23,11 @@ const eslintConfig = defineConfig([
     // Copied from node_modules before dev/build (scripts/ui/copy-maplibre-worker.mjs).
     "public/vendor/**",
     "team-guides/**",
+    // Round 2 deliverables kept as they were submitted (a Figma plugin and the
+    // static Round 2 site). They are not part of the app and are frozen, so we
+    // don't lint them; editing them would change what was handed in.
+    "docs/ux/figma-plugin/code.js",
+    "scripts/round2/web/shared.js",
   ]),
 ]);
 
