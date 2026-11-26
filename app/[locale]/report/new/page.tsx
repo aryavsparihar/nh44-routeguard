@@ -7,6 +7,7 @@ import { requirePageSignIn } from "@/src/server/auth/page";
 import { aadhaarQrEnabled, reportsWriteEnabled } from "@/src/server/flags";
 import { findUser } from "@/src/server/users/users.repository";
 import { isVerifiedLevel } from "@/src/shared/verification";
+import { SignInLink } from "@/src/ui/SignInLink";
 import type { Role } from "@/src/server/http/caller";
 import { ReportForm } from "@/src/ui/report/ReportForm";
 
@@ -38,8 +39,8 @@ async function ReportGate() {
   if (!reportsWriteEnabled()) {
     return <p className="rounded-md border border-hold-fill bg-hold-bg p-3 text-hold-text">{t("paused")}</p>;
   }
-  if (!caller.role) return <p className="rounded-md bg-surface p-3">{t("noRole")}</p>;
-  if (!CAN_REPORT.includes(caller.role)) return <p className="rounded-md bg-surface p-3">{t("wrongRole")}</p>;
+  if (!caller.role) return <NotForYou text={t("noRole")} />;
+  if (!CAN_REPORT.includes(caller.role)) return <NotForYou text={t("wrongRole")} />;
   if (caller.role === "driver") {
     const me = await findUser(await getDb(), caller.userId);
     if (!isVerifiedLevel(me?.verification_level)) return <GetVerified aadhaar={aadhaarQrEnabled()} />;
@@ -72,5 +73,24 @@ async function GetVerified({ aadhaar }: { aadhaar: boolean }) {
       )}
       <p className="text-sm">{t("meanwhile")}</p>
     </section>
+  );
+}
+
+// Not a reporter (yet): say why, and give the way on, not a dead end.
+async function NotForYou({ text }: { text: string }) {
+  const t = await getTranslations("report");
+  const link = "inline-flex min-h-12 items-center rounded-md border border-border-strong bg-elevated px-4 font-bold";
+  return (
+    <div className="flex flex-col gap-3 rounded-md bg-surface p-3">
+      <p>{text}</p>
+      <div className="flex flex-wrap gap-2">
+        <SignInLink href="/me" className={link}>
+          {t("openAccount")}
+        </SignInLink>
+        <Link href="/" className={link}>
+          {t("openMap")}
+        </Link>
+      </div>
+    </div>
   );
 }

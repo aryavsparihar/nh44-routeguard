@@ -13,7 +13,9 @@ import { send } from "@/src/ui/board/useShipments";
 import { saveLocaleCookie } from "@/src/ui/locale-cookie";
 import { outboxCount } from "@/src/ui/offline/outbox";
 import { clearOfflineData } from "@/src/ui/offline/private-store";
+import { saveTcuHint } from "@/src/ui/role-hint";
 import { SignInLink } from "@/src/ui/SignInLink";
+import { YourScreens } from "@/src/ui/YourScreens";
 import { AadhaarCard } from "./AadhaarCard";
 import { AlertsCard } from "./AlertsCard";
 import { turnOffAlertsHere } from "./push";
@@ -28,6 +30,11 @@ const card = "flex flex-col gap-3 rounded-lg border border-border bg-elevated p-
 export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string | null; aadhaar?: boolean }) {
   const t = useTranslations("me");
   const [me, retry, refresh] = useApi<{ data: MeProfile }>("/api/v1/me");
+  const isTcu = me.state === "ready" && me.value.data.role === "admin" && me.value.data.approval === "approved";
+  // The header's "TCU desk" button follows what this page last saw.
+  useEffect(() => {
+    if (me.state === "ready") saveTcuHint(isTcu);
+  }, [me.state, isTcu]);
 
   if (me.state === "loading") return <p role="status">{t("loading")}</p>;
   if (me.state === "error") {
@@ -46,6 +53,7 @@ export function MeScreen({ pushKey = null, aadhaar = false }: { pushKey?: string
     <div className="flex flex-col gap-5">
       {profile.onboarded && !approved && <ApprovalCard me={profile} />}
       {profile.onboarded && approved && <ApprovedTokenRefresh />}
+      {profile.onboarded && approved && <YourScreens me={profile} />}
       {profile.onboarded ? <Profile me={profile} onSaved={retry} /> : <Onboarding />}
       {profile.onboarded && approved && aadhaar && (profile.role === "driver" || profile.role === "agent") && (
         <AadhaarCard me={profile} onVerified={refresh} />
@@ -338,6 +346,7 @@ function Account({ me }: { me: MeProfile }) {
   async function leave() {
     await turnOffAlertsHere();
     await clearOfflineData();
+    saveTcuHint(false);
     await signOut({ redirectUrl: "/" }).catch(() => window.location.assign(new URL("/", window.location.origin)));
   }
 

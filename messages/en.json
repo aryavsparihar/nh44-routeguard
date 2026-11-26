@@ -7,7 +7,8 @@
     "title": "NH-44 RouteGuard",
     "skip": "Skip to content",
     "language": "Language",
-    "account": "Account"
+    "account": "Account",
+    "tcu": "TCU desk"
   },
   "nav": {
     "label": "Main",
@@ -674,7 +675,9 @@
       "aadhaar": "Or do the Aadhaar QR check on your account page. It is optional: we keep only the result and the last 4 digits.",
       "account": "Open the Aadhaar check",
       "meanwhile": "Until then you can still see the map, the reports and the advice."
-    }
+    },
+    "openAccount": "Open my account",
+    "openMap": "Open the map"
   },
   "board": {
     "heading": "Board",
@@ -977,6 +980,20 @@
         "pending": "waiting for TCU",
         "rejected": "not approved"
       }
+    },
+    "screens": {
+      "heading": "Your screens",
+      "tcu": "TCU desk",
+      "approvals": "New accounts",
+      "updates": "Official updates",
+      "adminReports": "Road reports",
+      "roadStatus": "Road and rail status",
+      "audit": "Audit log",
+      "board": "My board",
+      "report": "Report a hazard",
+      "advisor": "Dispatch advisor",
+      "strip": "Next 48 hours",
+      "map": "Risk map"
     }
   },
   "offline": {
