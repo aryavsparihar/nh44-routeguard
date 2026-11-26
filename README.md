@@ -210,6 +210,7 @@ Each one makes one of the seven Round 1 features (PPT slide 6) easier to use; no
 | Play a past storm: in replay mode, Play / Pause steps the storm from now to +12, +24 and +48 h, about 2 s a step. The "past storm, not today" banner stays on screen; with reduced motion there is no Play, only the step buttons; the live map is unchanged | 2. 48-hour strip (and 1. the risk map it is shown on) | `src/ui/risk/replay-play.ts` |
 | Backtest in the app: `/backtest`, linked from the map's "How this works", shows the hits table, false-alarm rate, date range, incident count, sources and the small-sample limit, all read from `lib/risk/backtest.json` (a pytest checks it says the same as `docs/backtest.md`) | 1. Live risk map (how far to trust its colours) | `app/[locale]/backtest/page.tsx` |
 | Every screen a tap away: "Your screens" on `/me` lists each role's screens (TCU: the desk and every console page), TCU gets a "TCU desk" button in the header on every page, and screens that aren't for your role link onwards instead of ending there | All seven (the installed app has no address bar) | `src/ui/role-links.ts` |
+| Past closures in each cell: tapping a hexagon also lists the verified closures nearest to it (date, hazard, place, hours closed when the source says, source link). 24 of the 27 land within 2 km of a road cell; the 3 at the old Jawahar Tunnel are 2.8 km off today's road and aren't shown | 1. Live risk map | `src/shared/cell-closures.ts` |
 
 ## Team
 

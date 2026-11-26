@@ -129,6 +129,23 @@ export type RiskHex = {
   boundary: [number, number][];
 };
 
+// GET /api/v1/incidents: a verified past closure (data/incidents.csv).
+export type PastClosure = {
+  id: number;
+  date: string; // YYYY-MM-DD
+  end_date: string | null;
+  zone_id: number | null;
+  place: string;
+  lat: number | null;
+  lng: number | null;
+  hazard_type: string;
+  hours_closed: number | null;
+  vehicles_stranded: number | null;
+  source_url: string;
+  source_publisher: string;
+  confidence: string | null;
+};
+
 // GET /api/v1/risk/replays: a real past storm (jobs/replay.py), scored on
 // the weather that actually happened. Never today's conditions.
 export type ReplaySummary = {

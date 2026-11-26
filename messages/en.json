@@ -136,7 +136,15 @@
       "slope": "Slope",
       "slopeValue": "{slope}°",
       "unknown": "Not known",
-      "close": "Close"
+      "close": "Close",
+      "closures": {
+        "heading": "Past closures near this cell",
+        "none": "None of our {count} verified closures is near this cell.",
+        "item": "{date}: {hazard} at {place}",
+        "hours": "closed {hours} h",
+        "source": "Source: {publisher}",
+        "approx": "Sources name a place, not the exact spot, so this is the nearest cell to that place."
+      }
     },
     "replay": {
       "lowHint": "When the weather is calm, every zone stays low. To see the map on a real bad day:",

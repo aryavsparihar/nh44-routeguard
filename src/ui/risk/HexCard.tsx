@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/src/i18n/routing";
+import type { PastClosure } from "@/src/shared/api-types";
+import { EXTERNAL_REL, formatDate, isolate } from "@/src/shared/format";
 import type { ReasonText } from "@/src/shared/reason";
 import { HAZARDS, type Hazard, type Level } from "@/src/shared/risk";
 import { LevelBadge } from "./LevelBadge";
@@ -24,7 +27,19 @@ const isConfidence = (c: string | null): c is (typeof CONFIDENCE)[number] => CON
 
 const isHazard = (h: string | null): h is Hazard => HAZARDS.includes(h as Hazard);
 
-export function HexCard({ cell, when, onClose }: { cell: PickedHex; when: string; onClose: () => void }) {
+export function HexCard({
+  cell,
+  when,
+  onClose,
+  closures = null,
+}: {
+  cell: PickedHex;
+  when: string;
+  onClose: () => void;
+  // Verified past closures nearest to this cell (src/shared/cell-closures.ts);
+  // null while they load or when they couldn't be read.
+  closures?: { here: PastClosure[]; total: number } | null;
+}) {
   const t = useTranslations("risk");
   const row = "contents";
   // On a phone the card opens below the map, often under the bottom menu:
@@ -95,6 +110,46 @@ export function HexCard({ cell, when, onClose }: { cell: PickedHex; when: string
           </dd>
         </div>
       </dl>
+      {closures && <CellClosures here={closures.here} total={closures.total} />}
     </section>
+  );
+}
+
+function CellClosures({ here, total }: { here: PastClosure[]; total: number }) {
+  const t = useTranslations("risk");
+  const locale = useLocale() as Locale;
+  const day = (iso: string) => isolate(formatDate(new Date(`${iso}T12:00:00+05:30`), locale));
+  return (
+    <div className="mt-3 flex flex-col gap-1 border-t border-border pt-2">
+      <h4 className="font-bold">{t("cell.closures.heading")}</h4>
+      {here.length === 0 ? (
+        <p className="text-sm">{t("cell.closures.none", { count: total })}</p>
+      ) : (
+        <>
+          <ul className="flex flex-col gap-2 text-sm">
+            {here.map((c) => (
+              <li key={c.id}>
+                <span>
+                  {t("cell.closures.item", {
+                    date: day(c.date),
+                    hazard: isHazard(c.hazard_type) ? t(`hazard.${c.hazard_type}`) : c.hazard_type,
+                    place: isolate(c.place),
+                  })}
+                  {c.hours_closed !== null && `, ${t("cell.closures.hours", { hours: c.hours_closed })}`}
+                </span>{" "}
+                {/^https:\/\//.test(c.source_url) ? (
+                  <a href={c.source_url} target="_blank" rel={EXTERNAL_REL} className="inline-flex min-h-12 items-center underline">
+                    {t("cell.closures.source", { publisher: c.source_publisher })}
+                  </a>
+                ) : (
+                  <span>{t("cell.closures.source", { publisher: c.source_publisher })}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-secondary">{t("cell.closures.approx")}</p>
+        </>
+      )}
+    </div>
   );
 }
