@@ -39,6 +39,12 @@ export const POST = withApi({ access: ["grower", "trader", "agent"] }, async ({ 
   if (!isAgent && body.driver_id) {
     throw new ValidationError([{ path: "driver_id", message: "Only an agent assigns a driver." }]);
   }
+  // An agent's shipment is a truck on the road, so it needs the truck's
+  // number. A grower's or trader's lot can wait for one (it may not be
+  // booked yet, or go by rail).
+  if (isAgent && !body.truck_number) {
+    throw new ValidationError([{ path: "truck_number", message: "Add the truck number: an agent's shipment is a truck on the road." }]);
+  }
 
   const lot = {
     variety: body.variety,
