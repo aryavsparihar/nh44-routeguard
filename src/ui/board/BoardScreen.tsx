@@ -7,6 +7,8 @@ import type { Locale } from "@/src/i18n/routing";
 import type { AgentInvite, FleetDriver, Shipment, ShipmentStatus } from "@/src/shared/api-types";
 import type { Decision } from "@/src/shared/decide";
 import { formatDayTime, formatTime, isolate } from "@/src/shared/format";
+import type { RiskMeta, RiskRow } from "@/src/shared/risk";
+import { truckRisk, truckZones } from "@/src/shared/truck-risk";
 import { ASSUMPTIONS, DESTINATIONS, VARIETIES, type Destination, type Variety } from "@/src/shared/priority";
 import { Field, Notice, buttonClass, fromIstInput, inputClass, quietButtonClass, toIstInput } from "@/src/ui/admin/common";
 import { useApi, type ApiList } from "@/src/ui/api";
@@ -61,6 +63,10 @@ function BoardBody({
   const locale = useLocale() as Locale;
   const { list, live, savedAt, reload } = useShipments(userId);
   const now = useNow();
+  // The same public scores as the map, for the "heading into risk" marks.
+  // Missing or failed: no marks, never a guess.
+  const [risk] = useApi<ApiList<RiskRow, RiskMeta>>("/api/v1/risk");
+  const riskRows = risk.state === "ready" ? risk.value.data : [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -97,7 +103,7 @@ function BoardBody({
           <ul className="flex flex-col gap-3">
             {list.value.map((s) => (
               <li key={s.id}>
-                <ShipmentCard shipment={s} role={role} drivers={fleet} onChanged={reload} />
+                <ShipmentCard shipment={s} role={role} drivers={fleet} riskRows={riskRows} onChanged={reload} />
               </li>
             ))}
           </ul>
@@ -131,15 +137,19 @@ function ShipmentCard({
   shipment: s,
   role,
   drivers,
+  riskRows,
   onChanged,
 }: {
   shipment: Shipment;
   role: BoardRole;
   drivers: FleetDriver[];
+  riskRows: RiskRow[];
   onChanged: () => void;
 }) {
   const t = useTranslations("board");
   const ta = useTranslations("advice");
+  const tr = useTranslations("risk");
+  const ahead = truckRisk(truckZones(s), riskRows);
   const locale = useLocale() as Locale;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -208,6 +218,14 @@ function ShipmentCard({
         {s.cold_stored && ` · ${t("coldStored")}`}
         {s.is_demo && ` · ${t("demo")}`}
       </p>
+      {ahead.kind === "high" && (
+        <p className="rounded-md border-s-4 border-risk-high bg-surface px-3 py-1 text-sm font-bold" data-risk-ahead={ahead.zone}>
+          {t(`riskAhead.${ahead.which}`, {
+            zone: ahead.zone,
+            when: ahead.hours === 0 ? tr("whenNow") : tr("whenLater", { hours: ahead.hours }),
+          })}
+        </p>
+      )}
       {decision && (
         <p className={`rounded-md border-s-4 px-3 py-1 text-sm ${DECISION_BOX[decision]}`}>
           {t("adviceAtSave", { decision: ta(`decision.${decision}`) })}

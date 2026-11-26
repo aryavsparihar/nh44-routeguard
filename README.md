@@ -206,6 +206,7 @@ Each one makes one of the seven Round 1 features (PPT slide 6) easier to use; no
 | Read aloud: the phone reads the advice, the reason and the advisory line in the screen's language, with a Stop button. Hidden when the phone has no voice for that language | 4. Dispatch advisor | `src/ui/advice/speech.ts` |
 | What would change the answer: up to two lines, such as "With 2 fewer days since picking: Divert", found by running the same `decide()` again with nearby values you typed. Only real changes are shown | 4. Dispatch advisor | `src/shared/what-if.ts` |
 | Share the text summary: a button on the 48 h strip sends the plain-text summary (data time, raised zones, the "not an official police service" line, a link) through the phone's share sheet, or copies it. Under 5 KB in every language, and works offline from the saved copy | 7. Offline mode (text summary under 5 KB) | `src/ui/risk/share.ts` |
+| Heading into risk: on `/board`, a truck whose current zone (from its last position) or next zone on the route is high now or within 12 h gets a mark that says it is advice only. Missing scores give no mark | 6. Shipment board | `src/shared/truck-risk.ts` |
 
 ## Team
 
