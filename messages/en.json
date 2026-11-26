@@ -363,7 +363,10 @@
       "open": "Open the board",
       "signIn": "Sign in to save this lot",
       "wrongRole": "Only growers, traders and agents save lots.",
-      "err": "Could not save. Try again."
+      "err": "Could not save. Try again.",
+      "needsTruck": "Agents add the truck number to save a shipment.",
+      "truckLabel": "Truck number",
+      "again": "Save with this truck"
     },
     "readAloud": "Read aloud",
     "stopReading": "Stop reading",
@@ -743,10 +746,12 @@
       "headingAgent": "Add a truck",
       "headingLot": "Save a lot",
       "harvest": "Picked on",
-      "truckNumber": "Truck number (optional)",
+      "truckNumber": "Truck number (add it when the truck is booked)",
       "truckHint": "Like JK05G7712. One truck can have only one active shipment.",
       "save": "Save",
-      "close": "Close"
+      "close": "Close",
+      "truckNumberAgent": "Truck number",
+      "truckMissing": "Add the truck number: a shipment on your board is a truck on the road."
     },
     "join": {
       "heading": "Join your agent",

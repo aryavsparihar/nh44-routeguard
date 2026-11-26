@@ -398,6 +398,9 @@ function NewShipment({
     }
     setFields(res.paths);
     if (res.status === 409) setMessage({ kind: "error", text: t("err.truckActive") });
+    else if (res.status === 422 && res.paths.includes("truck_number") && !form.truck_number.trim()) {
+      setMessage({ kind: "error", text: t("new.truckMissing") });
+    }
     else setMessage({ kind: "error", text: errorText(t, res.status) });
   }
 
@@ -485,13 +488,20 @@ function NewShipment({
             <option value="light">{ta("truckType.light")}</option>
           </select>
         </Field>
-        <Field id="ns-truck" label={t("new.truckNumber")} hint={t("new.truckHint")} invalid={fields.includes("truck_number")}>
+        <Field
+          id="ns-truck"
+          label={canAssign ? t("new.truckNumberAgent") : t("new.truckNumber")}
+          hint={t("new.truckHint")}
+          invalid={fields.includes("truck_number")}
+        >
           <input
             id="ns-truck"
             dir="ltr"
             autoCapitalize="characters"
             className={inputClass}
             maxLength={14}
+            required={canAssign}
+            aria-required={canAssign}
             value={form.truck_number}
             aria-describedby="ns-truck-hint"
             aria-invalid={fields.includes("truck_number")}
