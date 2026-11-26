@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import en from "@/messages/en.json";
 import ur from "@/messages/ur.json";
 import type { ModelGap } from "@/src/shared/model-gaps";
+import { tippingPoint } from "@/src/shared/tipping";
 import { HexCard, type PickedHex } from "./HexCard";
 
 // A real resolution-8 cell at Ramban (data/corridor_hexes.csv, hex_slope.csv).
@@ -79,5 +80,23 @@ describe("HexCard", () => {
     expect(html).toContain("Landslide: 2 confirmed reports, but the model&#x27;s score is 0.12 (Low).");
     expect(html).toContain("The score stays as the weather model made it.");
     expect(render(RAMBAN)).not.toContain("disagree");
+  });
+
+  it("shows the rain that tips the cell's landslide score, labelled as our own values", () => {
+    const tipping = tippingPoint({ zone: 4, slope: 35, reasonCode: "landslide_rain", reasonParams: { mm: 24, hours: 72 } });
+    const html = render({ ...RAMBAN, tipping });
+    expect(html).toContain("Medium from 37 mm of rain in 72 h");
+    expect(html).toContain("High from 67 mm of rain in 72 h");
+    expect(html).toContain("Rain the model used for this time: 24 mm in 72 h.");
+    expect(html).toContain("not sourced figures");
+    expect(html).not.toContain("cap the landslide score");
+  });
+
+  it("says when rain alone can't make the cell high, and the score it stops at", () => {
+    const html = render({ ...RAMBAN, tipping: tippingPoint({ zone: 4, slope: 17.5, reasonCode: null, reasonParams: null }) });
+    expect(html).toContain("Medium from 63 mm of rain in 72 h");
+    expect(html).toContain("Rain alone can&#x27;t make it High here");
+    expect(html).toContain("cap the landslide score at 0.40.");
+    expect(html).not.toContain("Rain the model used");
   });
 });

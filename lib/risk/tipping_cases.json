@@ -1,0 +1,11 @@
+{
+  "_note": "Rain in 72 h (whole mm, no downpour) at which a cell's landslide score turns Medium and High. Checked against the job in jobs/tests/test_tipping.py and against src/shared/tipping.ts in src/shared/tipping.test.ts. null: rain alone can't get there. Thresholds are our own starting values (lib/risk/config.json).",
+  "cases": [
+    { "zone": 4, "slope": 35, "medium_mm": 37, "high_mm": 67 },
+    { "zone": 3, "slope": null, "medium_mm": 34, "high_mm": 61 },
+    { "zone": 4, "slope": 17.5, "medium_mm": 63, "high_mm": null },
+    { "zone": 2, "slope": 40, "medium_mm": 45, "high_mm": null },
+    { "zone": 1, "slope": 35, "medium_mm": null, "high_mm": null },
+    { "zone": 5, "slope": 0, "medium_mm": null, "high_mm": null }
+  ]
+}

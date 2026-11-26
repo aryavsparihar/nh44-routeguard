@@ -149,6 +149,14 @@
       "slopeValue": "{slope}°",
       "unknown": "Not known",
       "close": "Close",
+      "tipping": {
+        "heading": "Landslide: rain that would tip this cell",
+        "from": "{level} from {mm} mm of rain in {hours} h",
+        "never": "Rain alone can't make it {level} here",
+        "cap": "Its zone's exposure and its slope cap the landslide score at {max}.",
+        "now": "Rain the model used for this time: {mm} mm in {hours} h.",
+        "note": "Worked backwards from our own starting thresholds (lib/risk/config.json), not sourced figures. Assumes rain spread out: more than {burst} mm within {burstHours} h tips it sooner. Landslides only."
+      },
       "closures": {
         "heading": "Past closures near this cell",
         "none": "None of our {count} verified closures is near this cell.",

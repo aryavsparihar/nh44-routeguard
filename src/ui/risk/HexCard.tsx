@@ -6,6 +6,7 @@ import { EXTERNAL_REL, formatDate, isolate } from "@/src/shared/format";
 import type { ModelGap } from "@/src/shared/model-gaps";
 import type { ReasonText } from "@/src/shared/reason";
 import { HAZARDS, type Hazard, type Level } from "@/src/shared/risk";
+import { BURST, RAIN_WINDOW_H, type Tipping } from "@/src/shared/tipping";
 import { LevelBadge } from "./LevelBadge";
 
 // One H3 cell, picked by tapping the road on the map: its ID, zone, the
@@ -21,6 +22,8 @@ export type PickedHex = {
   slope: number | null;
   reason: ReasonText; // already in the reader's language (formatReason)
   confidence: string | null;
+  // Rain that tips its landslide score (src/shared/tipping.ts); null: no zone.
+  tipping?: Tipping | null;
 };
 
 const CONFIDENCE = ["low", "medium", "high"] as const;
@@ -114,6 +117,7 @@ export function HexCard({
           </dd>
         </div>
       </dl>
+      {cell.tipping && <CellTipping tip={cell.tipping} />}
       {gaps && gaps.length > 0 && (
         <div className="mt-3 rounded-md border-2 border-dashed border-rail-fill p-2">
           <h4 className="font-bold">{t("gaps.cellHeading")}</h4>
@@ -134,6 +138,26 @@ export function HexCard({
       )}
       {closures && <CellClosures here={closures.here} total={closures.total} />}
     </section>
+  );
+}
+
+function CellTipping({ tip }: { tip: Tipping }) {
+  const t = useTranslations("risk");
+  const line = (level: "medium" | "high", need: Tipping["medium"]) =>
+    need
+      ? t("cell.tipping.from", { level: t(`level.${level}`), mm: need.mm, hours: RAIN_WINDOW_H })
+      : t("cell.tipping.never", { level: t(`level.${level}`) });
+  return (
+    <div className="mt-3 flex flex-col gap-1 border-t border-border pt-2">
+      <h4 className="font-bold">{t("cell.tipping.heading")}</h4>
+      <ul className="flex flex-col gap-1">
+        <li>{line("medium", tip.medium)}</li>
+        <li>{line("high", tip.high)}</li>
+      </ul>
+      {(!tip.medium || !tip.high) && <p>{t("cell.tipping.cap", { max: tip.max.toFixed(2) })}</p>}
+      {tip.nowMm !== null && <p>{t("cell.tipping.now", { mm: tip.nowMm, hours: RAIN_WINDOW_H })}</p>}
+      <p className="text-xs text-secondary">{t("cell.tipping.note", { burst: BURST.mm, burstHours: BURST.hours })}</p>
+    </div>
   );
 }
 
