@@ -69,7 +69,7 @@ flowchart LR
 | `GET/POST /api/v1/shipments`, `PATCH /shipments/{id}` | agent, driver, grower (own rows) |
 | `GET /api/v1/agents/drivers`, `POST /agents/invites`, `/invites/accept`, `/drivers/{id}/vouch` | agent, driver |
 | `POST/DELETE /api/v1/push/subscriptions` | signed in |
-| `/api/v1/admin/*` (users and roles, official updates, reports, road status, audit log, dead letters) | admin (police: official updates and reports) |
+| `/api/v1/admin/*` (users and roles, official updates, reports, road status, audit log, dead letters) | TCU (admin) only |
 | `POST /api/v1/internal/jobs/run` | queue worker only (`JOBS_SECRET`) |
 
 ## Security and guardrails
@@ -131,7 +131,7 @@ A hand-written service worker keeps the app shell, the last risk scores and the 
 
 ### Hourly job
 
-[`jobs/run_risk.py`](jobs/run_risk.py) fetches the weather (one Open-Meteo call), saves it to `weather_readings`, scores the 6 zones for 0/12/24/48 h and writes 24 rows to `risk_scores`. GitHub Actions runs it at minute 7 of every hour ([`.github/workflows/risk-job.yml`](.github/workflows/risk-job.yml)), then checks the new rows arrived.
+[`jobs/run_risk.py`](jobs/run_risk.py) fetches the weather (one Open-Meteo call), saves it to `weather_readings`, scores the 6 zones for 0/12/24/48 h and writes 24 rows to `risk_scores`. Supabase pg_cron starts it at :07 and :37 every hour through GitHub's "run workflow" API (the :37 call is a retry and skips if :07 worked); GitHub's own schedule stays as a fallback ([`.github/workflows/risk-job.yml`](.github/workflows/risk-job.yml), `supabase/migrations/20261124210000_risk_job_scheduler.sql`). Each run then checks the new rows arrived.
 
 Run it on your laptop without any key:
 

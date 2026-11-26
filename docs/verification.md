@@ -12,7 +12,7 @@ The level is `users.verification_level` (enum in `supabase/migrations/2026112416
 | `email` | Clerk email code | Sign in, save lots, flag reports |
 | `agent_vouched` | Your transport agent vouches for you after you accept their invite (`POST /api/v1/agents/drivers/{id}/vouch`) | Your reports go live as "verified driver" |
 | `aadhaar_qr` | Optional, behind `FEATURE_AADHAAR_QR`: drivers and agents scan the Secure QR on their Aadhaar card or e-Aadhaar on `/me`; UIDAI's signature checks out on our server against a pinned certificate and the name matches the profile exactly | Same as `agent_vouched`. Never required |
-| `official` | An admin grants police or admin with a written reason | Post official updates |
+| `official` | Only the TCU account has it. It is set up by the operator (`scripts/seed-demo.mts`); the app can't grant it (`admin_set_role` refuses `admin` and `police`) | Post official updates, approve accounts, confirm reports on its own |
 
 If a driver moves to a different agent, an `agent_vouched` level drops back to `none`: the new agent has to vouch again (`supabase/migrations/20261125180000_shipments_fleet.sql`).
 
@@ -37,12 +37,12 @@ The numbers live in `config/report-rules.json` (versioned, with a note on where 
 
 - **First, TCU approves the account.** Every new account waits for TCU (`/admin/approvals`); until then it has no role (`20261126040000_tcu_approval.sql`).
 - **Who can post:** drivers only once verified (`agent_vouched` or `aadhaar_qr`), plus agents and TCU. A driver at `none` or `email` gets 403 from `POST /api/v1/reports` and a "First, get verified" card on `/report/new`; `private.submit_report()` refuses them again in the database (`20261126020000_verified_drivers_report.sql`). Aadhaar is never the only way: an agent's vouch always works.
-- From a verified driver, police or admin: shown at once with a solid marker.
+- From a verified user (a vouched or Aadhaar-checked driver or agent) or TCU: shown at once with a solid marker.
 - From an agent who isn't verified: "unconfirmed", dashed marker.
 - **Confirmed** when 2 other verified users within 2 km confirm it within 3 h, or TCU confirms it.
 - **Expiry by type:** landslide, rockfall and flash flood 6 h; snow/ice 12 h; accident 3 h; other 3 h. Expired reports leave the map but stay in history.
 - **Duplicates:** the same hazard within 500 m and 60 min becomes a confirmation of the first report, not a new pin.
-- **Flags:** 3 flags from different users hide an unconfirmed report until an admin looks at it.
+- **Flags:** 3 flags from different users hide an unconfirmed report until TCU looks at it.
 - The risk job raises confidence only from **confirmed** reports and official updates.
 
 ## Official updates
