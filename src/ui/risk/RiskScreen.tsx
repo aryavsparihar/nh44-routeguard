@@ -19,7 +19,7 @@ import { useApi, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
 import { HexCard, type PickedHex } from "./HexCard";
 import { OfficialUpdates, RoadReports } from "./FeedLists";
-import { ReplayBanner, ReplayPicker, useReplayText } from "./Replay";
+import { ReplayBanner, ReplayPicker, ReplayPlay, useReplayText } from "./Replay";
 import { RiskMap } from "./RiskMap";
 import { LoadError, Loading } from "./states";
 import { MAP_PLACES } from "@/src/shared/map-places";
@@ -60,7 +60,14 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
   // Its zone rows and cells replace the live ones; zone names stay live.
   const [replays] = useApi<ApiList<ReplaySummary>>("/api/v1/risk/replays");
   const replayList = replays.state === "ready" ? replays.value.data : [];
-  const [replayId, setReplayId] = useState<string | null>(null);
+  const [replayId, setReplayIdState] = useState<string | null>(null);
+  // "Play the storm" runs only in replay mode; leaving it or picking another
+  // storm stops it.
+  const [playing, setPlaying] = useState(false);
+  const setReplayId = (id: string | null) => {
+    setPlaying(false);
+    setReplayIdState(id);
+  };
   const replayInfo = replayList.find((r) => r.id === replayId) ?? null;
   const [replay, retryReplay] = useApi<{ data: Replay }>(
     replayInfo ? `/api/v1/risk/replays/${encodeURIComponent(replayInfo.id)}?horizon=${horizon}` : null,
@@ -156,11 +163,21 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
 
       <div role="group" aria-label={t("forecastTime")} className="flex gap-2 overflow-x-auto pb-1">
         {HORIZONS.map((h) => (
-          <button key={h} type="button" className={chip} aria-pressed={horizon === h} onClick={() => setHorizon(h)}>
+          <button
+            key={h}
+            type="button"
+            className={chip}
+            aria-pressed={horizon === h}
+            onClick={() => {
+              setPlaying(false);
+              setHorizon(h);
+            }}
+          >
             {replayInfo ? t(`replay.horizon.h${h}`) : t(`horizon.h${h}`)}
           </button>
         ))}
       </div>
+      {replayInfo && <ReplayPlay horizon={horizon} setHorizon={setHorizon} playing={playing} setPlaying={setPlaying} />}
 
       {risk.state === "loading" && <Loading />}
       {risk.state === "error" && <LoadError retry={risk.retry} />}
