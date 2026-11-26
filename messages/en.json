@@ -795,7 +795,11 @@
       "outside": "Your position looks outside India. Try again outdoors.",
       "noGps": "Could not get your position. Allow location for this site and try again."
     },
-    "savedCopy": "No signal. This is the copy saved at {time} ({age})."
+    "savedCopy": "No signal. This is the copy saved at {time} ({age}).",
+    "riskAhead": {
+      "current": "High risk {when} in zone {zone}, where this truck is. Advice only: check with TCU before it moves.",
+      "next": "High risk {when} in zone {zone}, next on its route. Advice only: check with TCU before it moves."
+    }
   },
   "auth": {
     "heading": "Sign in or create an account",
