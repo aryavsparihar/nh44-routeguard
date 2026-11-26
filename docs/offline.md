@@ -83,3 +83,17 @@ both give the same answer.
 
 The built-in browser of the Claude desktop app can't register service
 workers; use Chrome or Playwright's Chromium.
+## Tested on a real phone
+
+- Phone model: [Samsung A25]
+- Browser: [Chrome]
+- Date: [26-11-26]
+
+### Results
+- Map showed saved scores: [Yes]
+- Saved data age was visible: [Yes]
+- Advisor worked offline: [Yes]
+- Offline report was saved on phone: [Yes]
+- Report sent after reconnecting: [Yes]
+
+
