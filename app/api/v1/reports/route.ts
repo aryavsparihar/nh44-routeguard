@@ -1,7 +1,7 @@
 // GET  /api/v1/reports?zone=&status=: road reports on the map right now
 //      (unconfirmed or confirmed, not expired, not hidden). Public. No user ids.
-// POST /api/v1/reports: a new road report from a driver, agent, police or
-//      admin. multipart/form-data: hazard_type, lat, lng, note (optional),
+// POST /api/v1/reports: a new road report from a verified driver, an agent or
+//      TCU. multipart/form-data: hazard_type, lat, lng, note (optional),
 //      photo (optional, JPEG/PNG/WebP up to 5 MB). Needs an Idempotency-Key
 //      header (a UUID made once per report): sending it again returns the
 //      first answer instead of a second report.
@@ -46,7 +46,7 @@ export const GET = withApi({ access: "public" }, async ({ req }) => {
 const MAX_FORM_BYTES = REPORT_RULES.photo.max_bytes + 64 * 1024;
 
 export const POST = withApi(
-  { access: ["driver", "agent", "police", "admin"], rateLimit: "report" },
+  { access: ["driver", "agent", "admin"], rateLimit: "report" },
   async ({ req, caller, log }) => {
     if (!reportsWriteEnabled()) throw new ServiceUnavailableError("Reporting is paused for now.");
     const { userId, role } = requireCaller(caller);

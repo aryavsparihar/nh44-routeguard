@@ -62,6 +62,6 @@ Shared zod pieces live in `src/server/schemas/common.ts`: `cleanText(max)`, `tru
 - Writes (POST, PUT, PATCH, DELETE) need an `Origin` header that matches our host. Browsers send it. In curl or Postman, add `Origin: http://localhost:3000`.
 - In tests, mock the caller (see `with-api.test.ts` and `src/server/users/users.routes.test.ts`).
 - Every exported handler in a `route.ts` under `app/api` must be `withApi(...)` or `notAllowed(...)`. `app/api/routes.test.ts` fails the build otherwise.
-- Admin and police actions need a `reason` in the body and an audit row. Write the audit row in the same database function as the change when you can (like `admin_set_role`); otherwise call `writeAudit()` right after the change.
+- TCU (admin) actions need a `reason` in the body and an audit row. Write the audit row in the same database function as the change when you can (like `admin_set_role`); otherwise call `writeAudit()` right after the change.
 - Pages: start every protected page with `await requirePageRole([...])` (`src/server/auth/page.ts`). `proxy.ts` only sends signed-out visitors to sign-in; it doesn't check roles.
 - Put a `*.test.ts` next to your route and call the exported `GET`/`POST` directly with a `NextRequest`. `npm test` runs them.

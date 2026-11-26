@@ -128,6 +128,14 @@ describe("POST /api/v1/reports", () => {
     expect(repo.submitReport).not.toHaveBeenCalled();
   });
 
+  it("is 403 for an old police token (police was merged into TCU)", async () => {
+    for (const role of ["police", null] as const) {
+      fakeCaller = { userId: "user_police1", role };
+      expect((await postReport(form({ hazard_type: "rockfall", ...SPOT }))).status).toBe(403);
+    }
+    expect(repo.submitReport).not.toHaveBeenCalled();
+  });
+
   it("is 403 for a driver who is not verified, before any photo is read or stored", async () => {
     fakeCaller = DRIVER;
     for (const level of ["email", "none"]) {
@@ -249,6 +257,13 @@ describe("POST /api/v1/reports/{id}/confirm", () => {
     expect((await confirm(ID, {})).status).toBe(403);
     fakeCaller = DRIVER;
     expect((await confirm("nope", {})).status).toBe(404);
+  });
+
+  it("is 403 for an old police token", async () => {
+    for (const role of ["police", null] as const) {
+      fakeCaller = { userId: "user_police1", role };
+      expect((await confirm(ID, {})).status).toBe(403);
+    }
   });
 
   it("needs lat and lng together", async () => {

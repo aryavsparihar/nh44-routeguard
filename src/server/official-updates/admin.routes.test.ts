@@ -38,7 +38,11 @@ const roadRoute = await import("@/app/api/v1/admin/road-status/route");
 const auditRoute = await import("@/app/api/v1/admin/audit-log/route");
 
 const ID = "6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f";
+// The police role was merged into TCU on 26 Nov 2026. An old police token
+// reaches the routes as a signed-in caller with no role (caller.ts); POLICE
+// checks the access list itself in case one ever got through.
 const POLICE: Caller = { userId: "user_police1", role: "police" };
+const OLD_POLICE_TOKEN: Caller = { userId: "user_police1", role: null };
 const ADMIN: Caller = { userId: "user_admin1", role: "admin" };
 const DRIVER: Caller = { userId: "user_driver1", role: "driver" };
 
@@ -89,14 +93,27 @@ describe("POST /api/v1/admin/official-updates", () => {
     expect(updates.insertUpdate).not.toHaveBeenCalled();
   });
 
+  it("is 403 for an old police token, and TCU still passes", async () => {
+    for (const caller of [POLICE, OLD_POLICE_TOKEN]) {
+      fakeCaller = caller;
+      expect((await post(validUpdate())).status).toBe(403);
+      const edit = request("PATCH", `/api/v1/admin/official-updates/${ID}`, { title: "x", reason: "y" });
+      expect((await updateRoute.PATCH(edit, withId(ID))).status).toBe(403);
+    }
+    expect(updates.insertUpdate).not.toHaveBeenCalled();
+    fakeCaller = ADMIN;
+    updates.insertUpdate.mockResolvedValue(ROW);
+    expect((await post(validUpdate())).status).toBe(201);
+  });
+
   it("is 403 without our Origin (CSRF)", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     const res = await post(validUpdate(), { origin: "https://evil.example" });
     expect(res.status).toBe(403);
   });
 
   it("creates the update as the caller, with 201 and Location", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     updates.insertUpdate.mockResolvedValue(ROW);
 
     const res = await post(validUpdate());
@@ -105,7 +122,7 @@ describe("POST /api/v1/admin/official-updates", () => {
     expect(res.headers.get("Location")).toBe(`/api/v1/admin/official-updates/${ID}`);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     const [, createdBy, input, auditInfo] = updates.insertUpdate.mock.calls[0];
-    expect(createdBy).toBe("user_police1");
+    expect(createdBy).toBe("user_admin1");
     expect(input.issued_at).toBeInstanceOf(Date);
     expect(input.title).toBe("NH-44 closed at Digdol");
     expect(auditInfo.requestId).toEqual(expect.any(String));
@@ -135,7 +152,7 @@ describe("POST /api/v1/admin/official-updates", () => {
     ["a 121-character title", { title: "a".repeat(121) }, "title"],
     ["a field we don't take", { created_by: "user_admin1" }, "created_by"],
   ])("refuses %s with 422", async (_name, change, field) => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     const res = await post({ ...validUpdate(), ...change });
 
     expect(res.status).toBe(422);
@@ -146,7 +163,7 @@ describe("POST /api/v1/admin/official-updates", () => {
   });
 
   it("passes a database clash on as 409", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     updates.insertUpdate.mockRejectedValue(new ConflictError("Your account has no RouteGuard profile yet."));
     expect((await post(validUpdate())).status).toBe(409);
   });
@@ -162,7 +179,7 @@ describe("GET /api/v1/admin/official-updates", () => {
   });
 
   it("pages with a cursor of the last row", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     updates.listAllUpdates.mockResolvedValue([ROW, { ...ROW, id: "x" }]);
 
     const res = await get("?limit=1");
@@ -174,14 +191,14 @@ describe("GET /api/v1/admin/official-updates", () => {
   });
 
   it("reads a cursor back", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     updates.listAllUpdates.mockResolvedValue([]);
     await get(`?cursor=${ROW.created_at.getTime()}_${ID}`);
     expect(updates.listAllUpdates.mock.calls[0][1].after).toEqual({ createdAt: ROW.created_at, id: ID });
   });
 
   it("is 400 for a made-up cursor", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     expect((await get("?cursor=1' or 1=1")).status).toBe(400);
   });
 });
@@ -196,18 +213,18 @@ describe("PATCH /api/v1/admin/official-updates/{id}", () => {
   });
 
   it("is 404 for an id that isn't a uuid", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     expect((await patch("abc", { title: "x" })).status).toBe(404);
     expect(updates.replaceUpdate).not.toHaveBeenCalled();
   });
 
   it("is 422 when nothing but a reason is sent", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     expect((await patch(ID, { reason: "typo" })).status).toBe(422);
   });
 
   it("sends the change without the reason, and the reason to the audit", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     updates.replaceUpdate.mockResolvedValue({ ...ROW, version: 2 });
 
     const res = await patch(ID, { title: "NH-44 open one way", reason: "Police reopened one lane" });
@@ -215,12 +232,12 @@ describe("PATCH /api/v1/admin/official-updates/{id}", () => {
     expect(res.status).toBe(200);
     expect((await res.json()).data.version).toBe(2);
     const [, id, editedBy, change, auditInfo] = updates.replaceUpdate.mock.calls[0];
-    expect([id, editedBy, change]).toEqual([ID, "user_police1", { title: "NH-44 open one way" }]);
+    expect([id, editedBy, change]).toEqual([ID, "user_admin1", { title: "NH-44 open one way" }]);
     expect(auditInfo.reason).toBe("Police reopened one lane");
   });
 
   it("is 409 when that version was already replaced", async () => {
-    fakeCaller = POLICE;
+    fakeCaller = ADMIN;
     updates.replaceUpdate.mockRejectedValue(new ConflictError("already replaced"));
     expect((await patch(ID, { title: "x" })).status).toBe(409);
   });

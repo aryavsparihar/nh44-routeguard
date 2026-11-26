@@ -326,3 +326,8 @@ One line per decision: date, what we decided, and why. Newest at the bottom.
 - **2026-11-26** · Approval is a gate in front of the existing checks, not a replacement · A driver still needs an agent's vouch or the Aadhaar check to post reports.
 - **2026-11-26** · The role reaches Clerk only on approval, and `private.jwt_role()` also checks the `users` row · Two locks: a pending account has no role in its token, and even a token with a role counts for nothing in the database unless the row is approved and matches.
 - **2026-11-26** · TCU sees the waiting person's email (from Clerk, not stored by us), name and requested role · TCU needs to know who is asking. The privacy notice says so (version 2026-11-26).
+
+## Consistency pass before the demo (26 Nov 2026)
+
+- **2026-11-26** · Every place that still let "police" through (official updates, reports, confirmations, the report page, OpenAPI) now says TCU (admin) only. `police` stays only where it protects old tokens (`caller.ts`, `private.jwt_role`) and in the SQL enums and policies · Since the merge, a police token already counted as no role, so behaviour doesn't change; the code and docs now say what it does. Changing the SQL would need a migration for no change. The full list is `docs/round3/consistency.md`.
+- **2026-11-26** · `/admin/audit` names every action the database writes, in all three languages (approvals, rejections, account deletes, a driver joining an agent, vouching, Aadhaar checks) · Raw names like `driver.vouched` look unfinished on the screen judges will open.

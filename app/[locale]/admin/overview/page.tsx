@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("heading"), robots: { index: false } };
 }
 
-// The road overview for the police and admin accounts (see RoadOverview).
+// The road overview for TCU (see RoadOverview).
 export default async function Page() {
   const t = await getTranslations("admin");
   return (

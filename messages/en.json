@@ -467,7 +467,13 @@
         "reportHidden": "Report hidden",
         "reportResolved": "Report cleared",
         "reportRestored": "Report restored",
-        "reportOfficialConfirm": "Report confirmed by TCU"
+        "reportOfficialConfirm": "Report confirmed by TCU",
+        "userApproved": "Account approved by TCU",
+        "userRejected": "Account turned down by TCU",
+        "userDeleted": "Account deleted",
+        "driverJoinedAgent": "Driver joined an agent",
+        "driverVouched": "Driver vouched for by agent",
+        "aadhaarChecked": "Aadhaar QR checked"
       },
       "by": "By {role} {id}",
       "target": "On {target}",
@@ -485,7 +491,7 @@
         "trader": "Trader",
         "agent": "Agent",
         "driver": "Driver",
-        "police": "Police (demo account)",
+        "police": "Police (before the TCU merge)",
         "admin": "TCU"
       },
       "reason": "Reason",

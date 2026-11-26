@@ -467,7 +467,13 @@
         "reportHidden": "रिपोर्ट छिपाई गई",
         "reportResolved": "रिपोर्ट साफ़ बताई गई",
         "reportRestored": "रिपोर्ट वापस लाई गई",
-        "reportOfficialConfirm": "TCU ने रिपोर्ट की पुष्टि की"
+        "reportOfficialConfirm": "TCU ने रिपोर्ट की पुष्टि की",
+        "userApproved": "TCU ने खाता मंज़ूर किया",
+        "userRejected": "TCU ने खाता नामंज़ूर किया",
+        "userDeleted": "खाता हटाया गया",
+        "driverJoinedAgent": "ड्राइवर एजेंट से जुड़ा",
+        "driverVouched": "एजेंट ने ड्राइवर की ज़मानत दी",
+        "aadhaarChecked": "आधार QR जाँचा गया"
       },
       "by": "{role} {id} ने",
       "target": "{target} पर",
@@ -485,7 +491,7 @@
         "trader": "व्यापारी",
         "agent": "एजेंट",
         "driver": "ड्राइवर",
-        "police": "पुलिस (डेमो खाता)",
+        "police": "पुलिस (TCU में मिलने से पहले)",
         "admin": "TCU"
       },
       "reason": "कारण",

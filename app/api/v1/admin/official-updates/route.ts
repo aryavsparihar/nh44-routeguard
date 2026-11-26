@@ -1,8 +1,10 @@
 // GET  /api/v1/admin/official-updates: every version, deleted ones too, for
 //      the history on the admin page. Newest first, 50 a page.
-// POST /api/v1/admin/official-updates: a new police/TCU update, with the
+// POST /api/v1/admin/official-updates: a new TCU update, copied from a police or TCU
+//      advisory, with the
 //      https link to where it was published. Audited.
-// Admin and police only (BUILD_PROMPT sections 7 and 12). The public list is
+// TCU (admin) only (BUILD_PROMPT sections 7 and 12; the police role was
+// merged into TCU on 26 Nov 2026). The public list is
 // GET /api/v1/official-updates.
 import { getDb } from "@/src/server/db";
 import { readJson, readQuery } from "@/src/server/http/body";
@@ -16,7 +18,7 @@ import {
   updateCursor,
 } from "@/src/server/official-updates/official-updates.schemas";
 
-export const GET = withApi({ access: ["police", "admin"] }, async ({ req }) => {
+export const GET = withApi({ access: ["admin"] }, async ({ req }) => {
   const { limit, cursor } = readQuery(req, adminUpdatesQuery);
   const rows = await listAllUpdates(await getDb(), { limit, after: cursor });
   const page = rows.slice(0, limit);
@@ -24,7 +26,7 @@ export const GET = withApi({ access: ["police", "admin"] }, async ({ req }) => {
   return list(page, { count: page.length, next_cursor: next });
 });
 
-export const POST = withApi({ access: ["police", "admin"] }, async ({ req, caller, requestId }) => {
+export const POST = withApi({ access: ["admin"] }, async ({ req, caller, requestId }) => {
   const input = await readJson(req, createUpdateBody);
   const row = await insertUpdate(await getDb(), requireCaller(caller).userId, input, { requestId });
   return created(row, `/api/v1/admin/official-updates/${row.id}`);
