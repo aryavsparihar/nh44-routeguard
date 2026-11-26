@@ -38,7 +38,7 @@ export async function listActiveUpdates(db: Db, opts: { zone?: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Admin and police. RLS lets only these two roles see deleted versions and
+// TCU (admin). RLS lets only TCU see deleted versions and
 // write; the route checks the role first (two locks, docs/security.md).
 // Who wrote each version is in the audit log, not in these rows.
 // ---------------------------------------------------------------------------
@@ -95,8 +95,8 @@ async function explainMissing(db: Db, id: string): Promise<never> {
   throw new ConflictError("This version was already replaced or deleted. Change the newest version instead.");
 }
 
-// created_by must be a users row; police and admins get one when an admin
-// grants the role, so this only fails for an account set up by hand.
+// created_by must be a users row; the TCU account has one (the seed makes
+// it), so this only fails for an account set up by hand.
 function mapWriteError(err: unknown): never {
   if (err instanceof DbError && err.code === "23503") {
     throw new ConflictError("Your account has no RouteGuard profile yet. Finish onboarding first.");

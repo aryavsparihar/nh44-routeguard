@@ -79,7 +79,7 @@ function statusOf(u: AdminUpdate, now: number): "live" | "ended" | "replaced" | 
   return Date.parse(u.valid_until) > now ? "live" : "ended";
 }
 
-// Police and admins post, edit (a new version) and soft delete updates.
+// TCU posts, edits (a new version) and soft deletes updates.
 export function UpdatesAdmin() {
   const t = useTranslations("admin.updates");
   const ta = useTranslations("admin");

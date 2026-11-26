@@ -25,7 +25,7 @@ export function sortForReview(reports: PublicReport[]): PublicReport[] {
   );
 }
 
-// The road overview: one screen for the police and admin accounts with what
+// The road overview: one screen for TCU with what
 // the public map and API already show (risk, road reports, police/TCU
 // updates, road and rail status). Nothing about people: no names, no truck
 // positions. Reports and updates refresh by themselves like the map.
