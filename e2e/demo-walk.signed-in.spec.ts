@@ -80,3 +80,37 @@ test("the new screens: share on the strip, How this works, the backtest numbers"
   await expect(page.getByText(/verified incidents from/)).toBeVisible();
   expect(problems).toEqual([]);
 });
+
+// In the installed app there is no address bar: every screen must be a tap
+// away for each kind of user.
+test("TCU reaches every console screen by tapping, starting from the account page", async ({ page }) => {
+  const problems = watch(page);
+  await signIn(page, "routeguard.admin+clerk_test@example.com");
+  await page.goto("/me");
+  const screens = page.getByRole("navigation", { name: "Your screens" });
+  await expect(screens.getByRole("link", { name: "New accounts" })).toBeVisible();
+  // The header now offers the TCU desk on every page.
+  await page.goto("/strip");
+  await page.getByRole("banner").getByRole("link", { name: "TCU desk" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  for (const name of ["New accounts", "Official updates", "Road reports", "Road and rail status", "Audit log"]) {
+    await page.getByRole("link", { name }).first().click();
+    await expect(page.getByRole("link", { name: "Back to the TCU desk" })).toBeVisible();
+    await page.getByRole("link", { name: "Back to the TCU desk" }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+  }
+  expect(problems).toEqual([]);
+});
+
+test("a grower finds the advisor and the board on the account page, and no TCU desk", async ({ page }) => {
+  await signIn(page, "routeguard.grower+clerk_test@example.com");
+  await page.goto("/me");
+  const screens = page.getByRole("navigation", { name: "Your screens" });
+  await expect(screens.getByRole("link", { name: "Dispatch advisor" })).toBeVisible();
+  await expect(screens.getByRole("link", { name: "My board" })).toBeVisible();
+  await expect(screens.getByRole("link", { name: "Report a hazard" })).toHaveCount(0);
+  await expect(page.getByRole("banner").getByRole("link", { name: "TCU desk" })).toHaveCount(0);
+  // The report screen isn't for growers, and says where to go instead.
+  await page.goto("/report/new");
+  await expect(page.getByRole("link", { name: "Open my account" })).toBeVisible();
+});
