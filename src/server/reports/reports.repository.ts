@@ -188,7 +188,10 @@ export async function listReportsForAdmin(
         status: reports.status,
         hidden_reason: reports.hidden_reason,
         confirmations: reports.confirmations,
-        flags: sql<number>`(select count(*) from public.report_flags f where f.report_id = ${reports.id})`.mapWith(Number),
+        // Spelled out: in a one-table select Drizzle writes ${reports.id} as a
+        // bare "id", which inside this subquery means f.id (a bigint), so
+        // Postgres answered 42883 "uuid = bigint" (found 26 Nov 2026).
+        flags: sql<number>`(select count(*) from public.report_flags f where f.report_id = "reports"."id")`.mapWith(Number),
         has_photo: sql<boolean>`${reports.photo_path} is not null`,
         created_at: reports.created_at,
         expires_at: reports.expires_at,
