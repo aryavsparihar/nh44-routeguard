@@ -169,7 +169,24 @@
       "play": "Play the storm",
       "pause": "Pause"
     },
-    "howItWorks": "How this works: how the rules did on past closures"
+    "howItWorks": "How this works: how the rules did on past closures",
+    "ribbon": {
+      "heading": "When to leave",
+      "intro": "Each column is a cell on NH-44, from Srinagar on the left to Jammu on the right. Time runs down, from now to 48 hours. Each line is a truck leaving at that time.",
+      "assumption": "Assumed travel time from Srinagar to Jammu: {hours} h (our starting value, not a sourced figure). Each cell uses the score of the nearest forecast time: now, 12, 24 or 48 h.",
+      "now": "Leave now",
+      "later": "Leave in {hours} h",
+      "result": "{when}: {high} high cells, {medium} medium on the way.",
+      "clear": "{when}: no high or medium cells on the way.",
+      "unknown": "{count} cells reached after 48 h have no scores yet.",
+      "fewest": "Fewest high cells: {when}. Advice only: check with TCU before you go.",
+      "srinagar": "Srinagar",
+      "jammu": "Jammu",
+      "svgLabel": "Risk along NH-44 for the next 48 hours, with five departure times. The same results are listed below.",
+      "hours": "{hours} h",
+      "loading": "Loading the road's cells…",
+      "noCells": "The cell scores can't be shown right now."
+    }
   },
   "reason": {
     "none": "Zone {zone}: no rain, snow or frost trigger in the window",

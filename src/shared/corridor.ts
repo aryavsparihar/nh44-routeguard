@@ -82,3 +82,11 @@ export function nearestOnRoad(lat: number, lng: number): { zone: number; kmAlong
   });
   return best;
 }
+
+// The whole line's length in km (Jammu end to Srinagar end).
+export function roadLengthKm(): number {
+  const points = line.points as [number, number][];
+  let along = 0;
+  for (let i = 1; i < points.length; i++) along += km(points[i - 1], points[i]);
+  return along;
+}
