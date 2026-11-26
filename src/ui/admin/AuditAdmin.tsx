@@ -30,6 +30,12 @@ const ACTIONS = {
   "report.resolved": "reportResolved",
   "report.restored": "reportRestored",
   "report.official_confirm": "reportOfficialConfirm",
+  "user.approved": "userApproved",
+  "user.rejected": "userRejected",
+  "user.deleted": "userDeleted",
+  "driver.joined_agent": "driverJoinedAgent",
+  "driver.vouched": "driverVouched",
+  "verification.aadhaar_qr": "aadhaarChecked",
 } as const;
 type Action = keyof typeof ACTIONS;
 const ROLES = ["grower", "trader", "agent", "driver", "police", "admin"] as const;

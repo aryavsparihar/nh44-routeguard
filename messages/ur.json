@@ -467,7 +467,13 @@
         "reportHidden": "رپورٹ چھپائی گئی",
         "reportResolved": "رپورٹ صاف بتائی گئی",
         "reportRestored": "رپورٹ واپس لائی گئی",
-        "reportOfficialConfirm": "TCU نے رپورٹ کی تصدیق کی"
+        "reportOfficialConfirm": "TCU نے رپورٹ کی تصدیق کی",
+        "userApproved": "TCU نے کھاتہ منظور کیا",
+        "userRejected": "TCU نے کھاتہ نامنظور کیا",
+        "userDeleted": "کھاتہ ہٹایا گیا",
+        "driverJoinedAgent": "ڈرائیور ایجنٹ سے جڑا",
+        "driverVouched": "ایجنٹ نے ڈرائیور کی ضمانت دی",
+        "aadhaarChecked": "آدھار QR جانچا گیا"
       },
       "by": "{role} {id} نے",
       "target": "{target} پر",
@@ -485,7 +491,7 @@
         "trader": "تاجر",
         "agent": "ایجنٹ",
         "driver": "ڈرائیور",
-        "police": "پولیس (ڈیمو اکاؤنٹ)",
+        "police": "پولیس (TCU میں ملنے سے پہلے)",
         "admin": "TCU"
       },
       "reason": "وجہ",
