@@ -221,3 +221,24 @@ def test_preview_never_writes_files(monkeypatch, tmp_path):
         "alarm_days_per_zone_per_30_days": None})
     assert backtest.main(["--incidents", str(csv_path), "--preview-unverified"]) == 0
     assert not (tmp_path / "backtest.json").exists() and not (tmp_path / "backtest.md").exists()
+
+
+# --- the committed results ---------------------------------------------------------
+def test_committed_json_and_markdown_say_the_same():
+    # The /backtest page reads lib/risk/backtest.json and the README quotes
+    # docs/backtest.md; both come from one run, so they must never drift.
+    report = json.loads(backtest.OUT_JSON.read_text())
+    assert render_md(report) == backtest.OUT_MD.read_text()
+
+
+def test_committed_json_has_what_the_page_shows():
+    report = json.loads(backtest.OUT_JSON.read_text())
+    assert report["status"] == "ok" and report["preview_unverified"] is False
+    assert report["incidents"]["verified"] is True
+    assert report["incidents"]["count"] == len(report["per_incident"])
+    for key in ("48h", "24h", "12h", "on_the_day"):
+        hit = report["hit_rate"][key]
+        assert 0 <= hit["hits"] <= hit["of"]
+    fa = report["false_alarms"]
+    assert fa["alarm_days"] == sum(z["alarm_days"] for z in fa["per_zone"].values())
+    assert fa["zone_days_scored"] == sum(z["days_scored"] for z in fa["per_zone"].values())

@@ -159,7 +159,8 @@
       },
       "play": "Play the storm",
       "pause": "Pause"
-    }
+    },
+    "howItWorks": "How this works: how the rules did on past closures"
   },
   "reason": {
     "none": "Zone {zone}: no rain, snow or frost trigger in the window",
@@ -1003,5 +1004,33 @@
       "title": "{kind}: {title}",
       "body": "{where}. From {source}. Check the source before you act."
     }
+  },
+  "backtest": {
+    "title": "How well the rules did on past closures",
+    "intro": "We ran the same risk rules on the weather before each verified NH-44 closure, to see whether they would have warned in time. It checks the rules; it is not a promise about the future.",
+    "range": "{count} verified incidents from {from} to {to}. {withForecasts} of them are recent enough for archived forecasts; the older ones only get the weather on the day.",
+    "hitsTitle": "Would it have warned?",
+    "colCheck": "Check",
+    "colZone": "Zone flagged (medium or high)",
+    "colHazard": "Right hazard flagged",
+    "row48h": "Forecast 48 h ahead",
+    "row24h": "Forecast 24 h ahead",
+    "row12h": "Forecast 12 h ahead",
+    "rowDay": "Weather on the day",
+    "of": "{hits} of {of}",
+    "lead": "Median warning time of the forecast hits: {hours} h.",
+    "falseTitle": "False alarms",
+    "falseText": "From {from} to {to}, forecast {lead} h ahead: {days} alarm days across {zoneDays} zone-days, about {per30} per zone per 30 days.",
+    "falseUpper": "Our incident list is incomplete, so some of these were probably real closures nobody wrote down. Read it as an upper bound.",
+    "limitTitle": "Limits",
+    "limitSmall": "There are only {count} verified incidents, so one event changes a hit rate a lot. Read these numbers as a rough check, not a measured accuracy.",
+    "limitTime": "Sources give a date, not a time, so every event is scored at 12:00 India time.",
+    "limitThresholds": "Every threshold is our own starting value, not a sourced figure.",
+    "sourcesTitle": "Sources",
+    "sourceIncidents": "The incident list, with a source for each row",
+    "sourceFull": "The full backtest: each incident and the method",
+    "sourceWeather": "Weather: Open-Meteo (archived forecasts and ERA5)",
+    "generated": "Model {model}, run on {date}.",
+    "notRun": "The backtest hasn't been run yet."
   }
 }

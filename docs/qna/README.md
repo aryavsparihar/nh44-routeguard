@@ -37,3 +37,7 @@ The phone has no Hindi voice installed, and we never read Hindi or Urdu with an 
 
 **Where do the "what would change the answer" lines come from?**
 The same `decide()` the advice uses, run again on the phone with nearby values you typed (`src/shared/what-if.ts`). A line appears only if the decision really changes; tests in `src/shared/what-if.test.ts` check every line against `decide()`.
+
+**How good is the risk score?**
+Open `/backtest` (the map's "How this works" link). The numbers come from `lib/risk/backtest.json`, written by `jobs/backtest.py` in the same run as `docs/backtest.md`; `jobs/tests/test_backtest.py` checks the two agree. It's 27 verified incidents, so read it as a rough check, not a measured accuracy.
+
