@@ -1,0 +1,38 @@
+# Demo script (5 minutes)
+
+One phone (or Chrome DevTools in a phone size) on the projector, one laptop with Postman and Swagger. Before we start: see the checklist at the end.
+
+**Timing note:** these are five-minute rehearsal targets. We have not timed a live run yet. After the team rehearsal, replace each target with the measured time and adjust any step that does not match the current app.
+
+| # | Who | Time | What we show | What to say |
+| --- | --- | --- | --- | --- |
+| 1 | Aryaveer | 15 s | Home screen | Apples leave Kashmir on one road, NH-44. When it closes, trucks can be stuck and fruit can spoil. RouteGuard gives a 48-hour risk forecast and dispatch advice. |
+| 2 | Riya | 35 s | Language switch: اردو → हिन्दी → English | The app is available in Urdu, Hindi and English. Urdu reads right-to-left, while numbers and “+48 h” remain readable. Every screen also says that this is not an official police service. |
+| 3 | Navaya | 45 s | Map, then `/strip` (48 h strip); DevTools Network on `/api/v1/risk` | Each zone shows a risk score, a reason and confidence. The risk is calculated once an hour for everyone. On reload, the matching ETag gives a **304** response with no new body. If all zones are low, say that honestly (“the weather is calm, so the score is 0”)
+| 4 | Navaya | 45 s | `/advisor`: Kullu Delicious, 10 days, 12 t, Azadpur, heavy → answer. Same request in Swagger (`/api/docs`, `POST /api/v1/advice`). Then airplane mode → ask again | The phone sends the request to our API, and Swagger returns the same kind of answer. Offline, the phone runs the same `decide()` logic using saved scores and clearly says that it is offline. |
+| 5 | Madhusudan | 55 s | Demo driver (vouched): `/report/new` offline → queued. Back online → syncs and goes live (solid). TCU taps “I see it too” on the agent's unconfirmed slide near Peerah (dashed) → solid. TCU posts an official update with its source; `/admin/audit` shows both entries. | Only verified drivers can post. A driver can be vouched for by an agent or complete the optional Aadhaar check. Agent reports stay unconfirmed until two nearby verified users or TCU confirm them. Official updates include their source, and TCU actions are recorded in an audit log. |
+| 6 | Aryaveer | 45 s | Joining: waiting driver on phone, `/me` → “Waiting for TCU”. TCU on laptop, `/admin/approvals` → Approve. Then demo driver (not vouched) on phone: `/report/new` → “First, get verified”. `/me` → “Aadhaar QR check” → tick consent → scan `docs/demo/aadhaar-demo-qr.png` shown on laptop → “Demo check (test key)”, level “Aadhaar checked” → `/report/new` now opens | TCU approves every new account before it can take part. Aadhaar is optional. For this demo, the phone scans a sample QR signed with our test key—not a real Aadhaar card. The server checks the signature and compares the name; we keep only the result and last four digits. |
+| 7 | Aryaveer | 25 s | Postman: folder 2 (401s), folder 3 (403 grower posting an update, 422 bad truck number, 429), then `npm run db:test` output | The API returns clear error responses with a request ID. Database Row Level Security checks permissions again, so a missed check in a route still cannot expose protected data. |
+| 8 | Navaya / Madhusudan | 15 s | `docs/scaling.md` table; `/admin/jobs` | Reads are cached. Writes go through a Postgres queue, and failed jobs go to a dead-letter list. The app can scale from zero to three replicas. |
+| 9 | Everyone | 20 s | — | Each speaker gives one honest limitation (listed below). |
+
+**Target total: 5:00 (300 seconds).**
+
+## Limitations (one each)
+
+- Aryaveer: Clerk runs as a development instance; GPS can be spoofed.
+- Riya: translations were checked by team members, not professional translators.
+- Navaya: the thresholds are starting values, not fitted to data; no read replicas, one database.
+- Madhusudan: the incident history is small and incomplete, so the backtest is weak evidence.
+
+## Before we present
+
+1. `node scripts/seed-demo.mts` (Aryaveer's machine, app running) **within 2 hours of presenting**. Demo reports keep the real expiry rules (`config/report-rules.json`: 6 h for the rockfall and landslide), counted from seed time. The two demo official updates stay in force for 36 h (`DEMO_WINDOW_HOURS`), each with an audit entry. Run it again after any signed-in Playwright run: the Aadhaar test leaves driver2 checked.
+2. `node scripts/demo-check.mjs <url>` (the live URL, or `http://localhost:3000`) a few minutes before. It also warms a replica (min replicas is 0). Every line must say PASS: health, fresh risk data, an official update in force, a confirmed and an unconfirmed demo report, the storm replays, and each demo account's role and approval. It only reads; it never writes or prints a key.
+3. Check `/api/v1/health/ready` says `stale: false`. If stale, run the risk job by hand (`risk-job.yml`, “Run workflow”).
+4. Sign in on the phone as the demo driver; sign in on the laptop as the admin. Code for all demo accounts: `424242`.
+5. Postman: environment “local” or “live” with fresh tokens (`postman/README.md`).
+6. Test airplane mode once on the real phone after loading the advisor.
+7. Aadhaar: the app has `FEATURE_AADHAAR_QR=true` and `AADHAAR_ALLOW_TEST_CERT=true` for the demo (blank it again afterwards); the seed (step 1) has reset the demo driver; `docs/demo/aadhaar-demo-qr.png` is open full screen on the laptop.
+8. Look at the map: if every zone is low, Navaya opens a past storm in step 3. Never edit scores to look busy.
+
