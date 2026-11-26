@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReplaySummary } from "@/src/shared/api-types";
 import { EXTERNAL_REL, formatDate, isolate } from "@/src/shared/format";
-import { HAZARDS, type Hazard } from "@/src/shared/risk";
+import { HAZARDS, type Hazard, type Horizon } from "@/src/shared/risk";
+import { PLAY_STEP_MS, nextHorizon, playStart, prefersReducedMotion } from "./replay-play";
 import type { Locale } from "@/src/i18n/routing";
 
 // Storm replays (GET /api/v1/risk/replays): a real past storm on the map,
@@ -86,5 +88,68 @@ export function ReplayBanner({ replay, onBack }: { replay: ReplaySummary; onBack
         {t("replay.back")}
       </button>
     </section>
+  );
+}
+
+// Play / Pause for a storm replay (src/ui/risk/replay-play.ts). Hidden when the
+// phone asks for reduced motion: the step buttons above do the same by hand.
+export function ReplayPlay({
+  horizon,
+  setHorizon,
+  playing,
+  setPlaying,
+}: {
+  horizon: Horizon;
+  setHorizon: (h: Horizon) => void;
+  playing: boolean;
+  setPlaying: (playing: boolean) => void;
+}) {
+  const t = useTranslations("risk");
+  // Assume reduced motion until the browser says otherwise (no button in the
+  // server-rendered page).
+  const [reduced, setReduced] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(prefersReducedMotion(window));
+    update();
+    media?.addEventListener("change", update);
+    return () => media?.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!playing) return;
+    if (reduced) {
+      setPlaying(false);
+      return;
+    }
+    const next = nextHorizon(horizon);
+    const timer = window.setTimeout(() => {
+      if (next === null) setPlaying(false);
+      else setHorizon(next);
+    }, PLAY_STEP_MS);
+    return () => window.clearTimeout(timer);
+  }, [playing, reduced, horizon, setHorizon, setPlaying]);
+
+  if (reduced) return null;
+
+  function toggle() {
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    setHorizon(playStart(horizon));
+    setPlaying(true);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-pressed={playing}
+      className="min-h-12 self-start rounded-md border border-border-strong bg-elevated px-4 font-bold"
+    >
+      {playing ? t("replay.pause") : t("replay.play")}
+    </button>
   );
 }
