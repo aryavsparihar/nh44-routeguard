@@ -428,7 +428,10 @@ function WhatIfLines({ result }: { result: Result }) {
 // with the advice the server gives at that moment, on /board.
 function SaveLot({ lot }: { lot: Lot }) {
   const t = useTranslations("advice.save");
-  const [state, setState] = useState<"idle" | "busy" | "saved" | "signIn" | "wrongRole" | "error">("idle");
+  const [state, setState] = useState<"idle" | "busy" | "saved" | "signIn" | "wrongRole" | "needsTruck" | "error">("idle");
+  // Agents must name the truck (POST /api/v1/shipments answers 422 on
+  // truck_number); growers and traders save the lot without one.
+  const [truck, setTruck] = useState("");
 
   async function save() {
     setState("busy");
@@ -444,8 +447,15 @@ function SaveLot({ lot }: { lot: Lot }) {
           tonnes: lot.tonnes,
           destination: lot.destination,
           truck_type: lot.truck_type,
+          ...(truck.trim() ? { truck_number: truck.trim() } : {}),
         }),
       });
+      if (res.status === 422) {
+        const body = await res.json().catch(() => null);
+        const paths: string[] = (body?.errors ?? []).map((e: { path?: string }) => e.path ?? "");
+        setState(paths.includes("truck_number") ? "needsTruck" : "error");
+        return;
+      }
       setState(res.status === 201 ? "saved" : res.status === 401 ? "signIn" : res.status === 403 ? "wrongRole" : "error");
     } catch {
       setState("error");
@@ -464,14 +474,35 @@ function SaveLot({ lot }: { lot: Lot }) {
   }
   return (
     <div className="flex flex-col gap-2">
+      {(state === "needsTruck" || truck) && (
+        <label className="flex flex-col gap-1 text-sm font-bold">
+          {t("truckLabel")}
+          <input
+            dir="ltr"
+            autoCapitalize="characters"
+            maxLength={14}
+            required
+            aria-required="true"
+            aria-invalid={state === "needsTruck"}
+            value={truck}
+            onChange={(e) => setTruck(e.target.value)}
+            className="min-h-12 rounded-md border border-border-strong bg-elevated px-3 text-base font-normal"
+          />
+        </label>
+      )}
       <button
         type="button"
         onClick={() => void save()}
         disabled={state === "busy"}
         className="min-h-12 rounded-md bg-highway px-4 font-bold text-inverse disabled:opacity-60"
       >
-        {t("label")}
+        {truck ? t("again") : t("label")}
       </button>
+      {state === "needsTruck" && (
+        <p role="alert" className="text-sm font-bold text-high-text">
+          {t("needsTruck")}
+        </p>
+      )}
       {(state === "wrongRole" || state === "error") && (
         <p role="alert" className="text-sm font-bold text-high-text">
           {state === "wrongRole" ? t("wrongRole") : t("err")}

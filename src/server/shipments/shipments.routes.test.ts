@@ -149,8 +149,20 @@ describe("POST /api/v1/shipments", () => {
     fakeCaller = GROWER;
     expect((await post({ ...LOT, driver_id: "user_driver1" })).status).toBe(422);
     fakeCaller = AGENT;
-    expect((await post({ ...LOT, driver_id: "user_driver1" })).status).toBe(201);
+    expect((await post({ ...LOT, truck_number: "JK05G7712", driver_id: "user_driver1" })).status).toBe(201);
     expect(shipRepo.insertShipment.mock.calls[0][1]).toMatchObject({ agent_id: "user_agent1", driver_id: "user_driver1" });
+  });
+
+  it("needs the truck number from an agent, not from a grower or trader", async () => {
+    fakeCaller = AGENT;
+    const res = await post(LOT);
+    expect(res.status).toBe(422);
+    expect((await res.json()).errors[0].path).toBe("truck_number");
+    expect(shipRepo.insertShipment).not.toHaveBeenCalled();
+    expect((await post({ ...LOT, truck_number: "jk05g7712" })).status).toBe(201);
+    expect(shipRepo.insertShipment.mock.calls[0][1]).toMatchObject({ truck_number: "JK05G7712" });
+    fakeCaller = GROWER;
+    expect((await post(LOT)).status).toBe(201);
   });
 
   it("refuses a future harvest date, unknown fields and bad numbers (422)", async () => {
@@ -166,9 +178,9 @@ describe("POST /api/v1/shipments", () => {
   it("passes on the repository's 409 and 422", async () => {
     fakeCaller = AGENT;
     shipRepo.insertShipment.mockRejectedValueOnce(new ConflictError("This truck already has an active shipment."));
-    expect((await post(LOT)).status).toBe(409);
+    expect((await post({ ...LOT, truck_number: "JK05G7712" })).status).toBe(409);
     shipRepo.insertShipment.mockRejectedValueOnce(new ValidationError([{ path: "driver_id", message: "x" }]));
-    const res = await post({ ...LOT, driver_id: "user_stranger1" });
+    const res = await post({ ...LOT, truck_number: "JK05G7712", driver_id: "user_stranger1" });
     expect(res.status).toBe(422);
     expect((await res.json()).errors[0].path).toBe("driver_id");
   });

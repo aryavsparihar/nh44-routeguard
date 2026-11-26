@@ -672,7 +672,10 @@ export const OPERATIONS: Operation[] = [
         headers: { Location: "/api/v1/shipments/{id}" },
       },
     },
-    errors: { 409: "This truck already has a shipment that isn't delivered." },
+    errors: {
+      409: "This truck already has a shipment that isn't delivered.",
+      422: "A field is wrong, or an agent left out truck_number (an agent's shipment is a truck on the road; a grower's or trader's lot may leave it out).",
+    },
   },
   {
     method: "get",
