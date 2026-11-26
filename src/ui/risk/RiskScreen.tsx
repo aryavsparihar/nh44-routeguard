@@ -9,6 +9,7 @@ import type { OfficialUpdate, PastClosure, PublicReport, Replay, ReplaySummary, 
 import { closuresByCell } from "@/src/shared/cell-closures";
 import { reportsInForce, updatesInForce } from "@/src/shared/in-force";
 import { modelGaps } from "@/src/shared/model-gaps";
+import { tippingPoint } from "@/src/shared/tipping";
 import { useNow } from "@/src/ui/offline/useNow";
 import {
   HAZARDS,
@@ -140,6 +141,12 @@ export function RiskScreen({ segments, bounds }: { segments: CorridorSegment[]; 
       // the service worker) has them undefined; show "Not known", not a crash.
       slope: typeof h.slope_deg === "number" ? h.slope_deg : null,
       confidence: h.confidence ?? null,
+      tipping: tippingPoint({
+        zone: h.zone_id,
+        slope: typeof h.slope_deg === "number" ? h.slope_deg : null,
+        reasonCode: h.reason_code ?? null,
+        reasonParams: h.reason_params ?? null,
+      }),
       reason: formatReason(
         {
           reason: h.reason ?? "",
