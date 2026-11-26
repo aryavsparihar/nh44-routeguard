@@ -11,9 +11,14 @@ import { getJson, type ApiList } from "@/src/ui/api";
 import { Icon, type IconName } from "@/src/ui/icons";
 import { LevelBadge } from "@/src/ui/risk/LevelBadge";
 import { SignInLink } from "@/src/ui/SignInLink";
+import { whatWouldChange } from "@/src/shared/what-if";
+import { pickVoice, speechText } from "./speech";
 
 type RoadRow = { item: string; state: RoadStatus["mughal_road"] };
-type Result = { advice: Advice; source: "server" | "phone"; lot: Lot };
+// basis: the scores and road status this phone saved, used for "what would
+// change the answer". Missing when the phone couldn't load them.
+type Basis = { rows: RiskRow[]; run_at: string | null; road: RoadStatus };
+type Result = { advice: Advice; source: "server" | "phone"; lot: Lot; basis: Basis | null };
 
 const DECISION_STYLE: Record<Decision, { box: string; icon: IconName }> = {
   SEND: { box: "border-send-fill bg-send-bg text-send-text", icon: "decision-send" },
@@ -93,7 +98,7 @@ export function AdvisorScreen() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        setResult({ advice: (await res.json()).data as Advice, source: "server", lot: body });
+        setResult({ advice: (await res.json()).data as Advice, source: "server", lot: body, basis: saved.current });
         return;
       }
       if (res.status < 500) throw new Error("rejected"); // our form checks match the API's
@@ -102,7 +107,7 @@ export function AdvisorScreen() {
       // No signal or server down: the same rules on this phone.
       if (error instanceof TypeError && saved.current) {
         const s = saved.current;
-        setResult({ advice: decide(body, { rows: s.rows, run_at: s.run_at }, s.road), source: "phone", lot: body });
+        setResult({ advice: decide(body, { rows: s.rows, run_at: s.run_at }, s.road), source: "phone", lot: body, basis: s });
       } else {
         setFailed(true);
       }
@@ -250,6 +255,12 @@ function AdviceResult({
   };
   const showReason = !advice.notes.includes("no_scores");
 
+  // The lines read aloud are the same strings shown below, in the same order.
+  const decisionText = t(`decision.${advice.decision}`);
+  const reasonText = showReason ? t(`reason.${advice.reason_code}`, reasonValues) : null;
+  const noteTexts = advice.notes.map((note) => t(`notes.${note}`));
+  const disclaimerText = t("disclaimer");
+
   return (
     <div className="flex flex-col gap-3">
       <div
@@ -261,15 +272,18 @@ function AdviceResult({
         <p className="flex items-center gap-2 text-2xl font-bold">
           {/* "Send" points forward: to the left in Urdu. */}
           <Icon name={style.icon} className={advice.decision === "SEND" ? "size-7 rtl:-scale-x-100" : "size-7"} />
-          {t(`decision.${advice.decision}`)}
+          {decisionText}
         </p>
-        {showReason && <p>{t(`reason.${advice.reason_code}`, reasonValues)}</p>}
-        {advice.notes.map((note) => (
+        {reasonText && <p>{reasonText}</p>}
+        {noteTexts.map((note) => (
           <p key={note} className="font-bold">
-            {t(`notes.${note}`)}
+            {note}
           </p>
         ))}
       </div>
+
+      <ReadAloud lines={[decisionText, reasonText, ...noteTexts, disclaimerText]} />
+      <WhatIfLines result={result} />
 
       <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="rounded-lg border border-border bg-elevated p-3">
@@ -313,13 +327,99 @@ function AdviceResult({
       <p className="text-sm text-secondary" data-source={source}>
         {source === "server" ? t("computedServer", { time: runAt }) : t("computedPhone", { time: runAt })}
       </p>
-      <p className="text-sm font-bold">{t("disclaimer")}</p>
+      <p className="text-sm font-bold">{disclaimerText}</p>
 
       {source === "server" && <SaveLot lot={result.lot} />}
 
       <button type="button" onClick={onAgain} className="min-h-12 rounded-md border border-border-strong bg-elevated px-4 font-bold">
         {t("again")}
       </button>
+    </div>
+  );
+}
+
+// "Read aloud": the browser reads the answer in the screen's language. Hidden
+// when the phone has no voice for that language (src/ui/advice/speech.ts).
+function ReadAloud({ lines }: { lines: (string | null)[] }) {
+  const t = useTranslations("advice");
+  const locale = useLocale() as Locale;
+  const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [speaking, setSpeaking] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    // Voices load late on some phones, so listen for the list changing too.
+    const load = () => setVoice(pickVoice(synth.getVoices(), locale));
+    load();
+    synth.addEventListener("voiceschanged", load);
+    return () => {
+      synth.removeEventListener("voiceschanged", load);
+      synth.cancel();
+    };
+  }, [locale]);
+
+  if (!voice) return null;
+
+  function start() {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(speechText(lines));
+    utterance.voice = voice;
+    utterance.lang = voice!.lang;
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    synth.speak(utterance);
+  }
+
+  function stop() {
+    window.speechSynthesis.cancel();
+    setSpeaking(false);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={speaking ? stop : start}
+      aria-pressed={speaking}
+      className="min-h-12 self-start rounded-md border border-border-strong bg-elevated px-4 font-bold"
+    >
+      {speaking ? t("stopReading") : t("readAloud")}
+    </button>
+  );
+}
+
+// "What would change the answer": at most two lines, only when the same rules
+// give a different decision with a nearby value the user typed
+// (src/shared/what-if.ts). Shown only when this phone's saved scores give the
+// same answer as the one on screen, so the lines can't contradict it.
+function WhatIfLines({ result }: { result: Result }) {
+  const t = useTranslations("advice");
+  const { basis, lot, advice } = result;
+  if (!basis) return null;
+  const risk = { rows: basis.rows, run_at: basis.run_at };
+  if (decide(lot, risk, basis.road).decision !== advice.decision) return null;
+  const lines = whatWouldChange(lot, risk, basis.road);
+  if (lines.length === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-elevated p-3">
+      <p className="text-sm text-secondary">{t("whatIf.heading")}</p>
+      <ul className="flex flex-col gap-1">
+        {lines.map((line) => {
+          const decision = t(`decision.${line.decision}`);
+          const text =
+            line.kind === "days"
+              ? t(line.delta < 0 ? "whatIf.daysFewer" : "whatIf.daysMore", { count: Math.abs(line.delta), decision })
+              : t(line.truck_type === "light" ? "whatIf.light" : "whatIf.heavy", { decision });
+          return (
+            <li key={line.kind} className="font-bold">
+              {text}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
