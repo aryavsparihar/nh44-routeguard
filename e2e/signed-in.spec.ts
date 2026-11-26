@@ -146,3 +146,67 @@ test("a driver checks the demo Aadhaar QR from a picture and gets the badge", as
   await page.goto("/report/new");
   await expect(page.getByRole("button", { name: "Send report" })).toBeVisible();
 });
+
+// The whole offline story in one run (BUILD_PROMPT section 13). Needs a
+// production build: the service worker only registers there
+// (src/ui/offline/OfflineStatus.tsx). Under `next dev` it is skipped.
+test("offline: saved scores, advice on the phone, and a queued report sent exactly once", async ({ page, context }) => {
+  const swActive = async () =>
+    page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return false;
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000)),
+      ]);
+      return !!reg?.active;
+    });
+
+  // 1. Load the map with signal, so the worker stores the page and the scores.
+  await page.goto("/");
+  test.skip(!(await swActive()), "no service worker here (run against `npm run build && npm start`)");
+  await page.reload(); // now the worker controls the page and saves what it loads
+  await expect(page.locator("main")).toContainText(/\d\.\d\d/);
+
+  // 2. No signal, reload: the saved scores show, with how old they are.
+  await context.setOffline(true);
+  await page.reload();
+  // The notice says it is a saved copy (with its time when the page knows it).
+  await expect(page.getByText(/You.re offline\. Showing (data saved at|what this phone saved last)/)).toBeVisible();
+  await expect(page.locator("main")).toContainText(/\d\.\d\d/);
+
+  // 3. The advisor answers from the phone.
+  await context.setOffline(false);
+  // The advisor keeps the scores and road status it loaded for the offline answer.
+  const loaded = Promise.all([
+    page.waitForResponse((r) => new URL(r.url()).pathname === "/api/v1/risk"),
+    page.waitForResponse((r) => new URL(r.url()).pathname === "/api/v1/road-status"),
+  ]);
+  await page.goto("/advisor");
+  await loaded;
+  await context.setOffline(true);
+  await page.getByLabel("Days since picking").fill("12");
+  await page.getByLabel("Load (tonnes)").fill("10");
+  await page.getByRole("button", { name: "Get advice" }).click();
+  await expect(page.getByText("No signal: worked out on this phone")).toBeVisible();
+  await context.setOffline(false);
+
+  // 4. As the vouched driver, queue a report with no signal.
+  await signIn(page, EMAIL.driverVouched);
+  const posts: number[] = [];
+  page.on("response", (r) => {
+    if (r.request().method() === "POST" && new URL(r.url()).pathname === "/api/v1/reports") posts.push(r.status());
+  });
+  await fillReport(page, "Other hazard");
+  await context.setOffline(true);
+  await page.getByRole("button", { name: "Send report" }).click();
+  await expect(page.getByText("No signal. Your report is saved on this phone")).toBeVisible();
+  expect(posts).toEqual([]); // nothing reached the server while offline
+
+  // 5. Back online: it is sent once, and nothing is left waiting.
+  await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(page.getByText(/waiting reports? sent\./)).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(2_000); // give a second send the chance to happen
+  expect(posts.filter((s) => s < 300)).toHaveLength(1);
+  await expect(page.getByText(/reports? waiting to send/)).toHaveCount(0);
+});
